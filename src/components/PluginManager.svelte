@@ -192,6 +192,16 @@
 		/>
 	</div>
 
+	<div class="ml-2 mt-8 mb-4">
+		<h2 class="font-semibold text-md dark:text-neutral-400">Elgato Marketplace</h2>
+		<button
+			on:click={() => invoke("open_url", { url: "https://github.com/ninjadev64/OpenDeck/wiki/0.-Elgato-Marketplace" })}
+			class="mt-4 text-md text-blue-400 hover:underline"
+		>
+			Click here for instructions
+		</button>
+	</div>
+
 	{#if !plugins}
 		<h2 class="mx-2 mt-6 mb-2 text-md dark:text-neutral-400">Loading open-source plugin list...</h2>
 	{:else}
@@ -241,18 +251,13 @@
 		</div>
 	{/if}
 
-	<div class="flex flex-row items-center mt-6 mb-2">
-		<h2 class="mx-2 font-semibold text-md dark:text-neutral-400">Elgato App Store archive</h2>
-		<Tooltip> Plugins archived from the now deprecated Elgato App Store. </Tooltip>
-	</div>
-	{#if !archiveRes}
-		<button
-			on:click={async () => archiveRes = await fetch("https://plugins.amankhanna.me/catalogue.json")}
-			class="mx-2 mt-2 mb-4 p-1 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg outline-hidden"
-		>
-			Load Elgato App Store Archive plugins list
-		</button>
-	{:else}
+	{#await fetch("https://plugins.amankhanna.me/catalogue.json")}
+		<h2 class="mx-2 mt-6 mb-2 text-md dark:text-neutral-400">Loading Elgato App Store archive plugin list...</h2>
+	{:then archiveRes}
+		<div class="flex flex-row items-center mt-6 mb-2">
+			<h2 class="mx-2 font-semibold text-md dark:text-neutral-400">Elgato App Store archive</h2>
+			<Tooltip> Plugins archived from the Elgato App Store (now replaced by the Elgato Marketplace). </Tooltip>
+		</div>
 		{#await archiveRes.json() then entries}
 			<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 				{#each entries as plugin}
@@ -271,5 +276,5 @@
 				{/each}
 			</div>
 		{/await}
-	{/if}
+	{/await}
 </Popup>
