@@ -4997,13 +4997,14 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-aptabase"
-version = "0.5.1"
-source = "git+https://github.com/ninjadev64/tauri-plugin-aptabase.git?branch=v2#6cce0f19b5c2ab1302813ec0d665135400308835"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "075ebe083b5f311bdfbf436f8383d316dfb12267be5fd977b57d7701bdb99987"
 dependencies = [
  "futures",
  "log",
  "os_info",
- "rand 0.8.5",
+ "rand 0.9.0",
  "reqwest",
  "serde",
  "serde_json",

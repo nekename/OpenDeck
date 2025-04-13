@@ -120,12 +120,12 @@
 		<div class="absolute bottom-6 flex flex-row items-center text-sm dark:text-neutral-400">
 			<span class="mr-1">
 				Please leave a
-				<button on:click={() => invoke("open_url", { url: "https://github.com/ninjadev64/OpenDeck" })} class="underline">star on GitHub</button>
+				<button on:click={() => invoke("open_url", { url: "https://github.com/nekename/OpenDeck" })} class="underline">star on GitHub</button>
 			</span>
 			<Star weight="fill" fill="yellow" />
 			<span class="mx-1">
 				or
-				<button on:click={() => invoke("open_url", { url: "https://github.com/sponsors/ninjadev64" })} class="underline">sponsor me</button>
+				<button on:click={() => invoke("open_url", { url: "https://github.com/sponsors/nekename" })} class="underline">sponsor me</button>
 			</span>
 			<Heart weight="fill" fill="fuchsia" />
 			<span class="ml-1">for my work :)</span>

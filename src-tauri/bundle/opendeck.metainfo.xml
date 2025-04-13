@@ -7,12 +7,12 @@
 	<developer id="me.amankhanna"><name>Aman Khanna</name></developer>
 	<launchable type="desktop-id">opendeck.desktop</launchable>
 
-	<url type="vcs-browser">https://github.com/ninjadev64/OpenDeck</url>
-	<url type="homepage">https://github.com/ninjadev64/OpenDeck</url>
-	<url type="bugtracker">https://github.com/ninjadev64/OpenDeck/issues</url>
-	<url type="faq">https://github.com/ninjadev64/OpenDeck?tab=readme-ov-file#support</url>
-	<url type="contribute">https://github.com/ninjadev64/OpenDeck?tab=readme-ov-file#building-from-source--contributing</url>
-	<url type="donation">https://github.com/sponsors/ninjadev64</url>
+	<url type="vcs-browser">https://github.com/nekename/OpenDeck</url>
+	<url type="homepage">https://github.com/nekename/OpenDeck</url>
+	<url type="bugtracker">https://github.com/nekename/OpenDeck/issues</url>
+	<url type="faq">https://github.com/nekename/OpenDeck?tab=readme-ov-file#support</url>
+	<url type="contribute">https://github.com/nekename/OpenDeck?tab=readme-ov-file#building-from-source--contributing</url>
+	<url type="donation">https://github.com/sponsors/nekename</url>
 	<url type="contact">https://discord.gg/26Nf8rHvaj</url>
 
 	<metadata_license>CC-BY-SA-4.0</metadata_license>
@@ -27,16 +27,16 @@
 
 	<screenshots>
 		<screenshot type="default">
-			<image>https://github.com/ninjadev64/OpenDeck/raw/release/.github/readme/mainmenu.png</image>
+			<image>https://github.com/nekename/OpenDeck/raw/release/.github/readme/mainmenu.png</image>
 		</screenshot>
 		<screenshot>
-			<image>https://github.com/ninjadev64/OpenDeck/raw/release/.github/readme/multiaction.png</image>
+			<image>https://github.com/nekename/OpenDeck/raw/release/.github/readme/multiaction.png</image>
 		</screenshot>
 		<screenshot>
-			<image>https://github.com/ninjadev64/OpenDeck/raw/release/.github/readme/plugins.png</image>
+			<image>https://github.com/nekename/OpenDeck/raw/release/.github/readme/plugins.png</image>
 		</screenshot>
 		<screenshot>
-			<image>https://github.com/ninjadev64/OpenDeck/raw/release/.github/readme/profiles.png</image>
+			<image>https://github.com/nekename/OpenDeck/raw/release/.github/readme/profiles.png</image>
 		</screenshot>
 	</screenshots>
 
@@ -47,7 +47,7 @@
 
 	<releases>
 		<release version="2.4.2" date="2025-02-18">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/releases/tag/v2.4.2</url>
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.4.2</url>
 			<description>
 				<ul>
 					<li>Highlight currently selected key</li>
@@ -56,7 +56,7 @@
 			</description>
 		</release>
 		<release version="2.4.1" date="2025-01-27">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/releases/tag/v2.4.1</url>
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.4.1</url>
 			<description>
 				<ul>
 					<li>Numerous bug fixes</li>
@@ -64,7 +64,7 @@
 			</description>
 		</release>
 		<release version="2.4.0" date="2025-01-23">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/releases/tag/v2.4.0</url>
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.4.0</url>
 			<description>
 				<ul>
 					<li>Plugin management improvements</li>
@@ -77,7 +77,7 @@
 			</description>
 		</release>
 		<release version="2.3.1" date="2024-12-17">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/releases/tag/v2.3.1</url>
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.3.1</url>
 			<description>
 				<ul>
 					<li>Fix instances being removed due to a race condition</li>
@@ -87,7 +87,7 @@
 			</description>
 		</release>
 		<release version="2.3.0" date="2024-12-16">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/releases/tag/v2.3.0</url>
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.3.0</url>
 			<description>
 				<ul>
 					<li>Support platform-specific manifest property overrides</li>
@@ -107,7 +107,7 @@
 			</description>
 		</release>
 		<release version="2.2.1" date="2024-11-03">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/releases/tag/v2.2.1</url>
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.2.1</url>
 			<description>
 				<ul>
 					<li>Documentation updates</li>
@@ -117,7 +117,7 @@
 			</description>
 		</release>
 		<release version="2.2.0" date="2024-10-14">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/releases/tag/v2.2.0</url>
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.2.0</url>
 			<description>
 				<ul>
 					<li>Preparations for Flatpak release</li>
@@ -127,13 +127,13 @@
 			</description>
 		</release>
 		<release version="2.1.1" date="2024-10-09">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/release/tag/v2.1.1</url>
+			<url type="details">https://github.com/nekename/OpenDeck/release/tag/v2.1.1</url>
 			<description>
 				<ul><li>Bug fix for blank screens</li></ul>
 			</description>
 		</release>
 		<release version="2.1.0" date="2024-10-03">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/releases/tag/v2.1.0</url>
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.1.0</url>
 			<description>
 				<ul>
 					<li>Changed license to the GNU GPL version 3 or later</li>
@@ -144,7 +144,7 @@
 			</description>
 		</release>
 		<release version="2.0.0" date="2024-09-07">
-			<url type="details">https://github.com/ninjadev64/OpenDeck/release/tag/v2.0.0</url>
+			<url type="details">https://github.com/nekename/OpenDeck/release/tag/v2.0.0</url>
 			<description>
 				<p>This is the first stable release of the completely rewritten version of OpenDeck</p>
 			</description>

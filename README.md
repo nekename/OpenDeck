@@ -9,7 +9,7 @@ OpenDeck is a desktop application for using stream controller devices like the E
 
 OpenDeck supports Elgato Stream Deck and [some other](https://github.com/streamduck-org/elgato-streamdeck?tab=readme-ov-file#supported-devices) hardware on all three major desktop platforms. Only Elgato hardware is officially supported.
 
-If you would like to support development of OpenDeck, consider [sponsoring me](https://github.com/sponsors/ninjadev64) on GitHub Sponsors! Considering that the power of your Stream Deck comes from the software you use with it, just $5 (only 2.5% of the cost of a Stream Deck+) goes a long way.
+If you would like to support development of OpenDeck, consider [sponsoring me](https://github.com/sponsors/nekename) on GitHub Sponsors! Considering that the power of your Stream Deck comes from the software you use with it, just $5 (only 2.5% of the cost of a Stream Deck+) goes a long way.
 
 Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tauri), the [elgato-streamdeck](https://github.com/streamduck-org/elgato-streamdeck) Rust library, [Wine](https://www.winehq.org/), and [Phosphor Icons](https://phosphoricons.com/).
 
@@ -29,7 +29,7 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 	<img width="150" alt="Get it on Flathub" src="https://flathub.org/api/badge?locale=en-GB" />
 </a>
 
-- Download the latest release from [GitHub Releases](https://github.com/ninjadev64/OpenDeck/releases/latest).
+- Download the latest release from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
 	- You should avoid AppImage releases of OpenDeck as they tend to have problems (you should also just avoid AppImages in general).
 	- For users of Arch-based distributions, there is the `opendeck` AUR package for the latest release, as well as the `opendeck-git` AUR package for the latest commit on the `main` branch of this repository.
 - Install OpenDeck using your package manager of choice.
@@ -41,12 +41,12 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 
 ### Windows
 
-- Download the latest release (`.exe` or `.msi`) from [GitHub Releases](https://github.com/ninjadev64/OpenDeck/releases/latest).
+- Download the latest release (`.exe` or `.msi`) from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
 - Double-click the downloaded file to run the installer.
 
 ### macOS
 
-- Download the latest release from [GitHub Releases](https://github.com/ninjadev64/OpenDeck/releases/latest).
+- Download the latest release from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
 - If you downloaded a `.dmg`, open the downloaded disk image and drag the application inside into your Applications folder; otherwise, extract the `.tar.gz` to your Applications folder.
 - Open the installed application. Note: if you receive a warning about OpenDeck being distributed by an unknown developer, *right-click the app in Finder and then click Open* to suppress the warning.
 - If you intend to use plugins that are only compiled for Windows, you will need to have [Wine](https://www.winehq.org/) installed on your system.
@@ -66,7 +66,7 @@ To change other options, open Settings. From here, you can also view information
 ### Troubleshooting
 
 - Ensure you are running the latest version of OpenDeck, as well as recent versions of related software (e.g. Spotify or OBS, or your operating system and Wine).
-- Check the pinned [GitHub Issues](https://github.com/ninjadev64/OpenDeck/issues) to see if there's a fix for your problem already.
+- Check the pinned [GitHub Issues](https://github.com/nekename/OpenDeck/issues) to see if there's a fix for your problem already.
 - Check the OpenDeck log file for any important messages. This file should be included with any support request.
 	- You can also run OpenDeck from the terminal to see the logs directly if it's easier than finding the log file or if the log file is empty or missing details.
 	- For issues with plugins, you can also check the plugin's logs (in the same folder, sometimes as well as a file named `plugin.log` or similar in the plugin's own folder).
@@ -82,7 +82,7 @@ To change other options, open Settings. From here, you can also view information
 
 - [Discord](https://discord.gg/26Nf8rHvaj)
 - [Matrix](https://matrix.to/#/#opendeck:matrix.org)
-- [GitHub Issues](https://github.com/ninjadev64/OpenDeck/issues)
+- [GitHub Issues](https://github.com/nekename/OpenDeck/issues)
 
 ### Building from source / contributing
 

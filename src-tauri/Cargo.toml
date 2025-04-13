@@ -2,9 +2,9 @@
 name = "opendeck"
 version = "2.4.2"
 description = "Use stream controllers"
-authors = ["ninjadev64"]
+authors = ["Aman Khanna (nekename)"]
 license = "GPL-3.0-or-later"
-repository = "https://github.com/ninjadev64/OpenDeck"
+repository = "https://github.com/nekename/OpenDeck"
 default-run = "opendeck"
 edition = "2021"
 rust-version = "1.77"
@@ -37,7 +37,7 @@ tauri-plugin-single-instance = { version = "2.2", features = ["deep-link"] }
 tauri-plugin-autostart = "2.2"
 tauri-plugin-dialog = "2.2"
 tauri-plugin-deep-link = "2.2"
-tauri-plugin-aptabase = { git = "https://github.com/ninjadev64/tauri-plugin-aptabase.git", branch = "v2" }
+tauri-plugin-aptabase = "1.0"
 serde-inline-default = "0.2"
 serde_with = "3.12"
 json-patch = "3.0"

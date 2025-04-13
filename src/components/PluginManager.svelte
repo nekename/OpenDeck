@@ -195,7 +195,7 @@
 	<div class="ml-2 mt-8 mb-4">
 		<h2 class="font-semibold text-md dark:text-neutral-400">Elgato Marketplace</h2>
 		<button
-			on:click={() => invoke("open_url", { url: "https://github.com/ninjadev64/OpenDeck/wiki/0.-Elgato-Marketplace" })}
+			on:click={() => invoke("open_url", { url: "https://github.com/nekename/OpenDeck/wiki/0.-Elgato-Marketplace" })}
 			class="mt-4 text-md text-blue-400 hover:underline"
 		>
 			Click here for instructions
