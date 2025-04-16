@@ -106,7 +106,7 @@ pub fn extract<S: Read + Seek>(source: S, target_dir: &Path) -> Result<(), ZipEx
 }
 
 #[cfg(unix)]
-fn set_unix_mode(file: &zip::read::ZipFile, outpath: &Path) -> io::Result<()> {
+fn set_unix_mode<R: Read>(file: &zip::read::ZipFile<R>, outpath: &Path) -> io::Result<()> {
 	if let Some(mut m) = file.unix_mode() {
 		m %= 0o1000;
 		m = if m >= 0o700 || file.is_dir() { 0o755 } else { 0o644 };

@@ -119,7 +119,7 @@ pub async fn initialise_devices() {
 	// Iterate through detected Elgato devices and attempt to register them.
 	match elgato_streamdeck::new_hidapi() {
 		Ok(hid) => {
-			for (kind, serial) in elgato_streamdeck::asynchronous::list_devices_async(&hid) {
+			for (kind, serial) in elgato_streamdeck::asynchronous::list_devices_async(&hid, true) {
 				match elgato_streamdeck::AsyncStreamDeck::connect(&hid, kind, &serial) {
 					Ok(device) => {
 						tokio::spawn(init(device, serial));
