@@ -20,6 +20,18 @@ export function getImage(image: string | undefined, fallback: string | undefined
 	return image;
 }
 
+export class CanvasLock {
+	currentLock = Promise.resolve();
+	async lock() {
+		let unlockNext: () => void;
+		const willLock = new Promise<void>((resolve) => unlockNext = resolve);
+		const previousLock = this.currentLock;
+		this.currentLock = willLock;
+		await previousLock;
+		return unlockNext!;
+	}
+}
+
 export async function renderImage(
 	canvas: HTMLCanvasElement,
 	slotContext: Context,

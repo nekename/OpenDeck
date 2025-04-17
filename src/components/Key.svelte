@@ -10,7 +10,7 @@
 	import InstanceEditor from "./InstanceEditor.svelte";
 
 	import { copiedContext, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
-	import { renderImage } from "$lib/rendererHelper";
+	import { CanvasLock, renderImage } from "$lib/rendererHelper";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
@@ -99,18 +99,24 @@
 	});
 
 	let canvas: HTMLCanvasElement;
+	let lock = new CanvasLock();
 	export let size = 144;
-	$: {
+	$: (async () => {
 		if (!slot) {
 			if (canvas) {
 				let context = canvas.getContext("2d");
 				if (context) context.clearRect(0, 0, canvas.width, canvas.height);
 			}
 		} else {
-			let fallback = slot.action.states[slot.current_state]?.image ?? slot.action.icon;
-			if (state) renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed);
+			const unlock = await lock.lock();
+			try {
+				let fallback = slot.action.states[slot.current_state]?.image ?? slot.action.icon;
+				if (state) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed);
+			} finally {
+				unlock();
+			}
 		}
-	}
+	})();
 </script>
 
 <canvas
