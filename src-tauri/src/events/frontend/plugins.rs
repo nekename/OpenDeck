@@ -100,7 +100,7 @@ pub async fn install_plugin(app: AppHandle, url: Option<String>, file: Option<St
 	let _ = tokio::fs::rename(&actual, &temp).await;
 
 	if let Err(error) = crate::zip_extract::extract(std::io::Cursor::new(bytes), &config_dir.join("plugins")) {
-		log::error!("Failed to unzip file: {}", error.to_string());
+		log::error!("Failed to unzip file: {}", error);
 		let _ = tokio::fs::rename(&temp, &actual).await;
 		let _ = crate::plugins::initialise_plugin(&actual).await;
 		return Err(anyhow::Error::from(error).into());

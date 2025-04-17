@@ -231,9 +231,7 @@
 	{/if}
 
 	{#if choices}
-		<div
-			class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 p-2 w-96 text-xs dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg z-40"
-		>
+		<div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 p-2 w-96 text-xs dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg z-40">
 			<h3 class="mb-2 font-semibold text-lg text-center">Choose a release asset</h3>
 			<div class="select-wrapper">
 				<select class="w-full" bind:value={choice}>
