@@ -30,6 +30,12 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		}
 
+		use tauri_plugin_aptabase::EventTracker;
+		let _ = crate::APP_HANDLE
+			.get()
+			.unwrap()
+			.track_event("device_registered", Some(serde_json::json!({ "name": event.payload.name })));
+
 		Ok(())
 	} else {
 		Err(anyhow::anyhow!("plugin {uuid} is not registered for device namespace {}", &event.payload.id[..2]))
