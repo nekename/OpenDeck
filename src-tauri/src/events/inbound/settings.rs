@@ -41,11 +41,11 @@ pub async fn set_global_settings(event: super::ContextAndPayloadEvent<serde_json
 		let settings_dir = crate::shared::config_dir().join("settings");
 		tokio::fs::create_dir_all(&settings_dir).await?;
 
-		let path = settings_dir.join(uuid + ".json");
+		let path = settings_dir.join(uuid.clone() + ".json");
 		tokio::fs::write(path, event.payload.to_string()).await?;
 	}
 
-	outbound::did_receive_global_settings(&event.context, !from_property_inspector).await?;
+	outbound::did_receive_global_settings(&uuid, !from_property_inspector).await?;
 
 	Ok(())
 }
