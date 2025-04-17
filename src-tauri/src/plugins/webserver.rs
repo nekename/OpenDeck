@@ -59,7 +59,7 @@ pub async fn init_webserver(prefix: PathBuf) {
 
 			let mut content = tokio::fs::read_to_string(path).await.unwrap_or_default();
 			content += r#"
-				<div id="opendeck_iframe_container" style="position: absolute; z-index: 100; top: 0; left: 0; width: 100%; height: 100%; display: none;" />
+				<div id="opendeck_iframe_container" style="position: absolute; z-index: 100; top: 0; left: 0; width: 100%; height: 100%; display: none;"></div>
 				<script>
 					const opendeck_window_open = window.open;
 					const opendeck_iframe_container = document.getElementById("opendeck_iframe_container");
@@ -68,7 +68,7 @@ pub async fn init_webserver(prefix: PathBuf) {
 						if (data.event == "connect") {
 							connectElgatoStreamDeckSocket(...data.payload);
 						} else if (data.event == "windowClosed") {
-							opendeck_iframe_container.innerHtml = "";
+							if (opendeck_iframe_container.firstElementChild) opendeck_iframe_container.firstElementChild.remove();
 							opendeck_iframe_container.style.display = "none";
 						}
 					});
@@ -79,7 +79,6 @@ pub async fn init_webserver(prefix: PathBuf) {
 							return;
 						}
 						let iframe = document.createElement("iframe");
-						iframe.src = url;
 						iframe.style.flexGrow = "1";
 						iframe.onload = () => {
 							iframe.contentWindow.opener = window;
@@ -87,6 +86,8 @@ pub async fn init_webserver(prefix: PathBuf) {
 							iframe.contentWindow.close = () => { iframe.contentWindow.onbeforeunload(); iframe.remove(); };
 							iframe.contentWindow.document.body.style.overflowY = "auto";
 						};
+						iframe.src = url.startsWith("http") ? url : url + "|opendeck_property_inspector_child";
+						if (opendeck_iframe_container.firstElementChild) opendeck_iframe_container.firstElementChild.remove();
 						opendeck_iframe_container.appendChild(iframe);
 						opendeck_iframe_container.style.display = "flex";
 						top.postMessage({ event: "windowOpened", payload: window.name }, "*");
@@ -113,6 +114,23 @@ pub async fn init_webserver(prefix: PathBuf) {
 					};
 				</script>
 			"#;
+
+			let mut response = Response::from_string(content);
+			response.add_header(access_control_allow_origin);
+			response.add_header(Header {
+				field: "Content-Type".parse().unwrap(),
+				value: "text/html".parse().unwrap(),
+			});
+			let _ = request.respond(response);
+		} else if url.ends_with("|opendeck_property_inspector_child") {
+			let path = &url[..url.len() - 34];
+			if !matches!(tokio::fs::try_exists(path).await, Ok(true)) {
+				let _ = request.respond(Response::empty(404).with_header(access_control_allow_origin));
+				continue;
+			}
+
+			let mut content = tokio::fs::read_to_string(path).await.unwrap_or_default();
+			content = format!("<script>window.opener ??= window.parent;</script>{content}");
 
 			let mut response = Response::from_string(content);
 			response.add_header(access_control_allow_origin);
