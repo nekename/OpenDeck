@@ -46,6 +46,12 @@
 	</branding>
 
 	<releases>
+		<release version="2.4.3" date="2025-04-17">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.4.3</url>
+			<description>
+				<p>Two months' worth of bug fixes and improvements, see the commit timeline on GitHub for details</p>
+			</description>
+		</release>
 		<release version="2.4.2" date="2025-02-18">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.4.2</url>
 			<description>

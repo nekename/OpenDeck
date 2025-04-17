@@ -41,7 +41,7 @@
 	},
 	"productName": "OpenDeck",
 	"mainBinaryName": "opendeck",
-	"version": "2.4.2",
+	"version": "2.4.3",
 	"identifier": "opendeck",
 	"plugins": {
 		"deep-link": {
