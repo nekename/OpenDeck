@@ -88,7 +88,7 @@ impl Default for Settings {
 			darktheme: true,
 			brightness: 50,
 			developer: false,
-			updatecheck: true,
+			updatecheck: option_env!("OPENDECK_DISABLE_UPDATE_CHECK").is_none() && std::env::var("container").is_err(),
 			// Consent is given by the user on install so it is OK to have the default be `true`
 			statistics: true,
 		}
