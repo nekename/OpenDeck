@@ -5,7 +5,6 @@
 	import type { Profile } from "$lib/Profile";
 
 	import Key from "./Key.svelte";
-	import Slider from "./Slider.svelte";
 
 	import { inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
 	import { invoke } from "@tauri-apps/api/core";
@@ -54,7 +53,7 @@
 	async function handlePaste(source: Context, destination: Context) {
 		let response: ActionInstance = await invoke("move_instance", { source, destination, retain: true });
 		if (response) {
-			profile.keys[destination.position] = response;
+			(destination.controller == "Encoder" ? profile.sliders : profile.keys)[destination.position] = response;
 			profile = profile;
 		}
 	}
@@ -63,21 +62,11 @@
 {#key device}
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div
-		class="flex flex-row"
+		class="flex flex-col"
 		class:hidden={$inspectedParentAction || selectedDevice != device.id}
 		on:click={() => inspectedInstance.set(null)}
 		on:keyup={() => inspectedInstance.set(null)}
 	>
-		{#each { length: device.encoders } as _, i}
-			<Slider
-				context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
-				bind:slot={profile.sliders[i]}
-				on:dragover={handleDragOver}
-				on:drop={(event) => handleDrop(event, "Encoder", i)}
-				on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
-			/>
-		{/each}
-
 		<div class="flex flex-col">
 			{#each { length: device.rows } as _, r}
 				<div class="flex flex-row">
@@ -93,6 +82,20 @@
 						/>
 					{/each}
 				</div>
+			{/each}
+		</div>
+
+		<div class="flex flex-row">
+			{#each { length: device.encoders } as _, i}
+				<Key
+					context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
+					bind:inslot={profile.sliders[i]}
+					on:dragover={handleDragOver}
+					on:drop={(event) => handleDrop(event, "Encoder", i)}
+					on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
+					{handlePaste}
+					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+				/>
 			{/each}
 		</div>
 	</div>

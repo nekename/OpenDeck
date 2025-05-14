@@ -55,7 +55,7 @@ impl ProfileStores {
 				instance.action.plugin == "opendeck"
 					|| (plugins_dir.join(&instance.action.plugin).exists() && (!registered.contains(&instance.action.plugin) || actions.iter().any(|v| v.uuid == instance.action.uuid)))
 			};
-			for slot in store.value.keys.iter_mut() {
+			for slot in store.value.keys.iter_mut().chain(store.value.sliders.iter_mut()) {
 				if let Some(instance) = slot {
 					if !keep_instance(instance) {
 						*slot = None;

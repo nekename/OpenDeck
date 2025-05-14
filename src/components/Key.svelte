@@ -124,6 +124,7 @@
 	class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
 	class:outline-solid={slot && $inspectedInstance == slot.context}
 	class:-m-[2.06rem]={size == 192}
+	class:rounded-full!={context.controller == "Encoder"}
 	width={size}
 	height={size}
 	style={`transform: scale(${(112 / size) * scale});`}
