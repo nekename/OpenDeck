@@ -1,6 +1,6 @@
 {
 	"fmt": {
-		"exclude": ["src-tauri/", "plugins/", "*.md"],
+		"exclude": ["src-tauri/", "*.md"],
 		"useTabs": true,
 		"lineWidth": 200
 	},

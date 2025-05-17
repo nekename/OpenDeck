@@ -1,0 +1,56 @@
+{
+	"Name": "OpenDeck Starter Pack",
+	"Description": "OpenDeck starter pack plugin",
+	"Author": "Aman Khanna (nekename)",
+	"Version": "1.4.1",
+	"CodePathWin": "opendeck-starterpack.exe",
+	"CodePathMac": "opendeck-starterpack-mac",
+	"CodePathLin": "opendeck-starterpack",
+	"Icon": "icons/plugin",
+	"Category": "OpenDeck",
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "10.11"
+		},
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		},
+		{
+			"Platform": "linux"
+		}
+	],
+	"Actions": [
+		{
+			"Icon": "icons/runCommand",
+			"Name": "Run Command",
+			"States": [{ "Image": "actionDefaultImage" }],
+			"Controllers": ["Keypad"],
+			"SupportedInMultiActions": true,
+			"Tooltip": "Run a command",
+			"UUID": "com.amansprojects.starterpack.runcommand",
+			"PropertyInspectorPath": "propertyInspector/runCommand.html"
+		},
+		{
+			"Icon": "icons/inputSimulation",
+			"Name": "Input Simulation",
+			"States": [{ "Image": "actionDefaultImage" }],
+			"Controllers": ["Keypad"],
+			"SupportedInMultiActions": true,
+			"Tooltip": "Simulate mouse or keyboard input",
+			"UUID": "com.amansprojects.starterpack.inputsimulation",
+			"PropertyInspectorPath": "propertyInspector/inputSimulation.html"
+		},
+		{
+			"Icon": "icons/switchProfile",
+			"Name": "Switch Profile",
+			"States": [{ "Image": "actionDefaultImage" }],
+			"Controllers": ["Keypad"],
+			"SupportedInMultiActions": true,
+			"Tooltip": "Switch the selected profile",
+			"UUID": "com.amansprojects.starterpack.switchprofile",
+			"PropertyInspectorPath": "propertyInspector/switchProfile.html"
+		}
+	]
+}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<script>
+			let update = () => {};
+
+			function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
+				const websocket = new WebSocket("ws://localhost:" + inPort);
+				inActionInfo = JSON.parse(inActionInfo);
+				websocket.onopen = () => {
+					websocket.send(JSON.stringify({
+						event: inRegisterEvent,
+						uuid: inPropertyInspectorUUID,
+					}));
+				};
+
+				const down = document.getElementById("down");
+				down.value = inActionInfo.payload.settings.down ?? "";
+				const up = document.getElementById("up");
+				up.value = inActionInfo.payload.settings.up ?? "";
+				const file = document.getElementById("file");
+				file.value = inActionInfo.payload.settings.file ?? "";
+				const show = document.getElementById("show");
+				show.checked = inActionInfo.payload.settings.show ?? false;
+
+				update = () => {
+					websocket.send(JSON.stringify({
+						event: "setSettings",
+						context: inActionInfo.context,
+						payload: {
+							down: down.value,
+							up: up.value,
+							file: file.value,
+							show: show.checked,
+						},
+					}));
+				};
+			}
+		</script>
+		<link rel="stylesheet" href="sdpi.css" />
+	</head>
+	<body>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Key down</div>
+			<input id="down" oninput="update();" class="sdpi-item-value" />
+		</div>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Key up</div>
+			<input id="up" oninput="update();" class="sdpi-item-value" />
+		</div>
+		<br />
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Write to path</div>
+			<input id="file" oninput="update();" class="sdpi-item-value" />
+		</div>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Show on key</div>
+			<input id="show" type="checkbox" oninput="update();" class="sdpi-item-value" />
+			<label for="show"><span></span></label>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<script>
+			let update = () => {};
+
+			function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
+				const websocket = new WebSocket("ws://localhost:" + inPort);
+				inActionInfo = JSON.parse(inActionInfo);
+				websocket.onopen = () => {
+					websocket.send(JSON.stringify({
+						event: inRegisterEvent,
+						uuid: inPropertyInspectorUUID,
+					}));
+				};
+
+				const device = document.getElementById("device");
+				device.value = inActionInfo.payload.settings.device ?? inActionInfo.device;
+				const profile = document.getElementById("profile");
+				profile.value = inActionInfo.payload.settings.profile ?? "";
+
+				update = () => {
+					websocket.send(JSON.stringify({
+						event: "setSettings",
+						context: inActionInfo.context,
+						payload: {
+							device: device.value ?? inActionInfo.device,
+							profile: profile.value,
+						},
+					}));
+				};
+			}
+		</script>
+		<link rel="stylesheet" href="sdpi.css" />
+	</head>
+	<body>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Device ID</div>
+			<input id="device" oninput="update();" class="sdpi-item-value" />
+		</div>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Profile</div>
+			<input id="profile" oninput="update();" class="sdpi-item-value" />
+		</div>
+	</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<script>
+			let update = () => {};
+
+			function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
+				const websocket = new WebSocket("ws://localhost:" + inPort);
+				inActionInfo = JSON.parse(inActionInfo);
+				websocket.onopen = () => {
+					websocket.send(JSON.stringify({
+						event: inRegisterEvent,
+						uuid: inPropertyInspectorUUID,
+					}));
+				};
+
+				const down = document.getElementById("down");
+				down.value = inActionInfo.payload.settings.down ?? "";
+				const up = document.getElementById("up");
+				up.value = inActionInfo.payload.settings.up ?? "";
+
+				update = () => {
+					websocket.send(JSON.stringify({
+						event: "setSettings",
+						context: inActionInfo.context,
+						payload: {
+							down: down.value,
+							up: up.value,
+						},
+					}));
+				};
+			}
+		</script>
+		<link rel="stylesheet" href="sdpi.css" />
+	</head>
+	<body>
+		<div type="textarea" class="sdpi-item">
+			<div class="sdpi-item-label">Key down</div>
+			<span class="sdpi-item-value textarea">
+				<textarea oninput="update();" id="down" style="font-family: monospace" placeholder="Input to be executed on key down"></textarea>
+			</span>
+		</div>
+		<div type="textarea" class="sdpi-item">
+			<div class="sdpi-item-label">Key up</div>
+			<span class="sdpi-item-value textarea">
+				<textarea oninput="update();" id="up" style="font-family: monospace" placeholder="Input to be executed on key up"></textarea>
+			</span>
+		</div>
+		<details open>
+			<summary style="margin-bottom: 0.25rem; font-size: 1.25rem">Details</summary>
+			<code style="word-break: break-all">[t("hello world!"),m(10,10,r),s(5),b(l),k(ctrl,p),k(uni('a')),k(ctrl,r)]</code>
+			<p>The example above becomes something like this:</p>
+			<!-- deno-fmt-ignore -->
+			<code style="white-space: pre;">[
+	Text("hello world!"),
+	MoveMouse(10, 10, Relative),
+	Scroll(5, Vertical),
+	Button(Left, Click),
+	Key(Control, Press),
+	Key(Unicode('a'), Click),
+	Key(Control, Release),
+]</code>
+			<p>
+				As you can see, <code>Vertical</code> is the default for the <code>Scroll</code> action if an axis is not specified,
+				<code>Click</code> (press followed by release) is the default for the <code>Button</code> and <code>Key</code> actions if a direction is not specified, and so on.
+			</p>
+			<!-- deno-fmt-ignore -->
+			<p>
+				You can find a list of all of the keycodes
+				<span style="color: dodgerblue; cursor: pointer;" onclick="window.open('https://github.com/enigo-rs/enigo/blob/v0.3.0/src/keycodes.rs', '_blank');">here</span>.
+				Please note that not all keycodes are available on all operating systems, as is marked on each such keycode on the line above it.
+				You can find the possible buttons, directions, axis and coordinate types
+				<span style="color: dodgerblue; cursor: pointer;" onclick="window.open('https://github.com/enigo-rs/enigo/blob/v0.3.0/src/lib.rs', '_blank');">here</span>.
+			</p>
+		</details>
+	</body>
+</html>
