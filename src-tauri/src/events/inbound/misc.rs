@@ -2,7 +2,7 @@ use super::{ContextAndPayloadEvent, ContextEvent, PayloadEvent};
 
 use tauri::{Emitter, Manager};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct OpenUrlEvent {
@@ -47,7 +47,7 @@ pub async fn show_ok(event: ContextEvent) -> Result<(), anyhow::Error> {
 	Ok(())
 }
 
-#[derive(Clone, serde::Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SwitchProfileEvent {
 	device: String,
 	profile: String,
@@ -56,5 +56,17 @@ pub struct SwitchProfileEvent {
 pub async fn switch_profile(event: SwitchProfileEvent) -> Result<(), anyhow::Error> {
 	let app_handle = crate::APP_HANDLE.get().unwrap();
 	app_handle.get_webview_window("main").unwrap().emit("switch_profile", event)?;
+	Ok(())
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct DeviceBrightnessEvent {
+	action: String,
+	value: u8,
+}
+
+pub async fn device_brightness(event: DeviceBrightnessEvent) -> Result<(), anyhow::Error> {
+	let app_handle = crate::APP_HANDLE.get().unwrap();
+	app_handle.get_webview_window("main").unwrap().emit("device_brightness", event)?;
 	Ok(())
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { settings } from "$lib/settings";
 	import { invoke } from "@tauri-apps/api/core";
+	import { listen } from "@tauri-apps/api/event";
 
 	import Heart from "phosphor-svelte/lib/Heart";
 	import Star from "phosphor-svelte/lib/Star";
@@ -22,6 +23,23 @@
 			document.documentElement.classList.remove("dark");
 		}
 	}
+
+	listen("device_brightness", ({ payload }: { payload: { action: string; value: number } }) => {
+		if (!$settings) return;
+		let value = $settings.brightness;
+		switch (payload.action) {
+			case "increase":
+				value += payload.value;
+				break;
+			case "decrease":
+				value -= payload.value;
+				break;
+			default:
+				value = payload.value;
+				break;
+		}
+		$settings.brightness = Math.max(0, Math.min(100, value));
+	});
 </script>
 
 <button

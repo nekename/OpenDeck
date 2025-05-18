@@ -530,9 +530,9 @@ dependencies = [
 
 [[package]]
 name = "openaction"
-version = "1.1.3"
+version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d93a4320238eee9462ddc43c1feb66d41bda984a908e30138fd20ba7460554b5"
+checksum = "2cea42e35409794e577937c6d69dc48996c741cec7f281dbcbd67794e3ec9d3d"
 dependencies = [
  "anyhow",
  "futures-util",
@@ -556,7 +556,6 @@ dependencies = [
  "serde_json",
  "simplelog",
  "tokio",
- "tungstenite",
 ]
 
 [[package]]

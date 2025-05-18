@@ -63,6 +63,7 @@ pub enum InboundEventType {
 	SendToPropertyInspector(ContextAndPayloadEvent<serde_json::Value>),
 	SendToPlugin(ContextAndPayloadEvent<serde_json::Value>),
 	SwitchProfile(misc::SwitchProfileEvent),
+	DeviceBrightness(misc::DeviceBrightnessEvent),
 }
 
 pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str) {
@@ -98,6 +99,8 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str) 
 			if event.context != uuid {
 				return;
 			}
+		} else if matches!(decoded, InboundEventType::SwitchProfile(_) | InboundEventType::DeviceBrightness(_)) && uuid != "com.amansprojects.starterpack.sdPlugin" {
+			return;
 		}
 
 		if let Err(error) = match decoded {
@@ -123,6 +126,7 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str) 
 			InboundEventType::SendToPropertyInspector(event) => misc::send_to_property_inspector(event).await,
 			InboundEventType::SendToPlugin(_) => Ok(()),
 			InboundEventType::SwitchProfile(event) => misc::switch_profile(event).await,
+			InboundEventType::DeviceBrightness(event) => misc::device_brightness(event).await,
 		} {
 			if !error.to_string().contains("closed connection") {
 				warn!("Failed to process incoming event from plugin: {}", error);

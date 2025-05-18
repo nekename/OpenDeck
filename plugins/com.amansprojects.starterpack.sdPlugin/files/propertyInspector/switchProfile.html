@@ -17,7 +17,7 @@
 				const device = document.getElementById("device");
 				device.value = inActionInfo.payload.settings.device ?? inActionInfo.device;
 				const profile = document.getElementById("profile");
-				profile.value = inActionInfo.payload.settings.profile ?? "";
+				profile.value = inActionInfo.payload.settings.profile ?? "Default";
 
 				update = () => {
 					websocket.send(JSON.stringify({

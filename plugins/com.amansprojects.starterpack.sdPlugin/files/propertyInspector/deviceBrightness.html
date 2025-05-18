@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<script>
+			let update = () => {};
+
+			function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
+				const websocket = new WebSocket("ws://localhost:" + inPort);
+				inActionInfo = JSON.parse(inActionInfo);
+				websocket.onopen = () => {
+					websocket.send(JSON.stringify({
+						event: inRegisterEvent,
+						uuid: inPropertyInspectorUUID,
+					}));
+				};
+
+				const action = document.getElementById("action");
+				action.value = inActionInfo.payload.settings.action ?? "set";
+				const value = document.getElementById("value");
+				value.value = (inActionInfo.payload.settings.value ?? 50).toString();
+				const valueDisplay = document.getElementById("value-display");
+				valueDisplay.innerText = value.value;
+
+				update = () => {
+					valueDisplay.innerText = value.value;
+					websocket.send(JSON.stringify({
+						event: "setSettings",
+						context: inActionInfo.context,
+						payload: {
+							action: action.value,
+							value: parseInt(value.value),
+						},
+					}));
+				};
+			}
+		</script>
+		<link rel="stylesheet" href="sdpi.css" />
+	</head>
+	<body>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Action</div>
+			<select id="action" onchange="update();" class="sdpi-item-value select">
+				<option value="set">Set</option>
+				<option value="increase">Increase</option>
+				<option value="decrease">Decrease</option>
+			</select>
+		</div>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Value (<span id="value-display"></span>%)</div>
+			<input id="value" oninput="update();" class="sdpi-item-value" type="range" min="0" max="100" />
+		</div>
+	</body>
+</html>

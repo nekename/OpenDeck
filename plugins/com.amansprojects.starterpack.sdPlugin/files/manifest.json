@@ -51,6 +51,16 @@
 			"Tooltip": "Switch the selected profile",
 			"UUID": "com.amansprojects.starterpack.switchprofile",
 			"PropertyInspectorPath": "propertyInspector/switchProfile.html"
+		},
+		{
+			"Icon": "icons/deviceBrightness",
+			"Name": "Device Brightness",
+			"States": [{ "Image": "actionDefaultImage" }],
+			"Controllers": ["Keypad"],
+			"SupportedInMultiActions": true,
+			"Tooltip": "Change the device brightness",
+			"UUID": "com.amansprojects.starterpack.devicebrightness",
+			"PropertyInspectorPath": "propertyInspector/deviceBrightness.html"
 		}
 	]
 }
