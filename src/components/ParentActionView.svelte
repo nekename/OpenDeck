@@ -43,9 +43,6 @@
 		children.splice(index, 1);
 		profile.keys[$inspectedParentAction!.position]!.children = children;
 	}
-
-	let context: Context;
-	context = null!;
 </script>
 
 <svelte:window
@@ -67,7 +64,7 @@
 >
 	{#each children as instance, index}
 		<div class="flex flex-row items-center mx-4 my-1 bg-neutral-100 dark:bg-neutral-800 rounded-md">
-			<Key inslot={instance} {context} active={false} scale={3 / 4} />
+			<Key inslot={instance} context={null} active={false} scale={3 / 4} />
 			<p class="ml-4 text-xl dark:text-neutral-400">{instance.action.name}</p>
 			<button
 				class="ml-auto mr-10"

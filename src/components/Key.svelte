@@ -15,7 +15,7 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 
-	export let context: Context;
+	export let context: Context | null;
 
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
@@ -55,7 +55,7 @@
 
 	async function contextMenu(event: MouseEvent) {
 		event.preventDefault();
-		if (!active) return;
+		if (!active || !context) return;
 		if (event.ctrlKey) return;
 		$openContextMenu = { context, x: event.x, y: event.y };
 	}
@@ -67,7 +67,7 @@
 
 	export let handlePaste: ((source: Context, destination: Context) => void) | undefined = undefined;
 	async function paste() {
-		if (!$copiedContext) return;
+		if (!$copiedContext || !context) return;
 		if (handlePaste) handlePaste($copiedContext, context);
 	}
 
@@ -124,7 +124,7 @@
 	class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
 	class:outline-solid={slot && $inspectedInstance == slot.context}
 	class:-m-[2.06rem]={size == 192}
-	class:rounded-full!={context.controller == "Encoder"}
+	class:rounded-full!={context?.controller == "Encoder"}
 	width={size}
 	height={size}
 	style={`transform: scale(${(112 / size) * scale});`}

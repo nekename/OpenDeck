@@ -34,7 +34,7 @@ export class CanvasLock {
 
 export async function renderImage(
 	canvas: HTMLCanvasElement,
-	slotContext: Context,
+	slotContext: Context | null,
 	state: ActionState,
 	fallback: string | undefined,
 	showOk: boolean,
@@ -151,7 +151,7 @@ export async function renderImage(
 		}
 	}
 
-	if (active && slotContext.controller != "Encoder") setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") }), 10);
+	if (active && slotContext && slotContext.controller != "Encoder") setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") }), 10);
 }
 
 export async function resizeImage(source: string): Promise<string | undefined> {
