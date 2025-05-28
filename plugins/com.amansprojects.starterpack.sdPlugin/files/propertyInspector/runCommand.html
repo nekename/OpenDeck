@@ -14,10 +14,18 @@
 					}));
 				};
 
+				if (inActionInfo.payload.controller == "Encoder") {
+					document.getElementById("encoder").style.display = "block";
+					document.getElementById("down-label").innerText = "Dial down";
+					document.getElementById("up-label").innerText = "Dial up";
+				}
+
 				const down = document.getElementById("down");
 				down.value = inActionInfo.payload.settings.down ?? "";
 				const up = document.getElementById("up");
 				up.value = inActionInfo.payload.settings.up ?? "";
+				const rotate = document.getElementById("rotate");
+				rotate.value = inActionInfo.payload.settings.rotate ?? "";
 				const file = document.getElementById("file");
 				file.value = inActionInfo.payload.settings.file ?? "";
 				const show = document.getElementById("show");
@@ -30,6 +38,7 @@
 						payload: {
 							down: down.value,
 							up: up.value,
+							rotate: rotate.value,
 							file: file.value,
 							show: show.checked,
 						},
@@ -41,12 +50,21 @@
 	</head>
 	<body>
 		<div class="sdpi-item">
-			<div class="sdpi-item-label">Key down</div>
+			<div class="sdpi-item-label" id="down-label">Key down</div>
 			<input id="down" oninput="update();" class="sdpi-item-value" />
 		</div>
 		<div class="sdpi-item">
-			<div class="sdpi-item-label">Key up</div>
+			<div class="sdpi-item-label" id="up-label">Key up</div>
 			<input id="up" oninput="update();" class="sdpi-item-value" />
+		</div>
+		<div id="encoder" style="display: none">
+			<div class="sdpi-item">
+				<div class="sdpi-item-label">Dial rotate</div>
+				<input id="rotate" oninput="update();" class="sdpi-item-value" />
+			</div>
+			<p style="padding-left: 0.75rem; padding-right: 0.75rem">
+				Usages of <code>%d</code> will be substituted with the number of ticks turned, where negative values signify counterclockwise rotation and positive values signify clockwise rotation.
+			</p>
 		</div>
 		<br />
 		<div class="sdpi-item">

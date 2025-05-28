@@ -5,6 +5,35 @@ mod switch_profile;
 
 use openaction::*;
 
+trait ActionEvent {
+	fn context(&self) -> &String;
+	fn settings(&self) -> &SettingsValue;
+}
+impl ActionEvent for KeyEvent {
+	fn context(&self) -> &String {
+		&self.context
+	}
+	fn settings(&self) -> &SettingsValue {
+		&self.payload.settings
+	}
+}
+impl ActionEvent for DialPressEvent {
+	fn context(&self) -> &String {
+		&self.context
+	}
+	fn settings(&self) -> &SettingsValue {
+		&self.payload.settings
+	}
+}
+impl ActionEvent for DialRotateEvent {
+	fn context(&self) -> &String {
+		&self.context
+	}
+	fn settings(&self) -> &SettingsValue {
+		&self.payload.settings
+	}
+}
+
 struct GlobalEventHandler {}
 impl openaction::GlobalEventHandler for GlobalEventHandler {}
 
@@ -16,7 +45,7 @@ impl openaction::ActionEventHandler for ActionEventHandler {
 		_outbound: &mut openaction::OutboundEventManager,
 	) -> EventHandlerResult {
 		match &event.action[..] {
-			"com.amansprojects.starterpack.runcommand" => run_command::key_down(event),
+			"com.amansprojects.starterpack.runcommand" => run_command::down_up("down", event),
 			"com.amansprojects.starterpack.inputsimulation" => input_simulation::key_down(event),
 			_ => Ok(()),
 		}
@@ -28,13 +57,52 @@ impl openaction::ActionEventHandler for ActionEventHandler {
 		outbound: &mut openaction::OutboundEventManager,
 	) -> EventHandlerResult {
 		match &event.action[..] {
-			"com.amansprojects.starterpack.runcommand" => run_command::key_up(event),
+			"com.amansprojects.starterpack.runcommand" => run_command::down_up("up", event),
 			"com.amansprojects.starterpack.inputsimulation" => input_simulation::key_up(event),
 			"com.amansprojects.starterpack.switchprofile" => {
 				switch_profile::key_up(event, outbound).await
 			}
 			"com.amansprojects.starterpack.devicebrightness" => {
-				device_brightness::key_up(event, outbound).await
+				device_brightness::up(event, outbound).await
+			}
+			_ => Ok(()),
+		}
+	}
+
+	async fn dial_down(
+		&self,
+		event: DialPressEvent,
+		_outbound: &mut openaction::OutboundEventManager,
+	) -> EventHandlerResult {
+		match &event.action[..] {
+			"com.amansprojects.starterpack.runcommand" => run_command::down_up("down", event),
+			_ => Ok(()),
+		}
+	}
+
+	async fn dial_up(
+		&self,
+		event: DialPressEvent,
+		outbound: &mut openaction::OutboundEventManager,
+	) -> EventHandlerResult {
+		match &event.action[..] {
+			"com.amansprojects.starterpack.runcommand" => run_command::down_up("up", event),
+			"com.amansprojects.starterpack.devicebrightness" => {
+				device_brightness::up(event, outbound).await
+			}
+			_ => Ok(()),
+		}
+	}
+
+	async fn dial_rotate(
+		&self,
+		event: DialRotateEvent,
+		outbound: &mut openaction::OutboundEventManager,
+	) -> EventHandlerResult {
+		match &event.action[..] {
+			"com.amansprojects.starterpack.runcommand" => run_command::rotate(event),
+			"com.amansprojects.starterpack.devicebrightness" => {
+				device_brightness::rotate(event, outbound).await
 			}
 			_ => Ok(()),
 		}

@@ -1,15 +1,30 @@
 use std::io::Read;
 use std::process::{Command, Stdio};
 
+use super::ActionEvent;
+
 use openaction::*;
 
-async fn run_command(event: KeyEvent, action: &str) -> EventHandlerResult {
-	let settings = event.payload.settings.as_object().unwrap();
-	let Some(value) = settings.get(action).map(|v| v.as_str().unwrap()) else {
+async fn run_command(
+	event: impl ActionEvent,
+	action: &str,
+	ticks: Option<i16>,
+) -> EventHandlerResult {
+	let Some(settings) = event.settings().as_object() else {
+		return Ok(());
+	};
+	let Some(mut value) = settings
+		.get(action)
+		.and_then(|v| v.as_str())
+		.map(|x| x.to_owned())
+	else {
 		return Ok(());
 	};
 	if value.is_empty() {
 		return Ok(());
+	}
+	if let Some(ticks) = ticks {
+		value = value.replace("%d", &ticks.to_string());
 	}
 
 	#[cfg(unix)]
@@ -57,16 +72,23 @@ async fn run_command(event: KeyEvent, action: &str) -> EventHandlerResult {
 		let mut lock = OUTBOUND_EVENT_MANAGER.lock().await;
 		let outbound = lock.as_mut().unwrap();
 		outbound
-			.set_title(event.context, Some(output.trim().to_owned()), None)
+			.set_title(
+				event.context().clone(),
+				Some(output.trim().to_owned()),
+				None,
+			)
 			.await?;
 	}
 
 	Ok(())
 }
 
-pub fn key_down(event: KeyEvent) -> EventHandlerResult {
+pub fn down_up(
+	direction: &'static str,
+	event: impl ActionEvent + Send + 'static,
+) -> EventHandlerResult {
 	tokio::spawn(async move {
-		if let Err(error) = run_command(event, "down").await {
+		if let Err(error) = run_command(event, direction, None).await {
 			log::warn!("Failed to run command: {error}");
 		}
 	});
@@ -74,9 +96,10 @@ pub fn key_down(event: KeyEvent) -> EventHandlerResult {
 	Ok(())
 }
 
-pub fn key_up(event: KeyEvent) -> EventHandlerResult {
+pub fn rotate(event: DialRotateEvent) -> EventHandlerResult {
 	tokio::spawn(async move {
-		if let Err(error) = run_command(event, "up").await {
+		let ticks = event.payload.ticks;
+		if let Err(error) = run_command(event, "rotate", Some(ticks)).await {
 			log::warn!("Failed to run command: {error}");
 		}
 	});
