@@ -109,6 +109,7 @@ pub async fn init_webserver(prefix: PathBuf) {
 						}
 					});
 					window.fetch = (...args) => {
+						if (args.length) args[0] = new URL(args[0], window.location.href).href;
 						top.postMessage({ event: "fetch", payload: { args, context: window.name, id: ++opendeck_fetch_count }}, "*");
 						return new Promise((resolve, reject) => { opendeck_fetch_promises[opendeck_fetch_count] = { resolve, reject }; });
 					};
