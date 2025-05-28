@@ -17,8 +17,8 @@ use events::frontend;
 
 use once_cell::sync::OnceCell;
 use tauri::{
-	menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
-	tray::TrayIconBuilder,
+	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
+	tray::{TrayIconBuilder, TrayIconEvent},
 	AppHandle, Builder, Manager, WindowEvent,
 };
 use tauri_plugin_log::{Target, TargetKind};
@@ -140,18 +140,33 @@ Enjoy!"#,
 			plugins::initialise_plugins();
 			application_watcher::init_application_watcher();
 
-			let open = MenuItemBuilder::with_id("open", "Open").build(app)?;
+			let label = IconMenuItemBuilder::with_id("label", "OpenDeck")
+				.icon(app.default_window_icon().unwrap().clone())
+				.enabled(false)
+				.build(app)?;
+			let show = MenuItemBuilder::with_id("show", "Show").build(app)?;
 			let hide = MenuItemBuilder::with_id("hide", "Hide").build(app)?;
 			let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
 			let separator = PredefinedMenuItem::separator(app)?;
-			let menu = MenuBuilder::new(app).items(&[&open, &hide, &separator, &quit]).build()?;
+			let menu = MenuBuilder::new(app).items(&[&label, &separator, &show, &hide, &separator, &quit]).build()?;
 			let _tray = TrayIconBuilder::new()
 				.menu(&menu)
 				.icon(app.default_window_icon().unwrap().clone())
+				.show_menu_on_left_click(false)
+				.on_tray_icon_event(move |icon, event| {
+					if let TrayIconEvent::Click { .. } = event {
+						let window = icon.app_handle().get_webview_window("main").unwrap();
+						let _ = if window.is_visible().unwrap_or(false) {
+							window.hide()
+						} else {
+							window.show().and_then(|_| window.set_focus())
+						};
+					}
+				})
 				.on_menu_event(move |app, event| {
 					let window = app.get_webview_window("main").unwrap();
 					let _ = match event.id().as_ref() {
-						"open" => window.show(),
+						"show" => window.show().and_then(|_| window.set_focus()),
 						"hide" => window.hide(),
 						"quit" => {
 							app.exit(0);
