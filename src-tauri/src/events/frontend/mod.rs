@@ -4,11 +4,11 @@ pub mod profiles;
 pub mod property_inspector;
 pub mod settings;
 
-use crate::shared::{Action, DeviceInfo, CATEGORIES, DEVICES};
+use crate::shared::{Action, CATEGORIES, DEVICES, DeviceInfo};
 
 use std::collections::HashMap;
 
-use tauri::{command, Emitter, Manager};
+use tauri::{Emitter, Manager, command};
 
 #[derive(Debug, serde_with::SerializeDisplay, serde::Deserialize)]
 pub struct Error {

@@ -1,6 +1,6 @@
 use super::{send_to_all_plugins, send_to_plugin};
 
-use crate::plugins::{info_param::DeviceInfo, DEVICE_NAMESPACES};
+use crate::plugins::{DEVICE_NAMESPACES, info_param::DeviceInfo};
 
 use serde::Serialize;
 

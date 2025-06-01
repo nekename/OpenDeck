@@ -1,9 +1,9 @@
 use super::Error;
 
 use crate::shared::DEVICES;
-use crate::store::profiles::{acquire_locks_mut, get_device_profiles, PROFILE_STORES};
+use crate::store::profiles::{PROFILE_STORES, acquire_locks_mut, get_device_profiles};
 
-use tauri::{command, AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Manager, command};
 
 #[command]
 pub fn get_profiles(device: &str) -> Result<Vec<String>, Error> {

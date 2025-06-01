@@ -2,7 +2,7 @@ use crate::shared::{config_dir, log_dir};
 
 use super::Error;
 
-use tauri::{command, AppHandle, Manager};
+use tauri::{AppHandle, Manager, command};
 use tokio::fs;
 
 #[derive(serde::Serialize)]

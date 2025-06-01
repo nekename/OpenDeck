@@ -1,8 +1,8 @@
 use super::{
-	simplified_profile::{DiskActionInstance, DiskProfile},
 	Store,
+	simplified_profile::{DiskActionInstance, DiskProfile},
 };
-use crate::shared::{config_dir, Action, ActionInstance, ActionState, DeviceInfo, Profile, DEVICES};
+use crate::shared::{Action, ActionInstance, ActionState, DEVICES, DeviceInfo, Profile, config_dir};
 
 use std::collections::HashMap;
 use std::fs;
@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use once_cell::sync::Lazy;
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -127,11 +127,7 @@ impl DeviceStores {
 
 		let from_store = &self.stores.get(device).unwrap().value.selected_profile;
 		let all = get_device_profiles(device)?;
-		if all.contains(from_store) {
-			Ok(from_store.clone())
-		} else {
-			Ok(all.first().unwrap().clone())
-		}
+		if all.contains(from_store) { Ok(from_store.clone()) } else { Ok(all.first().unwrap().clone()) }
 	}
 
 	pub fn set_selected_profile(&mut self, device: &str, id: String) -> Result<(), anyhow::Error> {

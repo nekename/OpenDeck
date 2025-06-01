@@ -17,9 +17,9 @@ use events::frontend;
 
 use once_cell::sync::OnceCell;
 use tauri::{
+	AppHandle, Builder, Manager, WindowEvent,
 	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
 	tray::{TrayIconBuilder, TrayIconEvent},
-	AppHandle, Builder, Manager, WindowEvent,
 };
 use tauri_plugin_log::{Target, TargetKind};
 

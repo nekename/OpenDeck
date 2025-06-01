@@ -3,7 +3,7 @@ use crate::events::outbound::{encoder, keypad};
 use std::collections::HashMap;
 
 use base64::Engine as _;
-use elgato_streamdeck::{info::Kind, AsyncStreamDeck, DeviceStateUpdate};
+use elgato_streamdeck::{AsyncStreamDeck, DeviceStateUpdate, info::Kind};
 use once_cell::sync::Lazy;
 use tokio::sync::RwLock;
 

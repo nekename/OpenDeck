@@ -1,4 +1,4 @@
-use super::{send_to_plugin, GenericInstancePayload};
+use super::{GenericInstancePayload, send_to_plugin};
 
 use crate::shared::{ActionContext, ActionInstance};
 

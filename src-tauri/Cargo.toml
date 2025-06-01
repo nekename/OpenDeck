@@ -6,7 +6,7 @@ authors = ["Aman Khanna (nekename)"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/nekename/OpenDeck"
 default-run = "opendeck"
-edition = "2021"
+edition = "2024"
 
 [build-dependencies]
 tauri-build = { version = "2.2", features = [] }

@@ -6,11 +6,11 @@ use inbound::RegisterEvent;
 
 use std::collections::HashMap;
 
-use futures::{stream::SplitSink, SinkExt, StreamExt};
+use futures::{SinkExt, StreamExt, stream::SplitSink};
 use once_cell::sync::Lazy;
 use tokio::net::TcpStream;
 use tokio::sync::{Mutex, RwLock};
-use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
+use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 
 type Sockets = Lazy<Mutex<HashMap<String, SplitSink<WebSocketStream<TcpStream>, Message>>>>;
 static PLUGIN_SOCKETS: Sockets = Lazy::new(|| Mutex::new(HashMap::new()));

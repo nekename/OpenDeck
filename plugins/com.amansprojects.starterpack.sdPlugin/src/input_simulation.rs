@@ -1,8 +1,8 @@
 use openaction::*;
 
 use enigo::{
-	agent::{Agent, Token},
 	Enigo, Settings,
+	agent::{Agent, Token},
 };
 
 pub fn key_down(event: KeyEvent) -> EventHandlerResult {

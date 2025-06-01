@@ -2,9 +2,9 @@ pub mod info_param;
 pub mod manifest;
 mod webserver;
 
-use crate::shared::{config_dir, convert_icon, log_dir, Action, CATEGORIES};
-use crate::store::get_settings;
 use crate::APP_HANDLE;
+use crate::shared::{Action, CATEGORIES, config_dir, convert_icon, log_dir};
+use crate::store::get_settings;
 
 use std::collections::HashMap;
 use std::process::{Child, Command, Stdio};

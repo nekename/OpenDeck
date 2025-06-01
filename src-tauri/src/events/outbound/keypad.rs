@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::{send_to_plugin, GenericInstancePayload};
+use super::{GenericInstancePayload, send_to_plugin};
 
 use crate::events::frontend::instances::{key_moved, update_state};
 use crate::shared::{ActionContext, Context};

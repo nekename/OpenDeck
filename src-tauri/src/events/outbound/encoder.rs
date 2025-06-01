@@ -1,4 +1,4 @@
-use super::{send_to_plugin, Coordinates};
+use super::{Coordinates, send_to_plugin};
 
 use crate::shared::ActionContext;
 use crate::store::profiles::{acquire_locks_mut, get_instance_mut};

@@ -3,7 +3,7 @@ name = "opendeck-starterpack"
 version = "1.4.1"
 authors = ["Aman Khanna (nekename)"]
 license = "GPL-3.0-or-later"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 openaction = "1.1"

@@ -1,9 +1,9 @@
 use super::Error;
 
-use crate::shared::{config_dir, Action, ActionContext, ActionInstance, Context};
-use crate::store::profiles::{acquire_locks_mut, get_instance_mut, get_slot_mut, save_profile, LocksMut};
+use crate::shared::{Action, ActionContext, ActionInstance, Context, config_dir};
+use crate::store::profiles::{LocksMut, acquire_locks_mut, get_instance_mut, get_slot_mut, save_profile};
 
-use tauri::{command, AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Manager, command};
 use tokio::fs::remove_dir_all;
 
 #[command]

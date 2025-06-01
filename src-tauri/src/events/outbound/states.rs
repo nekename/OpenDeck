@@ -1,4 +1,4 @@
-use super::{send_to_plugin, Coordinates};
+use super::{Coordinates, send_to_plugin};
 
 use crate::shared::{ActionContext, ActionInstance};
 
