@@ -11,7 +11,7 @@ export default defineConfig({
 	clearScreen: false,
 	server: {
 		watch: {
-			ignored: ["**/src-tauri/**"],
+			ignored: ["**/src-tauri/**", "**/target/**"],
 		},
 	},
 });
