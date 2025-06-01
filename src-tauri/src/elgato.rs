@@ -3,7 +3,7 @@ use crate::events::outbound::{encoder, keypad};
 use std::collections::HashMap;
 
 use base64::Engine as _;
-use elgato_streamdeck::{info, AsyncStreamDeck, DeviceStateUpdate};
+use elgato_streamdeck::{info::Kind, AsyncStreamDeck, DeviceStateUpdate};
 use once_cell::sync::Lazy;
 use tokio::sync::RwLock;
 
@@ -52,17 +52,13 @@ async fn init(device: AsyncStreamDeck, serial: String) {
 	}
 
 	let kind = device.kind();
-	let device_type = match kind.product_id() {
-		info::PID_STREAMDECK_ORIGINAL | info::PID_STREAMDECK_ORIGINAL_V2 | info::PID_STREAMDECK_MK2 => 0,
-		info::PID_STREAMDECK_MINI | info::PID_STREAMDECK_MINI_MK2 => 1,
-		info::PID_STREAMDECK_XL | info::PID_STREAMDECK_XL_V2 => 2,
-		info::PID_STREAMDECK_PEDAL => 5,
-		info::PID_STREAMDECK_PLUS => 7,
-		info::PID_STREAMDECK_NEO => 9,
-		// Non-Elgato devices are given the type of the smallest Elgato device with more or the same amount of keys
-		info::PID_AJAZZ_AKP153 | info::PID_AJAZZ_AKP153E | info::PID_AJAZZ_AKP153R | info::PID_MIRABOX_HSV293S => 2,
-		info::PID_AJAZZ_AKP815 => 0,
-		_ => 2,
+	let device_type = match kind {
+		Kind::Original | Kind::OriginalV2 | Kind::Mk2 => 0,
+		Kind::Mini | Kind::MiniMk2 => 1,
+		Kind::Xl | Kind::XlV2 => 2,
+		Kind::Pedal => 5,
+		Kind::Plus => 7,
+		Kind::Neo => 9,
 	};
 	let _ = device.clear_all_button_images().await;
 	if let Ok(settings) = crate::store::get_settings() {
@@ -119,7 +115,7 @@ pub async fn initialise_devices() {
 	// Iterate through detected Elgato devices and attempt to register them.
 	match elgato_streamdeck::new_hidapi() {
 		Ok(hid) => {
-			for (kind, serial) in elgato_streamdeck::asynchronous::list_devices_async(&hid, false) {
+			for (kind, serial) in elgato_streamdeck::asynchronous::list_devices_async(&hid) {
 				match elgato_streamdeck::AsyncStreamDeck::connect(&hid, kind, &serial) {
 					Ok(device) => {
 						tokio::spawn(init(device, serial));

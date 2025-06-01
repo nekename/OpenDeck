@@ -7,21 +7,20 @@ license = "GPL-3.0-or-later"
 repository = "https://github.com/nekename/OpenDeck"
 default-run = "opendeck"
 edition = "2021"
-rust-version = "1.77"
 
 [build-dependencies]
 tauri-build = { version = "2.2", features = [] }
-built = { version = "0.7", features = ["dependency-tree", "git2"] }
+built = { version = "0.8", features = ["dependency-tree", "git2"] }
 
 [dependencies]
 # Large, fundamental libraries
 tauri = { version = "2.5", features = ["devtools", "tray-icon"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.44", features = ["full"] }
+tokio = { version = "1.45", features = ["full"] }
 tokio-tungstenite = "0.26"
 tiny_http = "0.12"
-elgato-streamdeck = { version = "0.10", default-features = false, features = ["async"] }
+elgato-streamdeck = { version = "0.11", default-features = false, features = ["async"] }
 image = { version = "0.25", default-features = false, features = ["bmp", "jpeg"] }
 # Smaller utility libraries
 once_cell = "1.21"
@@ -31,21 +30,21 @@ anyhow = "1.0"
 log = "0.4"
 log-panics = "2.1"
 open = "5.3"
-tauri-plugin-log = "2.3"
+tauri-plugin-log = "2.4"
 tauri-plugin-cors-fetch = "3.1"
 tauri-plugin-single-instance = { version = "2.2", features = ["deep-link"] }
 tauri-plugin-autostart = "2.3"
 tauri-plugin-dialog = "2.2"
-tauri-plugin-deep-link = "2.2"
+tauri-plugin-deep-link = "2.3"
 tauri-plugin-aptabase = "1.0"
 serde-inline-default = "0.2"
 serde_with = "3.12"
-json-patch = "3.0"
-os_info = "3.10"
+json-patch = "4.0"
+os_info = "3.11"
 urlencoding = "2.1"
 base64 = "0.22"
 reqwest = "0.12"
-zip = { version = "2.6", default-features = false, features = ["deflate", "zstd"] }
+zip = { version = "4.0", default-features = false, features = ["deflate", "zstd"] }
 active-win-pos-rs = "0.9"
 semver = "1.0"
 path-slash = "0.2"
