@@ -7,11 +7,11 @@ Linux software for your Elgato Stream Deck
 
 OpenDeck is a desktop application for using stream controller devices like the Elgato Stream Deck on Linux, Windows, and macOS. OpenDeck supports plugins made for the original Stream Deck SDK, allowing many plugins made for the Elgato software ecosystem to be used, or the [OpenAction](https://openaction.amankhanna.me/) API.
 
-OpenDeck supports Elgato Stream Deck and [some other](https://github.com/streamduck-org/elgato-streamdeck?tab=readme-ov-file#supported-devices) hardware on all three major desktop platforms. Only Elgato hardware is officially supported.
+Only Elgato hardware is officially supported, but plugins are available for support for other hardware vendors.
 
 If you would like to support development of OpenDeck, consider [sponsoring me](https://github.com/sponsors/nekename) on GitHub Sponsors! Considering that the power of your Stream Deck comes from the software you use with it, just $5 (only 2.5% of the cost of a Stream Deck+) goes a long way.
 
-Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tauri), the [elgato-streamdeck](https://github.com/streamduck-org/elgato-streamdeck) Rust library, [Wine](https://www.winehq.org/), and [Phosphor Icons](https://phosphoricons.com/).
+Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tauri), the [elgato-streamdeck](https://github.com/OpenActionAPI/rust-elgato-streamdeck) Rust library, [Wine](https://www.winehq.org/), and [Phosphor Icons](https://phosphoricons.com/).
 
 ### Why use OpenDeck?
 
@@ -25,19 +25,18 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 
 ### Linux
 
-<a href="https://flathub.org/apps/me.amankhanna.opendeck">
-	<img width="150" alt="Get it on Flathub" src="https://flathub.org/api/badge?locale=en-GB" />
-</a>
-
 - Download the latest release from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
 	- You should avoid AppImage releases of OpenDeck as they tend to have problems (you should also just avoid AppImages in general).
 	- For users of Arch-based distributions, there is the `opendeck` AUR package for the latest release, as well as the `opendeck-git` AUR package for the latest commit on the `main` branch of this repository.
 - Install OpenDeck using your package manager of choice.
-- Install the appropriate udev subsystem rules from [here](https://raw.githubusercontent.com/streamduck-org/elgato-streamdeck/main/40-streamdeck.rules):
+- Install the appropriate udev subsystem rules from [here](https://raw.githubusercontent.com/OpenActionAPI/rust-elgato-streamdeck/main/40-streamdeck.rules):
 	- If you're using a `.deb` or `.rpm` release artifact, this file should be installed automatically.
 	- Otherwise, download and copy it to the correct location with `sudo cp 40-streamdeck.rules /etc/udev/rules.d/`.
-	- In both cases, you will need to reload your udev subsystem rules with `sudo udevadm control --reload-rules`.
-- If you intend to use plugins that are only compiled for Windows or macOS (which are the majority of plugins), you will need to have [Wine](https://www.winehq.org/) installed on your system. Some plugins may also depend on Wine Mono (which is sometimes, but not always included, in your distro's packaging of Wine).
+	- In both cases, you will need to reload your udev subsystem rules with `sudo udevadm control --reload-rules && sudo udevadm trigger`.
+- If you intend to use plugins that are not compiled for Linux (which are the majority of plugins), you will need to have [Wine](https://www.winehq.org/) installed on your system. Some plugins may also depend on Wine Mono (which is sometimes, but not always included, in your distro's packaging of Wine).
+
+> [!NOTE]
+> If Flatpak is your only option, OpenDeck is [available from Flathub](https://flathub.org/apps/me.amankhanna.opendeck). Please note that you still need to install the udev subsystem rules as described above. To use Windows plugins, you should have Wine installed natively (the Wine Flatpak is not supported).
 
 ### Windows
 
@@ -57,7 +56,7 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 
 To edit an action's settings, left-click on it to display its *property inspector*. To remove an action, right-click on it and choose "Delete" from the context menu.
 
-To edit an action's appearance, right-click on it and select "Edit" from the context menu. You can then customise the image and text for each of its states. To choose an image from your files: left-click on the image, to reset it to the plugin-provided default: right-click on the image, and to remove the image entirely: CTRL+right-click on the image.
+To edit an action's appearance, right-click on it and select "Edit" from the context menu. You can then customise the image and text for each of its states. Left-click on the image to choose an image from your filesystem or right-click on the image to reset it to the plugin-provided default.
 
 To select another device, or to switch profiles, use the dropdowns in the top right corner. You can organise profiles into folders by prefixing the profile name with the folder name and a forward slash. You can also configure automatically switching to a profile when a specific application's window is active.
 
@@ -76,7 +75,7 @@ To change other options, open Settings. From here, you can also view information
 		- Windows: `%appdata%\opendeck\logs\`
 		- macOS: `~/Library/Logs/opendeck/`
 - When trying to run plugins built for Windows (which are the majority of plugins) on Linux or macOS, please ensure you have the latest version of Wine (and Wine Mono) installed on your system.
-- If your device isn't showing up, ensure you have the correct permissions to access it, and that you have restarted OpenDeck since connecting it.
+- If your device isn't showing up, ensure you have the correct permissions to access it (e.g. on Linux, installing udev subsystem rules and restarting your system), and that you have restarted OpenDeck since connecting it.
 
 ### Support forums
 
@@ -86,7 +85,7 @@ To change other options, open Settings. From here, you can also view information
 
 ### Building from source / contributing
 
-When cloning this repository, make sure to pull its submodules with it (`git submodule update --init` after cloning or `git clone <url> --recurse-submodules`). You'll need to ensure that all of the [prerequisites for building a Tauri application](https://tauri.app/start/prerequisites) are satisfied to build OpenDeck, as well as making sure that [Deno](https://deno.com/) is installed. On Linux, you'll also need `libudev` installed for your distribution. You can then use `deno task tauri dev` and `deno task tauri build` to work with OpenDeck.
+You'll need to ensure that all of the [prerequisites for building a Tauri application](https://tauri.app/start/prerequisites) are satisfied to build OpenDeck, as well as making sure that [Deno](https://deno.com/) is installed. On Linux, you'll also need `libudev` installed for your distribution. You can then use `deno task tauri dev` and `deno task tauri build` to work with OpenDeck.
 
 Before each commit, please ensure that all of the following are completed:
 1. Rust code has been linted using `cargo clippy` and it discovers no violations
