@@ -223,7 +223,15 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 	} else if use_wine {
 		let command = if std::env::var("container").is_ok() { "flatpak-spawn" } else { "wine" };
 		let extra_args = if std::env::var("container").is_ok() { vec!["--host", "wine"] } else { vec![] };
-		if Command::new(command).stdout(Stdio::null()).stderr(Stdio::null()).spawn().is_err() {
+		let result = Command::new(command)
+			.args(&extra_args)
+			.arg("--version")
+			.stdout(Stdio::null())
+			.stderr(Stdio::null())
+			.spawn()
+			.and_then(|mut child| child.wait())
+			.map(|status| status.success());
+		if !matches!(result, Ok(true)) {
 			return Err(anyhow!("failed to detect an installation of Wine"));
 		}
 
