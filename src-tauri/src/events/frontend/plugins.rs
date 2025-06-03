@@ -13,6 +13,7 @@ pub struct PluginInfo {
 	icon: String,
 	version: String,
 	builtin: bool,
+	registered: bool,
 }
 
 #[command]
@@ -38,9 +39,6 @@ pub async fn list_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, Error> {
 		let metadata = fs::metadata(&path).await.unwrap();
 		if metadata.is_dir() {
 			let id = path.file_name().unwrap().to_str().unwrap().to_owned();
-			if !registered.contains(&id) {
-				continue;
-			}
 			let Ok(manifest) = crate::plugins::manifest::read_manifest(&path) else {
 				continue;
 			};
@@ -50,6 +48,7 @@ pub async fn list_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, Error> {
 				icon: crate::shared::convert_icon(path.join(manifest.icon).to_str().unwrap().to_owned()),
 				version: manifest.version,
 				builtin: builtins.contains(&id),
+				registered: registered.contains(&id),
 				id,
 			});
 		}

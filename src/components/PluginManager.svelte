@@ -116,8 +116,6 @@
 	let plugins: { [id: string]: GitHubPlugin };
 	(async () => plugins = await (await fetch("https://openactionapi.github.io/plugins/catalogue.json")).json())();
 
-	let archiveRes: Response;
-
 	let search: string = "";
 
 	onOpenUrl((urls: string[]) => {
@@ -152,6 +150,7 @@
 				icon="http://localhost:57118/{plugin.icon}"
 				name={($localisations && $localisations[plugin.id] && $localisations[plugin.id].Name) ? $localisations[plugin.id].Name : plugin.name}
 				subtitle={plugin.version}
+				disconnected={!plugin.registered}
 				action={() => {
 					if ($settings?.developer) invoke("reload_plugin", { id: plugin.id });
 					else removePlugin(plugin);
