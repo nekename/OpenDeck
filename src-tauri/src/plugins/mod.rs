@@ -309,11 +309,14 @@ pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow
 	if let Some(instance) = instances.remove(uuid) {
 		match instance {
 			PluginInstance::Webview => {
-				let window = app.get_webview_window(&uuid.replace('.', "_")).unwrap();
-				Ok(window.close()?)
+				if let Some(window) = app.get_webview_window(&uuid.replace('.', "_")) {
+					window.close()?;
+					tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+				}
 			}
-			PluginInstance::Node(mut child) | PluginInstance::Wine(mut child) | PluginInstance::Native(mut child) => Ok(child.kill()?),
+			PluginInstance::Node(mut child) | PluginInstance::Wine(mut child) | PluginInstance::Native(mut child) => child.kill()?,
 		}
+		Ok(())
 	} else {
 		Err(anyhow!("instance of plugin {} not found", uuid))
 	}
