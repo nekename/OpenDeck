@@ -7,6 +7,7 @@ export type Settings = {
 	autolaunch: boolean;
 	updatecheck: boolean;
 	statistics: boolean;
+	separatewine: boolean;
 	developer: boolean;
 };
 

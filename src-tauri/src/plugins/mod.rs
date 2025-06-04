@@ -138,7 +138,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 	}
 
 	if !supported || code_path.is_none() {
-		return Err(anyhow!("Unsupported on platform {}", platform));
+		return Err(anyhow!("unsupported on platform {}", platform));
 	}
 
 	let code_path = code_path.unwrap();
@@ -238,15 +238,21 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		let info = info_param::make_info(plugin_uuid.to_owned(), manifest.version, true).await;
 		let log_file = fs::File::create(log_dir().join("plugins").join(format!("{plugin_uuid}.log")))?;
 
-		let child = Command::new(command)
+		let mut command = Command::new(command);
+		command
 			.current_dir(path)
 			.args(extra_args)
 			.arg(code_path)
 			.args(args)
 			.arg(serde_json::to_string(&info)?)
 			.stdout(Stdio::from(log_file.try_clone()?))
-			.stderr(Stdio::from(log_file))
-			.spawn()?;
+			.stderr(Stdio::from(log_file));
+		if get_settings()?.value.separatewine {
+			command.env("WINEPREFIX", path.join("wineprefix").to_string_lossy().to_string());
+		} else {
+			let _ = fs::remove_dir_all(path.join("wineprefix"));
+		}
+		let child = command.spawn()?;
 
 		INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Wine(child));
 	} else {

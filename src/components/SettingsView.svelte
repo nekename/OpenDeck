@@ -109,6 +109,16 @@
 			<input type="checkbox" bind:checked={$settings.statistics} />
 		</div>
 
+		{#if !buildInfo?.includes("windows")}
+			<div class="flex flex-row items-center m-2 space-x-2">
+				<span class="dark:text-neutral-400"> Create separate Wine prefixes: </span>
+				<input type="checkbox" bind:checked={$settings.separatewine} />
+				<Tooltip>
+					If this option is enabled, OpenDeck will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when initialised.
+				</Tooltip>
+			</div>
+		{/if}
+
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="dark:text-neutral-400"> Enable developer mode: </span>
 			<input type="checkbox" bind:checked={$settings.developer} />

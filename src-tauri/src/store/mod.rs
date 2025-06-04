@@ -75,6 +75,7 @@ pub struct Settings {
 	pub autolaunch: bool,
 	pub updatecheck: bool,
 	pub statistics: bool,
+	pub separatewine: bool,
 	pub developer: bool,
 }
 
@@ -90,6 +91,7 @@ impl Default for Settings {
 			updatecheck: option_env!("OPENDECK_DISABLE_UPDATE_CHECK").is_none() && std::env::var("container").is_err(),
 			// Consent is given by the user on install so it is OK to have the default be `true`
 			statistics: true,
+			separatewine: false,
 			developer: false,
 		}
 	}
