@@ -23,6 +23,8 @@
 	let profileManager: ProfileManager;
 </script>
 
+<svelte:window on:dragover={(event) => event.preventDefault()} on:drop={(event) => event.preventDefault()} />
+
 <div class="flex flex-col grow">
 	{#if Object.keys(devices).length > 0 && selectedProfiles}
 		{#if $inspectedParentAction}
