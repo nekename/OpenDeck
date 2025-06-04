@@ -1,13 +1,13 @@
 export type Settings = {
 	version: string;
 	language: string;
+	brightness: number;
+	darktheme: boolean;
 	background: boolean;
 	autolaunch: boolean;
-	darktheme: boolean;
-	brightness: number;
-	developer: boolean;
 	updatecheck: boolean;
 	statistics: boolean;
+	developer: boolean;
 };
 
 import { invoke } from "@tauri-apps/api/core";

@@ -69,13 +69,13 @@ where
 pub struct Settings {
 	pub version: String,
 	pub language: String,
+	pub brightness: u8,
+	pub darktheme: bool,
 	pub background: bool,
 	pub autolaunch: bool,
-	pub darktheme: bool,
-	pub brightness: u8,
-	pub developer: bool,
 	pub updatecheck: bool,
 	pub statistics: bool,
+	pub developer: bool,
 }
 
 impl Default for Settings {
@@ -83,14 +83,14 @@ impl Default for Settings {
 		Self {
 			version: "0.0.0".to_owned(),
 			language: "en".to_owned(),
+			brightness: 50,
+			darktheme: true,
 			background: std::env::var("container").is_err(),
 			autolaunch: false,
-			darktheme: true,
-			brightness: 50,
-			developer: false,
 			updatecheck: option_env!("OPENDECK_DISABLE_UPDATE_CHECK").is_none() && std::env::var("container").is_err(),
 			// Consent is given by the user on install so it is OK to have the default be `true`
 			statistics: true,
+			developer: false,
 		}
 	}
 }

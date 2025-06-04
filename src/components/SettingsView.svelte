@@ -78,34 +78,25 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<span class="dark:text-neutral-400"> Device brightness: </span>
+			<input type="range" min="0" max="100" bind:value={$settings.brightness} />
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
+			<span class="dark:text-neutral-400"> Enable dark theme: </span>
+			<input type="checkbox" bind:checked={$settings.darktheme} />
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="dark:text-neutral-400"> Run in background: </span>
 			<input type="checkbox" bind:checked={$settings.background} />
 			<Tooltip> If this option is enabled, OpenDeck will minimise to the tray and run in the background. </Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="dark:text-neutral-400"> Autolaunch: </span>
+			<span class="dark:text-neutral-400"> Start at login: </span>
 			<input type="checkbox" bind:checked={$settings.autolaunch} />
 			<Tooltip> If this option is enabled, OpenDeck will automatically start at login. </Tooltip>
-		</div>
-
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="dark:text-neutral-400"> Dark theme: </span>
-			<input type="checkbox" bind:checked={$settings.darktheme} />
-		</div>
-
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="dark:text-neutral-400"> Device brightness: </span>
-			<input type="range" min="0" max="100" bind:value={$settings.brightness} />
-		</div>
-
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="dark:text-neutral-400"> Developer mode: </span>
-			<input type="checkbox" bind:checked={$settings.developer} />
-			<Tooltip>
-				Enables features that make plugin development and debugging easier. Additionally, this option exposes all file paths on your device on the local webserver to allow symbolic linking of plugins,
-				so you should disable it if it is not in use.
-			</Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
@@ -116,6 +107,15 @@
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="dark:text-neutral-400"> Contribute statistics: </span>
 			<input type="checkbox" bind:checked={$settings.statistics} />
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
+			<span class="dark:text-neutral-400"> Enable developer mode: </span>
+			<input type="checkbox" bind:checked={$settings.developer} />
+			<Tooltip>
+				This option enables features that make plugin development and debugging easier. Additionally, this option exposes all file paths on your device on the local webserver to allow symbolic linking
+				of plugins, so you should disable it if it is not in use.
+			</Tooltip>
 		</div>
 	{/if}
 
