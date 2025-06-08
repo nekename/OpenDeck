@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 import { copy } from "jsr:@std/fs";
 import { join } from "jsr:@std/path";
 

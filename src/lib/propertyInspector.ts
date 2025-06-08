@@ -1,4 +1,4 @@
-import type { Context } from "./Context";
+import type { Context } from "./Context.ts";
 
 import { type Writable, writable } from "svelte/store";
 

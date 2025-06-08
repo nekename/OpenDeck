@@ -1,4 +1,4 @@
-import type { ActionInstance } from "./ActionInstance";
+import type { ActionInstance } from "./ActionInstance.ts";
 
 export type Profile = {
 	device: string;

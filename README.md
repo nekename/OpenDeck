@@ -90,7 +90,7 @@ You'll need to ensure that all of the [prerequisites for building a Tauri applic
 Before each commit, please ensure that all of the following are completed:
 1. Rust code has been linted using `cargo clippy` and it discovers no violations
 2. Rust code has been formatted using `cargo fmt`
-3. TypeScript code has been linted using `deno lint` and it discovers no violations
+3. TypeScript code has been checked using `deno check` and linted using `deno lint` and they discover no violations
 4. Svelte code has been linted using `deno task check` and it discovers no violations
 5. Frontend code has been formatted using `deno fmt --unstable-component`
 

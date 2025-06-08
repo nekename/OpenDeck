@@ -1,5 +1,5 @@
-import type { Action } from "./Action";
-import type { ActionState } from "./ActionState";
+import type { Action } from "./Action.ts";
+import type { ActionState } from "./ActionState.ts";
 
 export type ActionInstance = {
 	action: Action;

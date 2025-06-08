@@ -1,12 +1,18 @@
 {
+	"exclude": ["src-tauri", "node_modules", "build", ".svelte-kit"],
 	"fmt": {
-		"exclude": ["src-tauri/", "*.md"],
+		"exclude": ["*.md"],
 		"useTabs": true,
 		"lineWidth": 200
 	},
 	"lint": {
 		"rules": {
-			"exclude": ["prefer-const", "no-explicit-any"]
+			"exclude": ["no-explicit-any"]
 		}
+	},
+	"compilerOptions": {
+		"lib": ["ES2021", "DOM", "DOM.Iterable"],
+		"strict": true,
+		"verbatimModuleSyntax": true
 	}
 }

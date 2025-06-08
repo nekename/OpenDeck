@@ -1,4 +1,4 @@
-import type { ActionState } from "./ActionState";
+import type { ActionState } from "./ActionState.ts";
 
 export type Action = {
 	name: string;

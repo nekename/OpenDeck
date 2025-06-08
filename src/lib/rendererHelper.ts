@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { ActionState } from "./ActionState";
-import type { Context } from "./Context";
+import type { ActionState } from "./ActionState.ts";
+import type { Context } from "./Context.ts";
 
 export function getImage(image: string | undefined, fallback: string | undefined): string {
 	if (!image) return fallback ? getImage(fallback, undefined) : "/alert.png";
@@ -13,7 +13,7 @@ export function getImage(image: string | undefined, fallback: string | undefined
 		image = "data:image/svg+xml;base64," + btoa(decodeURIComponent((svgxmlre.exec(image) as RegExpExecArray)[1].replace(/\;$/, "")));
 	}
 	if (base64re.test(image)) {
-		let exec = base64re.exec(image)!;
+		const exec = base64re.exec(image)!;
 		if (!exec[2]) return fallback ? getImage(fallback, undefined) : "/alert.png";
 		else image = exec[0];
 	}
@@ -53,13 +53,13 @@ export async function renderImage(
 		scale = canvas.width / 144;
 	}
 
-	let context = canvas.getContext("2d");
+	const context = canvas.getContext("2d");
 	if (!context) return;
 	context.clearRect(0, 0, canvas.width, canvas.height);
 
 	try {
 		// Load image
-		let image = document.createElement("img");
+		const image = document.createElement("img");
 		image.crossOrigin = "anonymous";
 		image.src = processImage ? getImage(state.image, fallback) : state.image;
 		if (image.src == undefined) return;
@@ -86,7 +86,7 @@ export async function renderImage(
 		context.strokeStyle = "black";
 		context.lineWidth = 3 * scale;
 		context.textBaseline = "top";
-		let x = canvas.width / 2;
+		const x = canvas.width / 2;
 		let y = canvas.height / 2 - (size * state.text.split("\n").length * 0.5);
 		switch (state.alignment) {
 			case "top":
@@ -100,7 +100,7 @@ export async function renderImage(
 			context.strokeText(line, x, y + (size * parseInt(index)));
 			context.fillText(line, x, y + (size * parseInt(index)));
 			if (state.underline) {
-				let width = context.measureText(line).width;
+				const width = context.measureText(line).width;
 				// Set to black for the outline, since it uses the same fill style info as the text colour.
 				context.fillStyle = "black";
 				context.fillRect(x - (width / 2) - 3, y + (size * parseInt(index)) + size, width + 6, 9);
@@ -112,7 +112,7 @@ export async function renderImage(
 	}
 
 	if (showOk) {
-		let okImage = document.createElement("img");
+		const okImage = document.createElement("img");
 		okImage.crossOrigin = "anonymous";
 		okImage.src = "/ok.png";
 		await new Promise((resolve) => {
@@ -122,7 +122,7 @@ export async function renderImage(
 	}
 
 	if (showAlert) {
-		let alertImage = document.createElement("img");
+		const alertImage = document.createElement("img");
 		alertImage.crossOrigin = "anonymous";
 		alertImage.src = "/alert.png";
 		await new Promise((resolve) => {
@@ -133,11 +133,11 @@ export async function renderImage(
 
 	// Make the image smaller while the button is pressed.
 	if (pressed) {
-		let smallCanvas = document.createElement("canvas");
+		const smallCanvas = document.createElement("canvas");
 		smallCanvas.width = canvas.width;
 		smallCanvas.height = canvas.height;
-		let newContext = smallCanvas.getContext("2d");
-		let margin = 0.1;
+		const newContext = smallCanvas.getContext("2d");
+		const margin = 0.1;
 		if (newContext) {
 			newContext.drawImage(
 				canvas,
@@ -155,13 +155,13 @@ export async function renderImage(
 }
 
 export async function resizeImage(source: string): Promise<string | undefined> {
-	let canvas = document.createElement("canvas");
+	const canvas = document.createElement("canvas");
 	canvas.width = 288;
 	canvas.height = 288;
-	let context = canvas.getContext("2d");
+	const context = canvas.getContext("2d");
 	if (!context) return;
 
-	let image = document.createElement("img");
+	const image = document.createElement("img");
 	image.crossOrigin = "anonymous";
 	image.src = source;
 	await new Promise((resolve) => image.onload = resolve);
@@ -169,11 +169,11 @@ export async function resizeImage(source: string): Promise<string | undefined> {
 	let xOffset = 0, yOffset = 0;
 	let xScaled = canvas.width, yScaled = canvas.height;
 	if (image.width > image.height) {
-		let ratio = image.height / image.width;
+		const ratio = image.height / image.width;
 		yScaled = canvas.height * ratio;
 		yOffset = (canvas.height - yScaled) / 2;
 	} else if (image.width < image.height) {
-		let ratio = image.width / image.height;
+		const ratio = image.width / image.height;
 		xScaled = canvas.width * ratio;
 		xOffset = (canvas.width - xScaled) / 2;
 	}
