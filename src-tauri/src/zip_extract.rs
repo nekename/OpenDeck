@@ -39,7 +39,7 @@ pub fn dir_name<S: Read + Seek>(source: S) -> Result<String, ZipExtractError> {
 	if archive.len() == 1 {
 		let file = archive.by_index(0)?;
 		if file.is_file() {
-			return dir_name(std::io::Cursor::new(file.bytes().flatten().collect::<Vec<u8>>()));
+			return dir_name(Cursor::new(BufReader::new(file).bytes().flatten().collect::<Vec<u8>>()));
 		}
 	}
 
@@ -66,7 +66,7 @@ pub fn extract<S: Read + Seek>(source: S, target_dir: &Path) -> Result<(), ZipEx
 	if archive.len() == 1 {
 		let file = archive.by_index(0)?;
 		if file.is_file() {
-			return extract(std::io::Cursor::new(file.bytes().flatten().collect::<Vec<u8>>()), target_dir);
+			return extract(Cursor::new(BufReader::new(file).bytes().flatten().collect::<Vec<u8>>()), target_dir);
 		}
 	}
 
