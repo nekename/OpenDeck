@@ -8,6 +8,7 @@
 	import FileArrowUp from "phosphor-svelte/lib/FileArrowUp";
 	import Trash from "phosphor-svelte/lib/Trash";
 	import ListedPlugin from "./ListedPlugin.svelte";
+	import PluginDetails from "./PluginDetails.svelte";
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
 
@@ -50,6 +51,7 @@
 		return assets[choice];
 	}
 
+	let openDetailsView: string | null = null;
 	type GitHubPlugin = {
 		name: string;
 		author: string;
@@ -135,7 +137,10 @@
 
 <svelte:window
 	on:keydown={(event) => {
-		if (event.key == "Escape") showPopup = false;
+		if (event.key == "Escape") {
+			if (openDetailsView) openDetailsView = null;
+			else showPopup = false;
+		}
 	}}
 />
 
@@ -207,9 +212,6 @@
 		<div class="flex flex-row items-center ml-2 mt-6 mb-2 space-x-2">
 			<h2 class="font-semibold text-md dark:text-neutral-400">Open-source plugins</h2>
 			<Tooltip> Open-source plugins downloaded from the author's releases. </Tooltip>
-			<button on:click={() => invoke("open_url", { url: "https://marketplace.rivul.us/" })}>
-				<ArrowSquareOut size="24" color="#77767B" />
-			</button>
 		</div>
 		<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			{#each Object.entries(plugins) as [id, plugin]}
@@ -218,9 +220,9 @@
 					name={plugin.name}
 					subtitle={plugin.author}
 					hidden={!plugin.name.toUpperCase().includes(search.toUpperCase())}
-					action={() => installPluginGitHub(id, plugin)}
+					action={() => openDetailsView = id}
 				>
-					<CloudArrowDown
+					<ArrowSquareOut
 						size="24"
 						color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
 					/>
@@ -275,3 +277,15 @@
 		{/await}
 	{/await}
 </Popup>
+
+{#if openDetailsView}
+	<PluginDetails
+		id={openDetailsView}
+		details={plugins[openDetailsView]}
+		install={() => {
+			// @ts-expect-error
+			installPluginGitHub(openDetailsView, plugins[openDetailsView]);
+		}}
+		close={() => openDetailsView = null}
+	/>
+{/if}

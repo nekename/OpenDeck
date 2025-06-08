@@ -33,3 +33,31 @@ select {
 	@apply border-r-2 border-b-2;
 	@apply pointer-events-none content-["_"];
 }
+
+.plugin-readme h1, .plugin-readme h2, .plugin-readme h3, .plugin-readme h4, .plugin-readme h5, .plugin-readme h6 {
+	@apply font-medium dark:text-neutral-200;
+}
+.plugin-readme h1:not(:first-child), .plugin-readme h2:not(:first-child), .plugin-readme h3:not(:first-child) {
+	@apply mt-5;
+}
+.plugin-readme h1, .plugin-readme h2, .plugin-readme h3 {
+	@apply mb-3 pb-1.5 border-b border-neutral-300 dark:border-neutral-600;
+}
+.plugin-readme h1 {
+	@apply text-2xl;
+}
+.plugin-readme h2 {
+	@apply text-xl;
+}
+.plugin-readme h3 {
+	@apply text-lg;
+}
+.plugin-readme a {
+	@apply text-blue-600 dark:text-blue-400 hover:underline cursor-pointer;
+}
+.plugin-readme ul {
+	@apply list-disc ml-6;
+}
+.plugin-readme img {
+	@apply my-3;
+}
