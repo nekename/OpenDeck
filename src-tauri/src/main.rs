@@ -226,7 +226,17 @@ Enjoy!"#,
 				.build(),
 		)
 		.plugin(tauri_plugin_cors_fetch::init())
-		.plugin(tauri_plugin_single_instance::init(|app, _, _| app.get_webview_window("main").unwrap().show().unwrap()))
+		.plugin(tauri_plugin_single_instance::init(|app, args, _| {
+			if args.iter().any(|x| x.to_lowercase().trim() == "--reload-plugin") {
+				let pos = args.iter().position(|x| x.to_lowercase().trim() == "--reload-plugin").unwrap() + 1;
+				if args.len() > pos {
+					tauri::async_runtime::spawn(frontend::plugins::reload_plugin(app.clone(), args[pos].clone()));
+				}
+			} else {
+				let window = app.get_webview_window("main").unwrap();
+				let _ = window.show().and_then(|_| window.set_focus());
+			}
+		}))
 		.plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--hide"])))
 		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_deep_link::init())
