@@ -1,7 +1,7 @@
-import { invoke } from "@tauri-apps/api/core";
-
 import type { ActionState } from "./ActionState.ts";
 import type { Context } from "./Context.ts";
+
+import { invoke } from "@tauri-apps/api/core";
 
 export function getImage(image: string | undefined, fallback: string | undefined): string {
 	if (!image) return fallback ? getImage(fallback, undefined) : "/alert.png";

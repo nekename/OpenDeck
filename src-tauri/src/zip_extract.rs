@@ -2,13 +2,13 @@
 
 #![forbid(unsafe_code)]
 
+use std::io::{BufReader, Cursor, Read, Seek};
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
-
-use log::{debug, trace};
-use std::io::{Read, Seek};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
+
+use log::{debug, trace};
 
 #[derive(Debug)]
 #[allow(dead_code)]

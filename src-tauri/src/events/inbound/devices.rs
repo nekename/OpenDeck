@@ -1,8 +1,8 @@
+use super::PayloadEvent;
+
 use crate::plugins::DEVICE_NAMESPACES;
 use crate::shared::DEVICES;
 use crate::store::profiles::get_device_profiles;
-
-use super::PayloadEvent;
 
 use serde::Deserialize;
 

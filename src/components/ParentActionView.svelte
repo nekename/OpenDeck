@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type { ActionInstance } from "$lib/ActionInstance";
-	import type { Context } from "$lib/Context";
 	import type { Profile } from "$lib/Profile";
 
 	import Trash from "phosphor-svelte/lib/Trash";
 	import Key from "./Key.svelte";
 
 	import { inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
+
 	import { invoke } from "@tauri-apps/api/core";
 
 	export let profile: Profile;

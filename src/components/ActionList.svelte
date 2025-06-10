@@ -2,6 +2,7 @@
 	import type { Action } from "$lib/Action";
 
 	import { localisations } from "$lib/settings";
+
 	import { invoke } from "@tauri-apps/api/core";
 
 	let categories: { [name: string]: Action[] } = {};

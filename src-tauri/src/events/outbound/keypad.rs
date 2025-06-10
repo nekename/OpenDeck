@@ -1,10 +1,10 @@
-use std::time::Duration;
-
 use super::{GenericInstancePayload, send_to_plugin};
 
 use crate::events::frontend::instances::{key_moved, update_state};
 use crate::shared::{ActionContext, Context};
 use crate::store::profiles::{acquire_locks_mut, get_slot_mut, save_profile};
+
+use std::time::Duration;
 
 use serde::Serialize;
 

@@ -2,6 +2,7 @@ use super::{
 	Store,
 	simplified_profile::{DiskActionInstance, DiskProfile},
 };
+
 use crate::shared::{Action, ActionInstance, ActionState, DEVICES, DeviceInfo, Profile, config_dir};
 
 use std::collections::HashMap;

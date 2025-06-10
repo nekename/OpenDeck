@@ -4,6 +4,7 @@
 	import type { Profile } from "$lib/Profile";
 
 	import { inspectedInstance } from "$lib/propertyInspector";
+
 	import { invoke } from "@tauri-apps/api/core";
 
 	let iframes: { [context: string]: HTMLIFrameElement } = {};

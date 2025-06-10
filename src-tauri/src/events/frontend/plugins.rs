@@ -1,6 +1,6 @@
-use crate::shared::{config_dir, log_dir};
-
 use super::Error;
+
+use crate::shared::{config_dir, log_dir};
 
 use tauri::{AppHandle, Manager, command};
 use tokio::fs;

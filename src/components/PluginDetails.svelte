@@ -1,14 +1,15 @@
 <script lang="ts">
+	import ArrowSquareOut from "phosphor-svelte/lib/ArrowSquareOut";
+	import DownloadSimple from "phosphor-svelte/lib/DownloadSimple";
+	import Popup from "./Popup.svelte";
+
 	import "$lib/shims.ts";
+
 	import { invoke } from "@tauri-apps/api/core";
 	import DOMPurify from "dompurify";
 	import { marked } from "marked";
 	import { baseUrl } from "marked-base-url";
 	import { onMount } from "svelte";
-
-	import ArrowSquareOut from "phosphor-svelte/lib/ArrowSquareOut";
-	import DownloadSimple from "phosphor-svelte/lib/DownloadSimple";
-	import Popup from "./Popup.svelte";
 
 	export let id: string;
 	export let details: { repository: string; name: string; author: string; download_url: string | undefined };

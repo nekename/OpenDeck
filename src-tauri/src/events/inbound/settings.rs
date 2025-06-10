@@ -1,8 +1,8 @@
-use std::str::FromStr;
-
 use crate::events::outbound::settings as outbound;
 use crate::shared::ActionContext;
 use crate::store::profiles::{acquire_locks, acquire_locks_mut, get_instance, get_instance_mut, save_profile};
+
+use std::str::FromStr;
 
 pub async fn set_settings(event: super::ContextAndPayloadEvent<serde_json::Value>, from_property_inspector: bool) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;

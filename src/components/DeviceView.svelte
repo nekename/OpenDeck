@@ -7,6 +7,7 @@
 	import Key from "./Key.svelte";
 
 	import { inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
+
 	import { invoke } from "@tauri-apps/api/core";
 
 	export let device: DeviceInfo;

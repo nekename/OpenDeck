@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { settings } from "$lib/settings";
-	import { invoke } from "@tauri-apps/api/core";
-	import { listen } from "@tauri-apps/api/event";
-
 	import Heart from "phosphor-svelte/lib/Heart";
 	import Star from "phosphor-svelte/lib/Star";
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
+
+	import { settings } from "$lib/settings";
+
+	import { invoke } from "@tauri-apps/api/core";
+	import { listen } from "@tauri-apps/api/event";
 
 	let showPopup: boolean;
 	let buildInfo: string;
