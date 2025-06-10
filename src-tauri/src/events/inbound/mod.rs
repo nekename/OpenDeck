@@ -117,7 +117,7 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str) 
 			InboundEventType::SetGlobalSettings(event) => settings::set_global_settings(event, false).await,
 			InboundEventType::GetGlobalSettings(event) => settings::get_global_settings(event, false).await,
 			InboundEventType::OpenUrl(event) => misc::open_url(event).await,
-			InboundEventType::LogMessage(event) => misc::log_message(event).await,
+			InboundEventType::LogMessage(event) => misc::log_message(Some(uuid), event).await,
 			InboundEventType::SetTitle(event) => states::set_title(event).await,
 			InboundEventType::SetImage(event) => states::set_image(event).await,
 			InboundEventType::SetState(event) => states::set_state(event).await,
@@ -161,7 +161,7 @@ pub async fn process_incoming_message_pi(data: Result<Message, Error>, uuid: &st
 			InboundEventType::SetGlobalSettings(event) => settings::set_global_settings(event, true).await,
 			InboundEventType::GetGlobalSettings(event) => settings::get_global_settings(event, true).await,
 			InboundEventType::OpenUrl(event) => misc::open_url(event).await,
-			InboundEventType::LogMessage(event) => misc::log_message(event).await,
+			InboundEventType::LogMessage(event) => misc::log_message(None, event).await,
 			InboundEventType::SendToPlugin(event) => misc::send_to_plugin(event).await,
 			_ => Ok(()),
 		} {

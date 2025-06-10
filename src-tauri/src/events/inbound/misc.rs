@@ -20,7 +20,12 @@ pub async fn open_url(event: PayloadEvent<OpenUrlEvent>) -> Result<(), anyhow::E
 	Ok(())
 }
 
-pub async fn log_message(event: PayloadEvent<LogMessageEvent>) -> Result<(), anyhow::Error> {
+pub async fn log_message(uuid: Option<&str>, mut event: PayloadEvent<LogMessageEvent>) -> Result<(), anyhow::Error> {
+	if let Some(uuid) = uuid {
+		if let Ok(manifest) = crate::plugins::manifest::read_manifest(&crate::shared::config_dir().join("plugins").join(uuid)) {
+			event.payload.message = format!("[{}] {}", manifest.name, event.payload.message);
+		}
+	}
 	log::info!("{}", event.payload.message.trim());
 	Ok(())
 }
