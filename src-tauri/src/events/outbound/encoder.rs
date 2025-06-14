@@ -82,6 +82,7 @@ pub async fn dial_press(device: &str, event: &'static str, index: u8) -> Result<
 		index: 0,
 	};
 	let Some(instance) = get_instance_mut(&context, &mut locks).await? else { return Ok(()) };
+	let _ = crate::frontend::instances::key_moved(crate::APP_HANDLE.get().unwrap(), context.into(), event == "dialDown").await;
 
 	send_to_plugin(
 		&instance.action.plugin,

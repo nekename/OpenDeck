@@ -39,6 +39,7 @@ pub async fn device_did_disconnect(id: &str) -> Result<(), anyhow::Error> {
 struct SetImageEvent {
 	event: &'static str,
 	device: String,
+	controller: Option<String>,
 	position: Option<u8>,
 	image: Option<String>,
 }
@@ -50,6 +51,7 @@ pub async fn update_image(context: crate::shared::Context, image: Option<String>
 			&SetImageEvent {
 				event: "setImage",
 				device: context.device,
+				controller: Some(context.controller),
 				position: Some(context.position),
 				image,
 			},
@@ -69,6 +71,7 @@ pub async fn clear_screen(device: String) -> Result<(), anyhow::Error> {
 			&SetImageEvent {
 				event: "setImage",
 				device,
+				controller: None,
 				position: None,
 				image: None,
 			},

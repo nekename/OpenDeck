@@ -3,7 +3,11 @@ use crate::events::outbound::{encoder, keypad};
 use std::collections::HashMap;
 
 use base64::Engine as _;
-use elgato_streamdeck::{AsyncStreamDeck, DeviceStateUpdate, info::Kind};
+use elgato_streamdeck::{
+	AsyncStreamDeck, DeviceStateUpdate,
+	images::{ImageRect, convert_image_with_format_async},
+	info::Kind,
+};
 use once_cell::sync::Lazy;
 use tokio::sync::RwLock;
 
@@ -14,7 +18,21 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 		if let Some(image) = image {
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
-			device.set_button_image(context.position, image::load_from_memory(&bytes)?).await?;
+			if context.controller == "Encoder" {
+				device
+					.write_lcd(
+						(context.position as u16 * 200) + 64,
+						14,
+						&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
+					)
+					.await?;
+			} else {
+				device.set_button_image(context.position, image::load_from_memory(&bytes)?).await?;
+			}
+		} else if context.controller == "Encoder" {
+			device
+				.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
+				.await?;
 		} else {
 			device.clear_button_image(context.position).await?;
 		}
@@ -26,6 +44,11 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 pub async fn clear_screen(id: &str) -> Result<(), anyhow::Error> {
 	if let Some(device) = ELGATO_DEVICES.read().await.get(id) {
 		device.clear_all_button_images().await?;
+		if device.kind() == Kind::Plus {
+			device
+				.write_lcd_fill(&convert_image_with_format_async(device.kind().lcd_image_format().unwrap(), image::DynamicImage::new_rgb8(800, 100))?)
+				.await?;
+		}
 		device.flush().await?;
 	}
 	Ok(())
