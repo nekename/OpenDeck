@@ -49,6 +49,32 @@
 	</branding>
 
 	<releases>
+		<release version="2.5.0" date="2025-06-15">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.5.0</url>
+			<description>
+				<ul>
+					<li>Support configuring a 'default profile'</li>
+					<li>Rework UI for Stream Deck Plus dials</li>
+					<li>Implement Device Brightness built-in action</li>
+					<li>Implement setting images to solid colours</li>
+					<li>Improve system tray icon</li>
+					<li>Support dials in Run Command and Device Brightness built-in actions</li>
+					<li>Improve Wine installation check</li>
+					<li>Indicate unregistered plugins in plugin manager</li>
+					<li>Reorganise settings view options</li>
+					<li>Support creating separate Wine prefixes for each plugin</li>
+					<li>Create plugin details view for plugin store</li>
+					<li>Implement reloading plugins from the CLI</li>
+					<li>Indicate plugin name in OpenDeck logs</li>
+					<li>Render dial action image and text to SD+ LCD</li>
+					<li>Numerous bug fixes</li>
+				</ul>
+				<p>
+					Please note that non-Elgato devices are no longer supported out of the box from this release onwards.
+					You can continue to use them by installing the relevant device support plugin, but your existing configurations will not carry over.
+				</p>
+			</description>
+		</release>
 		<release version="2.4.4" date="2025-04-18">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.4.4</url>
 			<description>

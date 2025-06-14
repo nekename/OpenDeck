@@ -542,7 +542,7 @@ dependencies = [
 
 [[package]]
 name = "opendeck-starterpack"
-version = "1.4.1"
+version = "2.5.0"
 dependencies = [
  "enigo",
  "log",
