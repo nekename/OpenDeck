@@ -19,7 +19,7 @@ use once_cell::sync::OnceCell;
 use tauri::{
 	AppHandle, Builder, Manager, WindowEvent,
 	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
-	tray::{TrayIconBuilder, TrayIconEvent},
+	tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -154,7 +154,10 @@ Enjoy!"#,
 				.icon(app.default_window_icon().unwrap().clone())
 				.show_menu_on_left_click(false)
 				.on_tray_icon_event(move |icon, event| {
-					if let TrayIconEvent::Click { .. } = event {
+					if let TrayIconEvent::Click { button, .. } = event {
+						if button != MouseButton::Left {
+							return;
+						}
 						let window = icon.app_handle().get_webview_window("main").unwrap();
 						let _ = if window.is_visible().unwrap_or(false) {
 							window.hide()
