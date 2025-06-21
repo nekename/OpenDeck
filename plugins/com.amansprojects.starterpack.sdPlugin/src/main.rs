@@ -46,7 +46,9 @@ impl openaction::ActionEventHandler for ActionEventHandler {
 	) -> EventHandlerResult {
 		match &event.action[..] {
 			"com.amansprojects.starterpack.runcommand" => run_command::down_up("down", event),
-			"com.amansprojects.starterpack.inputsimulation" => input_simulation::key_down(event),
+			"com.amansprojects.starterpack.inputsimulation" => {
+				input_simulation::down_up(event, "down").await
+			}
 			_ => Ok(()),
 		}
 	}
@@ -58,7 +60,9 @@ impl openaction::ActionEventHandler for ActionEventHandler {
 	) -> EventHandlerResult {
 		match &event.action[..] {
 			"com.amansprojects.starterpack.runcommand" => run_command::down_up("up", event),
-			"com.amansprojects.starterpack.inputsimulation" => input_simulation::key_up(event),
+			"com.amansprojects.starterpack.inputsimulation" => {
+				input_simulation::down_up(event, "up").await
+			}
 			"com.amansprojects.starterpack.switchprofile" => {
 				switch_profile::key_up(event, outbound).await
 			}
