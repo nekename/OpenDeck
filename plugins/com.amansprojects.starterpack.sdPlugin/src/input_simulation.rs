@@ -1,33 +1,26 @@
 use openaction::*;
 
+use std::sync::LazyLock;
+
 use enigo::{
 	Enigo, Settings,
 	agent::{Agent, Token},
 };
+use tokio::sync::Mutex;
 
-pub fn key_down(event: KeyEvent) -> EventHandlerResult {
-	if let Some(value) = event.payload.settings.as_object().unwrap().get("down") {
+static ENIGO: LazyLock<Mutex<Option<Enigo>>> = LazyLock::new(|| Mutex::new(Option::None));
+
+pub async fn down_up(event: KeyEvent, action: &str) -> EventHandlerResult {
+	if let Some(value) = event.payload.settings.as_object().unwrap().get(action) {
 		let value = value.as_str().unwrap();
 		if value.trim().is_empty() {
 			return Ok(());
 		}
-		let mut enigo = Enigo::new(&Settings::default())?;
-		let tokens: Vec<Token> = ron::from_str(value)?;
-		for token in tokens {
-			enigo.execute(&token).unwrap();
+		let mut enigo_guard = ENIGO.lock().await;
+		if enigo_guard.is_none() {
+			enigo_guard.replace(Enigo::new(&Settings::default())?);
 		}
-	}
-
-	Ok(())
-}
-
-pub fn key_up(event: KeyEvent) -> EventHandlerResult {
-	if let Some(value) = event.payload.settings.as_object().unwrap().get("up") {
-		let value = value.as_str().unwrap();
-		if value.trim().is_empty() {
-			return Ok(());
-		}
-		let mut enigo = Enigo::new(&Settings::default())?;
+		let enigo = enigo_guard.as_mut().unwrap();
 		let tokens: Vec<Token> = ron::from_str(value)?;
 		for token in tokens {
 			enigo.execute(&token).unwrap();
