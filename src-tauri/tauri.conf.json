@@ -64,7 +64,7 @@
 			}
 		],
 		"security": {
-			"csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src *; frame-src http://localhost:57118; connect-src ipc: http://ipc.localhost https://openactionapi.github.io https://api.github.com https://raw.githubusercontent.com https://plugins.amankhanna.me;"
+			"csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src * data:; frame-src http://localhost:57118; connect-src ipc: http://ipc.localhost https://openactionapi.github.io https://api.github.com https://raw.githubusercontent.com https://plugins.amankhanna.me;"
 		},
 		"withGlobalTauri": true
 	}
