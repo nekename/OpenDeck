@@ -7,7 +7,7 @@ export function getImage(image: string | undefined, fallback: string | undefined
 	if (!image) return fallback ? getImage(fallback, undefined) : "/alert.png";
 	if (image.startsWith("opendeck/")) return image.replace("opendeck", "");
 	if (!image.startsWith("data:")) return "http://localhost:57118/" + image;
-	const svgxmlre = /^data:image\/svg\+xml(?:;\w+=\w+)*,(.+)/;
+	const svgxmlre = /^data:image\/svg\+xml(?!.*?;base64.*?)(?:;[\w=]*)*,(.+)/;
 	const base64re = /^data:image\/(apng|avif|gif|jpeg|png|svg\+xml|webp|bmp|x-icon|tiff);base64,([A-Za-z0-9+/]+={0,2})?/;
 	if (svgxmlre.test(image)) {
 		image = "data:image/svg+xml;base64," + btoa(decodeURIComponent((svgxmlre.exec(image) as RegExpExecArray)[1].replace(/\;$/, "")));
