@@ -66,8 +66,10 @@ pub async fn init_webserver(prefix: PathBuf) {
 
 					window.addEventListener("message", ({ data }) => {
 						if (data.event == "connect") {
+							event.stopImmediatePropagation();
 							connectElgatoStreamDeckSocket(...data.payload);
 						} else if (data.event == "windowClosed") {
+							event.stopImmediatePropagation();
 							if (opendeck_iframe_container.firstElementChild) opendeck_iframe_container.firstElementChild.remove();
 							opendeck_iframe_container.style.display = "none";
 						}
@@ -99,11 +101,13 @@ pub async fn init_webserver(prefix: PathBuf) {
 					let opendeck_fetch_promises = {};
 					window.addEventListener("message", ({ data }) => {
 						if (data.event == "fetchResponse") {
+							event.stopImmediatePropagation();
 							const response = new Response(data.payload.response.body, data.payload.response);
 							Object.defineProperty(response, "url", { value: data.payload.response.url });
 							opendeck_fetch_promises[data.payload.id].resolve(response);
 							delete opendeck_fetch_promises[data.payload.id];
 						} else if (data.event == "fetchError") {
+							event.stopImmediatePropagation();
 							opendeck_fetch_promises[data.payload.id].reject(data.payload.error);
 							delete opendeck_fetch_promises[data.payload.id];
 						}
