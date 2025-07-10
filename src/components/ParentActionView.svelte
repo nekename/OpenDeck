@@ -52,7 +52,7 @@
 />
 
 <div class="px-6 pt-6 pb-4 dark:text-neutral-300">
-	<button class="float-right text-xl" on:click={() => $inspectedParentAction = null}>✕</button>
+	<button class="float-right text-xl hover:text-red-500" on:click={() => $inspectedParentAction = null}>✕</button>
 	<h1 class="font-semibold text-2xl">{parentUuid == "opendeck.toggleaction" ? "Toggle Action" : "Multi Action"}</h1>
 </div>
 
@@ -67,15 +67,15 @@
 			<Key inslot={instance} context={null} active={false} scale={3 / 4} />
 			<p class="ml-4 text-xl dark:text-neutral-400">{instance.action.name}</p>
 			<button
-				class="ml-auto mr-10"
+				class="ml-auto mr-10 group"
 				on:click={() => removeInstance(index)}
 			>
-				<Trash size="32" color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"} />
+				<Trash size="32" class="fill-zinc-500 dark:fill-stone-300 group-hover:fill-red-500" />
 			</button>
 		</div>
 	{/each}
 	<div
-		class="flex flex-row items-center mx-4 mt-1 mb-4 p-3 bg-neutral-100 dark:bg-neutral-800 border-2 border-dashed dark:border-neutral-700 rounded-md"
+		class="flex flex-row items-center mx-4 mt-1 mb-4 p-3 bg-neutral-100 dark:bg-neutral-800 border-2 border-dashed dark:border-neutral-700 rounded-md cursor-grab hover:active:cursor-grabbing"
 		on:dragover={handleDragOver}
 		on:drop={handleDrop}
 	>

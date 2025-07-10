@@ -132,7 +132,7 @@
 />
 
 <Popup show={showPopup}>
-	<button class="mr-1 float-right text-xl dark:text-neutral-300" on:click={() => showPopup = false}>✕</button>
+	<button class="mr-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600" on:click={() => showPopup = false}>✕</button>
 	<h2 class="text-xl font-semibold dark:text-neutral-300">{device.name}</h2>
 
 	<div class="flex flex-row mt-2 mb-1">
@@ -151,13 +151,13 @@
 				nameInput.value = "";
 				showPopup = false;
 			}}
-			class="px-4 dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-900 rounded-r-md"
+			class="px-4 dark:text-neutral-300 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800 rounded-r-md"
 		>
 			Create
 		</button>
 
 		<button
-			class="ml-2 px-4 flex items-center dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-900 rounded-md outline-hidden"
+			class="ml-2 px-4 flex items-center dark:text-neutral-300 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800 rounded-md outline-hidden"
 			on:click={() => showApplicationManager = true}
 		>
 			<Browsers size={24} />
@@ -176,11 +176,11 @@
 					{#if profile != value}
 						<button
 							on:click={() => deleteProfile(profile)}
-							class="float-right"
+							class="float-right group"
 						>
 							<Trash
 								size="20"
-								color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
+								class="fill-stone-300 dark:fill-zinc-500 group-hover:fill-red-500"
 							/>
 						</button>
 					{/if}
@@ -191,7 +191,7 @@
 </Popup>
 
 <Popup show={showApplicationManager}>
-	<button class="mr-1 float-right text-xl dark:text-neutral-300" on:click={() => showApplicationManager = false}>✕</button>
+	<button class="mr-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600" on:click={() => showApplicationManager = false}>✕</button>
 	<h2 class="text-xl font-semibold dark:text-neutral-300">{device.name}</h2>
 	<span class="text-sm dark:text-neutral-400">If your application isn't listed, try switching to it and back again.</span>
 	<span class="text-sm dark:text-neutral-400">The 'default profile' will activate when the focussed application has no profile associated with it.</span>

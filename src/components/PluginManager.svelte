@@ -145,7 +145,7 @@
 />
 
 <Popup show={showPopup}>
-	<button class="mr-2 my-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 dark:hover:bg-neutral-600" on:click={() => showPopup = false}>✕</button>
+	<button class="mr-2 my-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600" on:click={() => showPopup = false}>✕</button>
 	<h2 class="m-2 font-semibold text-xl dark:text-neutral-300">Manage plugins</h2>
 
 	<h2 class="mx-2 mt-6 mb-2 text-lg dark:text-neutral-400">Installed plugins</h2>
@@ -164,12 +164,12 @@
 				{#if $settings?.developer}
 					<ArrowClockwise
 						size="24"
-						color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
+						class="fill-stone-400 dark:fill-zinc-400"
 					/>
 				{:else if !plugin.builtin}
 					<Trash
 						size="24"
-						color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
+						class="fill-stone-400 dark:fill-zinc-400"
 					/>
 				{/if}
 			</ListedPlugin>
@@ -224,7 +224,7 @@
 				>
 					<ArrowSquareOut
 						size="24"
-						color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
+						class="fill-stone-400 dark:fill-zinc-400"
 					/>
 				</ListedPlugin>
 			{/each}
@@ -242,7 +242,7 @@
 				</select>
 			</div>
 			<button
-				class="mt-2 p-1 w-full text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-800 border dark:border-neutral-600 rounded-lg"
+				class="mt-2 p-1 w-full text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 border dark:border-neutral-600 rounded-lg"
 				on:click={finishChoice}
 			>
 				Install
@@ -269,7 +269,7 @@
 					>
 						<CloudArrowDown
 							size="24"
-							color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
+							class="fill-stone-400 dark:fill-zinc-400"
 						/>
 					</ListedPlugin>
 				{/each}

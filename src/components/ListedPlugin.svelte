@@ -22,11 +22,11 @@
 
 	<div class="flex flex-col ml-auto mr-4 space-y-2">
 		{#if disconnected}
-			<button on:click={() => invoke("open_log_directory")}>
-				<WarningCircle size="24" color="#E5A50A" />
+			<button on:click={() => invoke("open_log_directory")} class="group">
+				<WarningCircle size="24" class="fill-yellow-500 hover:fill-yellow-600" />
 			</button>
 		{/if}
-		<button on:click={action} class="hover:bg-neutral-800 p-2 rounded-full">
+		<button on:click={action} class="hover:bg-neutral-300 dark:hover:bg-neutral-800 p-2 rounded-full">
 			<slot />
 		</button>
 	</div>

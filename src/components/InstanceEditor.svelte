@@ -38,7 +38,7 @@
 				{/each}
 			</select>
 		</div>
-		<button class="ml-2 mr-1 float-right text-xl dark:text-neutral-300" on:click={() => showEditor = false}>✕</button>
+		<button class="ml-2 mr-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600" on:click={() => showEditor = false}>✕</button>
 	</div>
 	<div class="flex flex-row">
 		<div class="flex flex-col justify-center items-center">
@@ -57,7 +57,7 @@
 			</button>
 			<button
 				on:click={() => colourInput.click()}
-				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
+				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-600 dark:hover:bg-neutral-700 rounded-md outline-hidden"
 			>
 				Solid colour
 			</button>
