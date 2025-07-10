@@ -46,7 +46,7 @@
 </script>
 
 <Popup show>
-	<button class="mr-2 my-1 float-right text-xl dark:text-neutral-300" on:click={close}>✕</button>
+	<button class="mr-2 my-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 dark:hover:bg-neutral-600" on:click={close}>✕</button>
 	<div class="flex flex-row items-start">
 		<img
 			src={"https://openactionapi.github.io/plugins/icons/" + id + ".png"}
@@ -76,14 +76,14 @@
 			<div class="flex flex-row items-center mt-6">
 				<button
 					on:click={install}
-					class="px-8 py-3 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 rounded-l-lg"
+					class="px-8 py-3 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 rounded-l-lg hover:bg-indigo-700"
 				>
 					Install
 				</button>
 
 				<button
 					on:click={() => invoke("open_url", { url: details.download_url ?? details.repository + "/releases/latest" })}
-					class="ml-1 p-3.5 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 rounded-r-lg"
+					class="ml-1 p-3.5 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 rounded-r-lg hover:bg-indigo-700"
 				>
 					<ArrowSquareOut size={24} />
 				</button>

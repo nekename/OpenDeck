@@ -26,7 +26,7 @@
 				<WarningCircle size="24" color="#E5A50A" />
 			</button>
 		{/if}
-		<button on:click={action}>
+		<button on:click={action} class="hover:bg-neutral-800 p-2 rounded-full">
 			<slot />
 		</button>
 	</div>

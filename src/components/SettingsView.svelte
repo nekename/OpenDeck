@@ -44,7 +44,7 @@
 </script>
 
 <button
-	class="ml-2 mt-2 p-1 w-1/2 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg outline-hidden"
+	class="ml-2 mt-2 p-1 w-1/2 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-800 border dark:border-neutral-600 rounded-lg outline-hidden"
 	on:click={() => showPopup = true}
 >
 	Settings
@@ -57,7 +57,7 @@
 />
 
 <Popup show={showPopup}>
-	<button class="mr-2 my-1 float-right text-xl dark:text-neutral-300" on:click={() => showPopup = false}>✕</button>
+	<button class="mr-2 my-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 dark:hover:bg-neutral-600" on:click={() => showPopup = false}>✕</button>
 	<h2 class="m-2 font-semibold text-xl dark:text-neutral-300">Settings</h2>
 	{#if $settings}
 		<div class="flex flex-row items-center m-2 space-x-2">
@@ -132,13 +132,13 @@
 
 	<div class="ml-2">
 		<button
-			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg"
+			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-800 border dark:border-neutral-600 rounded-lg"
 			on:click={() => invoke("open_config_directory")}
 		>
 			Open config directory
 		</button>
 		<button
-			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg"
+			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-800 border dark:border-neutral-600 rounded-lg"
 			on:click={() => invoke("open_log_directory")}
 		>
 			Open log directory

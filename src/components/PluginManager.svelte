@@ -129,7 +129,7 @@
 </script>
 
 <button
-	class="mt-2 p-1 w-1/2 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg outline-hidden"
+	class="mt-2 p-1 w-1/2 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-800 border dark:border-neutral-600 rounded-lg outline-hidden"
 	on:click={() => showPopup = true}
 >
 	Plugins
@@ -145,7 +145,7 @@
 />
 
 <Popup show={showPopup}>
-	<button class="mr-2 my-1 float-right text-xl dark:text-neutral-300" on:click={() => showPopup = false}>✕</button>
+	<button class="mr-2 my-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 dark:hover:bg-neutral-600" on:click={() => showPopup = false}>✕</button>
 	<h2 class="m-2 font-semibold text-xl dark:text-neutral-300">Manage plugins</h2>
 
 	<h2 class="mx-2 mt-6 mb-2 text-lg dark:text-neutral-400">Installed plugins</h2>
@@ -179,7 +179,7 @@
 	<div class="flex flex-row justify-between items-center mx-2 mt-6 mb-2">
 		<h2 class="text-lg dark:text-neutral-400">Plugin store</h2>
 		<button
-			class="flex flex-row items-center mt-2 px-1 py-0.5 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg outline-hidden"
+			class="flex flex-row items-center mt-2 px-1 py-0.5 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-700 dark:hover:bg-neutral-800 border dark:border-neutral-600 rounded-lg outline-hidden"
 			on:click={installPluginFile}
 		>
 			<FileArrowUp />
