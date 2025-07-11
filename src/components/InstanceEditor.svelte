@@ -38,7 +38,12 @@
 				{/each}
 			</select>
 		</div>
-		<button class="ml-2 mr-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600" on:click={() => showEditor = false}>✕</button>
+		<button
+			class="ml-2 mr-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600"
+			on:click={() => showEditor = false}
+		>
+			✕
+		</button>
 	</div>
 	<div class="flex flex-row">
 		<div class="flex flex-col justify-center items-center">

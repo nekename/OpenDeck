@@ -132,7 +132,12 @@
 />
 
 <Popup show={showPopup}>
-	<button class="mr-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600" on:click={() => showPopup = false}>✕</button>
+	<button
+		class="mr-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600"
+		on:click={() => showPopup = false}
+	>
+		✕
+	</button>
 	<h2 class="text-xl font-semibold dark:text-neutral-300">{device.name}</h2>
 
 	<div class="flex flex-row mt-2 mb-1">
@@ -191,7 +196,12 @@
 </Popup>
 
 <Popup show={showApplicationManager}>
-	<button class="mr-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600" on:click={() => showApplicationManager = false}>✕</button>
+	<button
+		class="mr-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600"
+		on:click={() => showApplicationManager = false}
+	>
+		✕
+	</button>
 	<h2 class="text-xl font-semibold dark:text-neutral-300">{device.name}</h2>
 	<span class="text-sm dark:text-neutral-400">If your application isn't listed, try switching to it and back again.</span>
 	<span class="text-sm dark:text-neutral-400">The 'default profile' will activate when the focussed application has no profile associated with it.</span>

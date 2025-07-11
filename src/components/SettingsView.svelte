@@ -57,7 +57,12 @@
 />
 
 <Popup show={showPopup}>
-	<button class="mr-2 my-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600" on:click={() => showPopup = false}>✕</button>
+	<button
+		class="mr-2 my-1 float-right w-6 h-6 flex items-center justify-center rounded-full text-xl dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600"
+		on:click={() => showPopup = false}
+	>
+		✕
+	</button>
 	<h2 class="m-2 font-semibold text-xl dark:text-neutral-300">Settings</h2>
 	{#if $settings}
 		<div class="flex flex-row items-center m-2 space-x-2">
