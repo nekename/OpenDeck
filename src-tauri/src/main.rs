@@ -70,8 +70,8 @@ async fn main() {
 		.setup(|app| {
 			APP_HANDLE.set(app.handle().clone()).unwrap();
 
-			if std::env::args().any(|v| v == "--hide") {
-				let _ = app.get_webview_window("main").unwrap().hide();
+			if !std::env::args().any(|v| v == "--hide") {
+				let _ = app.get_webview_window("main").unwrap().show();
 			}
 
 			let old = app.path().config_dir().unwrap().join("com.amansprojects.opendeck");
