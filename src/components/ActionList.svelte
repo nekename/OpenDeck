@@ -26,7 +26,7 @@
 					<img
 						src={!action.icon.startsWith("opendeck/") ? "http://localhost:57118/" + action.icon : action.icon.replace("opendeck", "")}
 						alt={$localisations?.[action.plugin]?.[action.uuid]?.Tooltip ?? action.tooltip}
-						class="min-w-10 w-[15%] h-auto rounded-xs cursor-grab hover:active:cursor-grabbing"
+						class="w-12 h-12 rounded-xs cursor-grab hover:active:cursor-grabbing"
 						draggable="true"
 						on:dragstart={(event) => event.dataTransfer?.setData("action", JSON.stringify(action))}
 					/>
