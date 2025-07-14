@@ -144,7 +144,7 @@
 		<input
 			bind:this={nameInput}
 			pattern="[a-zA-Z0-9_ ]+(\/[a-zA-Z0-9_ ]+)?"
-			class="grow p-2 dark:text-neutral-300 invalid:text-red-400 dark:bg-neutral-700 rounded-l-md outline-hidden"
+			class="grow p-2 border border-neutral-200 dark:text-neutral-300 invalid:text-red-400 dark:bg-neutral-700 dark:border-neutral-700 rounded-l-md outline-hidden"
 			placeholder='Profile ID (e.g. "folder/profile")'
 		/>
 
@@ -156,13 +156,13 @@
 				nameInput.value = "";
 				showPopup = false;
 			}}
-			class="px-4 dark:text-neutral-300 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800 rounded-r-md"
+			class="px-4 dark:text-neutral-300 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-900 dark:border-neutral-900 dark:border dark:hover:bg-neutral-800 rounded-r-md"
 		>
 			Create
 		</button>
 
 		<button
-			class="ml-2 px-4 flex items-center dark:text-neutral-300 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800 rounded-md outline-hidden"
+			class="ml-2 px-4 flex items-center dark:text-neutral-300 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-900 dark:border dark:border-neutral-900 dark:hover:bg-neutral-800 rounded-md outline-hidden"
 			on:click={() => showApplicationManager = true}
 		>
 			<Browsers size={24} />
