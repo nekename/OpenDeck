@@ -85,7 +85,7 @@ To change other options, open Settings. From here, you can also view information
 
 ### Building from source / contributing
 
-You'll need to ensure that all of the [prerequisites for building a Tauri application](https://tauri.app/start/prerequisites) are satisfied to build OpenDeck, as well as making sure that [Deno](https://deno.com/) is installed. On Linux, you'll also need `libudev` installed for your distribution. You can then use `deno task tauri dev` and `deno task tauri build` to work with OpenDeck.
+You'll need to ensure that all of the [prerequisites for building a Tauri application](https://tauri.app/start/prerequisites) are satisfied to build OpenDeck, as well as making sure that [Deno](https://deno.com/) is installed. On Linux, you'll also need `libudev` installed for your distribution. After running `deno install`, you can use `deno task tauri dev` and `deno task tauri build` to work with OpenDeck.
 
 Before each commit, please ensure that all of the following are completed:
 1. Rust code has been linted using `cargo clippy` and it discovers no violations
@@ -94,7 +94,7 @@ Before each commit, please ensure that all of the following are completed:
 4. Svelte code has been linted using `deno task check` and it discovers no violations
 5. Frontend code has been formatted using `deno fmt --unstable-component`
 
-Feel free to reach out on the support channels above for guidance when contributing!
+When submitting contributions, please adhere to the [Conventional Commits specification](https://conventionalcommits.org/) for commit messages. You will also need to [sign your commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits). Feel free to reach out on the support channels above for guidance when contributing!
 
 OpenDeck is licensed under the GNU General Public License version 3.0 or later. For more details, see the LICENSE.md file.
 
