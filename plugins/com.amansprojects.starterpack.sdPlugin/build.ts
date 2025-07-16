@@ -6,7 +6,7 @@ import { join } from "jsr:@std/path";
 if (Deno.args.length < 1) Deno.exit(1);
 const outDir = Deno.args[0];
 try {
-	Deno.remove(outDir, { recursive: true });
+	await Deno.remove(outDir, { recursive: true });
 } catch (error: any) {
 	if (!(error instanceof Deno.errors.NotFound)) {
 		throw error;
