@@ -76,7 +76,7 @@ async fn init(device: AsyncStreamDeck, serial: String) {
 
 	let kind = device.kind();
 	let device_type = match kind {
-		Kind::Original | Kind::OriginalV2 | Kind::Mk2 => 0,
+		Kind::Original | Kind::OriginalV2 | Kind::Mk2 | Kind::Mk2Scissor => 0,
 		Kind::Mini | Kind::MiniMk2 => 1,
 		Kind::Xl | Kind::XlV2 => 2,
 		Kind::Pedal => 5,
