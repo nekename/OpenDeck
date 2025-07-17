@@ -18,6 +18,11 @@ struct DeviceDidDisconnectEvent {
 	device: String,
 }
 
+#[derive(Serialize)]
+struct SystemDidWakeUpEvent {
+	event: &'static str,
+}
+
 pub async fn device_did_connect(id: &str, info: DeviceInfo) -> Result<(), anyhow::Error> {
 	send_to_all_plugins(&DeviceDidConnectEvent {
 		event: "deviceDidConnect",
@@ -33,6 +38,10 @@ pub async fn device_did_disconnect(id: &str) -> Result<(), anyhow::Error> {
 		device: id.to_owned(),
 	})
 	.await
+}
+
+pub async fn system_did_wake_up() -> Result<(), anyhow::Error> {
+	send_to_all_plugins(&SystemDidWakeUpEvent { event: "systemDidWakeUp" }).await
 }
 
 #[derive(Serialize)]
