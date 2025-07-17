@@ -327,6 +327,18 @@ pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow
 	}
 }
 
+pub async fn deactivate_plugins() {
+	let uuids = {
+		let instances = INSTANCES.lock().await;
+		instances.keys().cloned().collect::<Vec<_>>()
+	};
+
+	let app = APP_HANDLE.get().unwrap();
+	for uuid in uuids {
+		let _ = deactivate_plugin(app, &uuid).await;
+	}
+}
+
 /// Initialise plugins from the plugins directory.
 pub fn initialise_plugins() {
 	tokio::spawn(init_websocket_server());

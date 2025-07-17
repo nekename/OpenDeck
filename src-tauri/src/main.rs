@@ -264,6 +264,7 @@ Enjoy!"#,
 
 	app.run(|app, event| {
 		if let tauri::RunEvent::Exit = event {
+			futures::executor::block_on(plugins::deactivate_plugins());
 			tokio::spawn(elgato::reset_devices());
 			use tauri_plugin_aptabase::EventTracker;
 			let _ = app.track_event("app_exited", None);
