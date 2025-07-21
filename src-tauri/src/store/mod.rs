@@ -1,6 +1,8 @@
 pub mod profiles;
 mod simplified_profile;
 
+use crate::shared::is_flatpak;
+
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -86,9 +88,9 @@ impl Default for Settings {
 			language: "en".to_owned(),
 			brightness: 50,
 			darktheme: true,
-			background: std::env::var("container").is_err(),
+			background: !is_flatpak(),
 			autolaunch: false,
-			updatecheck: option_env!("OPENDECK_DISABLE_UPDATE_CHECK").is_none() && std::env::var("container").is_err(),
+			updatecheck: option_env!("OPENDECK_DISABLE_UPDATE_CHECK").is_none() && !is_flatpak(),
 			// Consent is given by the user on install so it is OK to have the default be `true`
 			statistics: true,
 			separatewine: false,

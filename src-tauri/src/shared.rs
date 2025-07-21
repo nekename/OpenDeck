@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env::var;
 use std::path::Path;
 
 use serde::{Deserialize, Deserializer, Serialize, de::Visitor};
@@ -48,6 +49,11 @@ pub fn config_dir() -> std::path::PathBuf {
 pub fn log_dir() -> std::path::PathBuf {
 	let app_handle = crate::APP_HANDLE.get().unwrap();
 	app_handle.path().app_log_dir().unwrap()
+}
+
+/// Get whether or not the application is running inside the Flatpak sandbox.
+pub fn is_flatpak() -> bool {
+	var("FLATPAK_ID").is_ok() || var("container").map(|x| x.to_lowercase().trim() == "flatpak").unwrap_or(false)
 }
 
 /// Convert an icon specified in a plugin manifest to its full path.

@@ -3,7 +3,7 @@ pub mod manifest;
 mod webserver;
 
 use crate::APP_HANDLE;
-use crate::shared::{Action, CATEGORIES, config_dir, convert_icon, log_dir};
+use crate::shared::{Action, CATEGORIES, config_dir, convert_icon, is_flatpak, log_dir};
 use crate::store::get_settings;
 
 use std::collections::HashMap;
@@ -178,8 +178,8 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Webview);
 	} else if code_path.to_lowercase().ends_with(".js") || code_path.to_lowercase().ends_with(".mjs") || code_path.to_lowercase().ends_with(".cjs") {
 		// Check for Node.js installation and version in one go.
-		let command = if std::env::var("container").is_ok() { "flatpak-spawn" } else { "node" };
-		let extra_args = if std::env::var("container").is_ok() { vec!["--host", "node"] } else { vec![] };
+		let command = if is_flatpak() { "flatpak-spawn" } else { "node" };
+		let extra_args = if is_flatpak() { vec!["--host", "node"] } else { vec![] };
 		let version_output = Command::new(command).args(&extra_args).arg("--version").output();
 		if version_output.is_err() || String::from_utf8(version_output.unwrap().stdout).unwrap().trim() < "v20.0.0" {
 			return Err(anyhow!("Node.js version 20.0.0 or higher is required"));
@@ -220,8 +220,8 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 			INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Node(child));
 		}
 	} else if use_wine {
-		let command = if std::env::var("container").is_ok() { "flatpak-spawn" } else { "wine" };
-		let extra_args = if std::env::var("container").is_ok() { vec!["--host", "wine"] } else { vec![] };
+		let command = if is_flatpak() { "flatpak-spawn" } else { "wine" };
+		let extra_args = if is_flatpak() { vec!["--host", "wine"] } else { vec![] };
 		let result = Command::new(command)
 			.args(&extra_args)
 			.arg("--version")

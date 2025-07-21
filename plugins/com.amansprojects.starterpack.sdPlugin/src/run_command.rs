@@ -1,9 +1,17 @@
+use std::env::var;
 use std::io::Read;
 use std::process::{Command, Stdio};
 
 use super::ActionEvent;
 
 use openaction::*;
+
+fn is_flatpak() -> bool {
+	var("FLATPAK_ID").is_ok()
+		|| var("container")
+			.map(|x| x.to_lowercase().trim() == "flatpak")
+			.unwrap_or(false)
+}
 
 async fn run_command(
 	event: impl ActionEvent,
@@ -28,13 +36,9 @@ async fn run_command(
 	}
 
 	#[cfg(unix)]
-	let command = if std::env::var("container").is_ok() {
-		"flatpak-spawn"
-	} else {
-		"sh"
-	};
+	let command = if is_flatpak() { "flatpak-spawn" } else { "sh" };
 	#[cfg(unix)]
-	let extra_args = if std::env::var("container").is_ok() {
+	let extra_args = if is_flatpak() {
 		vec!["--host", "sh", "-c"]
 	} else {
 		vec!["-c"]
