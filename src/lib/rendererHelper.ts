@@ -10,7 +10,12 @@ export function getImage(image: string | undefined, fallback: string | undefined
 	const svgxmlre = /^data:image\/svg\+xml(?!.*?;base64.*?)(?:;[\w=]*)*,(.+)/;
 	const base64re = /^data:image\/(apng|avif|gif|jpeg|png|svg\+xml|webp|bmp|x-icon|tiff);base64,([A-Za-z0-9+/]+={0,2})?/;
 	if (svgxmlre.test(image)) {
-		image = "data:image/svg+xml;base64," + btoa(decodeURIComponent((svgxmlre.exec(image) as RegExpExecArray)[1].replace(/\;$/, "")));
+		let svg = (svgxmlre.exec(image) as RegExpExecArray)[1].replace(/\;$/, "");
+		try {
+			svg = decodeURIComponent(svg);
+		} finally {
+			image = "data:image/svg+xml," + encodeURIComponent(svg);
+		}
 	}
 	if (base64re.test(image)) {
 		const exec = base64re.exec(image)!;
