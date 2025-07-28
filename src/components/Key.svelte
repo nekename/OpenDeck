@@ -144,32 +144,32 @@
 	>
 		{#if !slot}
 			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
+				class="flex flex-row p-2 w-full cursor-pointer items-center hover:bg-neutral-200 dark:hover:bg-neutral-600"
 				on:click={paste}
 			>
-				<Clipboard size="18" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+				<Clipboard size="18" class="fill-zinc-500 dark:fill-stone-200" />
 				<span class="ml-2"> Paste </span>
 			</button>
 		{:else}
 			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
+				class="flex flex-row p-2 w-full cursor-pointer items-center hover:bg-neutral-200 dark:hover:bg-neutral-600"
 				on:click={edit}
 			>
-				<Pencil size="18" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+				<Pencil size="18" class="fill-zinc-500 dark:fill-stone-200" />
 				<span class="ml-2"> Edit </span>
 			</button>
 			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
+				class="flex flex-row p-2 w-full cursor-pointer items-center hover:bg-neutral-200 dark:hover:bg-neutral-600"
 				on:click={() => copiedContext.set(context)}
 			>
-				<Copy size="18" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+				<Copy size="18" class="fill-zinc-500 dark:fill-stone-200" />
 				<span class="ml-2"> Copy </span>
 			</button>
 			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
+				class="flex flex-row p-2 w-full cursor-pointer items-center hover:bg-neutral-200 dark:hover:bg-neutral-600"
 				on:click={clear}
 			>
-				<Trash size="18" color="#F66151" />
+				<Trash size="18" class="fill-red-500" />
 				<span class="ml-2"> Delete </span>
 			</button>
 		{/if}
