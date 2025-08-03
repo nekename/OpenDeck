@@ -60,7 +60,6 @@ export async function renderImage(
 
 	const context = canvas.getContext("2d");
 	if (!context) return;
-	context.clearRect(0, 0, canvas.width, canvas.height);
 
 	try {
 		// Load image
@@ -74,10 +73,12 @@ export async function renderImage(
 		});
 
 		// Draw image
+		context.clearRect(0, 0, canvas.width, canvas.height);
 		context.imageSmoothingQuality = "high";
 		context.drawImage(image, 0, 0, canvas.width, canvas.height);
 	} catch (error: any) {
 		if (!(error instanceof Event)) console.error(error);
+		context.clearRect(0, 0, canvas.width, canvas.height);
 		showAlert = true;
 	}
 
