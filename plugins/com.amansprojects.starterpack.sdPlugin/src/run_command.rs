@@ -56,6 +56,9 @@ async fn run_command(
 		.arg(value)
 		.stdout(Stdio::from(writer.try_clone()?))
 		.stderr(Stdio::from(writer));
+	if let Some(home_dir) = std::env::home_dir() {
+		command.current_dir(home_dir);
+	}
 	command.spawn()?.wait()?;
 	drop(command);
 	let mut output = String::new();
