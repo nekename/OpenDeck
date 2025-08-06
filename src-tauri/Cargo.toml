@@ -48,6 +48,7 @@ zip = { version = "4.0", default-features = false, features = ["deflate", "zstd"
 active-win-pos-rs = "0.9"
 semver = "1.0"
 path-slash = "0.2"
+psp = { git = "https://github.com/pewsheen/psp.git", version = "0.1.0" }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
