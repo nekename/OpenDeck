@@ -2,7 +2,7 @@
 	"Name": "OpenDeck Starter Pack",
 	"Description": "OpenDeck starter pack plugin",
 	"Author": "Aman Khanna (nekename)",
-	"Version": "2.5.0",
+	"Version": "2.5.1",
 	"CodePathWin": "opendeck-starterpack.exe",
 	"CodePathMac": "opendeck-starterpack-mac",
 	"CodePathLin": "opendeck-starterpack",

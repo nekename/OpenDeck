@@ -49,6 +49,16 @@
 	</branding>
 
 	<releases>
+		<release version="2.5.1" date="2025-08-11">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.5.1</url>
+			<description>
+				<ul>
+					<li>Allow leaving keys pressed in Input Simulation commands</li>
+					<li>Enable libei support for Input Simulation</li>
+					<li>Numerous bug fixes</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.5.0" date="2025-06-15">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.5.0</url>
 			<description>
