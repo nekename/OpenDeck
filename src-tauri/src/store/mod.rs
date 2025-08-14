@@ -4,8 +4,10 @@ mod simplified_profile;
 use crate::shared::is_flatpak;
 
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use fs2::FileExt;
 use serde::{Deserialize, Serialize};
 
 pub trait FromAndIntoDiskValue
@@ -61,7 +63,15 @@ where
 	/// Save the relevant Store as a file.
 	pub fn save(&self) -> Result<(), anyhow::Error> {
 		fs::create_dir_all(self.path.parent().unwrap())?;
-		fs::write(&self.path, serde_json::to_string_pretty(&T::into_value(&self.value)?)?)?;
+
+		let contents = serde_json::to_string_pretty(&T::into_value(&self.value)?)?;
+		let mut file = fs::OpenOptions::new().read(true).write(true).create(true).truncate(true).open(&self.path)?;
+
+		FileExt::lock_exclusive(&file)?;
+		file.write_all(contents.as_bytes())?;
+		file.sync_all()?;
+		FileExt::unlock(&file)?;
+
 		Ok(())
 	}
 }
