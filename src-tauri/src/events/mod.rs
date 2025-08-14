@@ -37,7 +37,7 @@ pub async fn register_plugin(event: RegisterEvent, stream: WebSocketStream<TcpSt
 			PLUGIN_SOCKETS.lock().await.insert(uuid.clone(), read);
 			tokio::spawn(async move {
 				let uuid = uuid;
-				write.for_each(|event| inbound::process_incoming_message(event, &uuid)).await;
+				write.for_each(|event| inbound::process_incoming_message(event, &uuid, false)).await;
 				PLUGIN_SOCKETS.lock().await.remove(&uuid);
 			});
 		}

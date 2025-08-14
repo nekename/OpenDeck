@@ -66,41 +66,43 @@ pub enum InboundEventType {
 	DeviceBrightness(misc::DeviceBrightnessEvent),
 }
 
-pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str) {
+pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, skip_auth: bool) {
 	if let Ok(Message::Text(text)) = data {
 		let decoded: InboundEventType = match serde_json::from_str(&text) {
 			Ok(event) => event,
 			Err(_) => return,
 		};
 
-		if let Some(context) = match &decoded {
-			InboundEventType::SetSettings(event) => Some(&event.context),
-			InboundEventType::GetSettings(event) => Some(&event.context),
-			InboundEventType::SetTitle(event) => Some(&event.context),
-			InboundEventType::SetImage(event) => Some(&event.context),
-			InboundEventType::SetState(event) => Some(&event.context),
-			InboundEventType::ShowAlert(event) => Some(&event.context),
-			InboundEventType::ShowOk(event) => Some(&event.context),
-			InboundEventType::SendToPropertyInspector(event) => Some(&event.context),
-			_ => None,
-		} {
-			if let Ok(Some(instance)) = get_instance(context, &acquire_locks().await).await {
-				if instance.action.plugin != uuid {
+		if !(uuid.is_empty() && skip_auth) {
+			if let Some(context) = match &decoded {
+				InboundEventType::SetSettings(event) => Some(&event.context),
+				InboundEventType::GetSettings(event) => Some(&event.context),
+				InboundEventType::SetTitle(event) => Some(&event.context),
+				InboundEventType::SetImage(event) => Some(&event.context),
+				InboundEventType::SetState(event) => Some(&event.context),
+				InboundEventType::ShowAlert(event) => Some(&event.context),
+				InboundEventType::ShowOk(event) => Some(&event.context),
+				InboundEventType::SendToPropertyInspector(event) => Some(&event.context),
+				_ => None,
+			} {
+				if let Ok(Some(instance)) = get_instance(context, &acquire_locks().await).await {
+					if instance.action.plugin != uuid {
+						return;
+					}
+				} else {
 					return;
 				}
-			} else {
+			} else if let InboundEventType::SetGlobalSettings(event) = &decoded {
+				if event.context != uuid {
+					return;
+				}
+			} else if let InboundEventType::GetGlobalSettings(event) = &decoded {
+				if event.context != uuid {
+					return;
+				}
+			} else if matches!(decoded, InboundEventType::SwitchProfile(_) | InboundEventType::DeviceBrightness(_)) && !uuid.is_empty() && uuid != "com.amansprojects.starterpack.sdPlugin" {
 				return;
 			}
-		} else if let InboundEventType::SetGlobalSettings(event) = &decoded {
-			if event.context != uuid {
-				return;
-			}
-		} else if let InboundEventType::GetGlobalSettings(event) = &decoded {
-			if event.context != uuid {
-				return;
-			}
-		} else if matches!(decoded, InboundEventType::SwitchProfile(_) | InboundEventType::DeviceBrightness(_)) && uuid != "com.amansprojects.starterpack.sdPlugin" {
-			return;
 		}
 
 		if let Err(error) = match decoded {

@@ -230,10 +230,17 @@ Enjoy!"#,
 		)
 		.plugin(tauri_plugin_cors_fetch::init())
 		.plugin(tauri_plugin_single_instance::init(|app, args, _| {
-			if args.iter().any(|x| x.to_lowercase().trim() == "--reload-plugin") {
-				let pos = args.iter().position(|x| x.to_lowercase().trim() == "--reload-plugin").unwrap() + 1;
-				if args.len() > pos {
-					tauri::async_runtime::spawn(frontend::plugins::reload_plugin(app.clone(), args[pos].clone()));
+			if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--reload-plugin") {
+				if args.len() > pos + 1 {
+					tauri::async_runtime::spawn(frontend::plugins::reload_plugin(app.clone(), args[pos + 1].clone()));
+				}
+			} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--process-message") {
+				if args.len() > pos + 1 {
+					tauri::async_runtime::spawn(events::inbound::process_incoming_message(
+						Ok(tokio_tungstenite::tungstenite::Message::Text(args[pos + 1].clone().into())),
+						"",
+						true,
+					));
 				}
 			} else {
 				let window = app.get_webview_window("main").unwrap();

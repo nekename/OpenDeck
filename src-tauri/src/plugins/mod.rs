@@ -439,7 +439,7 @@ async fn accept_connection(stream: TcpStream) {
 	match serde_json::from_str(&register_event.clone().into_text().unwrap()) {
 		Ok(event) => crate::events::register_plugin(event, socket).await,
 		Err(_) => {
-			let _ = crate::events::inbound::process_incoming_message(Ok(register_event), "").await;
+			let _ = crate::events::inbound::process_incoming_message(Ok(register_event), "", false).await;
 		}
 	}
 }
