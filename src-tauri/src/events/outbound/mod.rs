@@ -1,3 +1,4 @@
+pub mod app_monitor;
 pub mod devices;
 pub mod encoder;
 pub mod keypad;
