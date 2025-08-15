@@ -89,6 +89,7 @@ pub struct Settings {
 	pub statistics: bool,
 	pub separatewine: bool,
 	pub developer: bool,
+	pub disableelgato: bool,
 }
 
 impl Default for Settings {
@@ -105,6 +106,7 @@ impl Default for Settings {
 			statistics: true,
 			separatewine: false,
 			developer: false,
+			disableelgato: false,
 		}
 	}
 }

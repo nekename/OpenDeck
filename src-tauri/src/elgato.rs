@@ -135,6 +135,18 @@ async fn init(device: AsyncStreamDeck, serial: String) {
 
 /// Attempt to initialise all connected devices.
 pub async fn initialise_devices() {
+	if let Ok(settings) = crate::store::get_settings() {
+		if settings.value.disableelgato {
+			crate::plugins::DEVICE_NAMESPACES
+				.write()
+				.await
+				.insert("sd".to_owned(), "opendeck_alternative_elgato_implementation".to_owned());
+			return;
+		} else {
+			crate::plugins::DEVICE_NAMESPACES.write().await.remove("sd");
+		}
+	}
+
 	// Iterate through detected Elgato devices and attempt to register them.
 	match elgato_streamdeck::new_hidapi() {
 		Ok(hid) => {

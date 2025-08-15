@@ -9,6 +9,7 @@ export type Settings = {
 	statistics: boolean;
 	separatewine: boolean;
 	developer: boolean;
+	disableelgato: boolean;
 };
 
 import { invoke } from "@tauri-apps/api/core";

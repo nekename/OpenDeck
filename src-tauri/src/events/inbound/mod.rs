@@ -100,7 +100,10 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 				if event.context != uuid {
 					return;
 				}
-			} else if matches!(decoded, InboundEventType::SwitchProfile(_) | InboundEventType::DeviceBrightness(_)) && !uuid.is_empty() && uuid != "com.amansprojects.starterpack.sdPlugin" {
+			} else if matches!(decoded, InboundEventType::SwitchProfile(_) | InboundEventType::DeviceBrightness(_))
+				&& uuid != "com.amansprojects.starterpack.sdPlugin"
+				&& uuid != "opendeck_alternative_elgato_implementation"
+			{
 				return;
 			}
 		}
