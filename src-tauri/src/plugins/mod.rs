@@ -3,6 +3,7 @@ pub mod manifest;
 mod webserver;
 
 use crate::APP_HANDLE;
+use crate::application_watcher::{start_monitoring, stop_monitoring_all};
 use crate::shared::{Action, CATEGORIES, config_dir, convert_icon, is_flatpak, log_dir};
 use crate::store::get_settings;
 
@@ -293,6 +294,12 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		}
 	}
 
+	if let Some(apps) = manifest.applications_to_monitor {
+		for app in apps.get(platform).into_iter().flatten() {
+			start_monitoring(plugin_uuid, app).await?;
+		}
+	}
+
 	Ok(())
 }
 
@@ -309,6 +316,8 @@ pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow
 			crate::events::frontend::update_devices().await;
 		}
 	}
+
+	stop_monitoring_all(uuid).await?;
 
 	let mut instances = INSTANCES.lock().await;
 	if let Some(instance) = instances.remove(uuid) {

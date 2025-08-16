@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::shared::Action;
 
 use serde::Deserialize;
@@ -52,6 +54,9 @@ pub struct PluginManifest {
 
 	#[serde(alias = "DeviceNamespace")]
 	pub device_namespace: Option<String>,
+
+	#[serde(alias = "ApplicationsToMonitor")]
+	pub applications_to_monitor: Option<HashMap<String, Vec<String>>>,
 }
 
 pub fn read_manifest(base_path: &std::path::Path) -> Result<PluginManifest, anyhow::Error> {
