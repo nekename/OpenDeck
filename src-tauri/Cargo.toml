@@ -47,9 +47,9 @@ base64 = "0.22"
 reqwest = "0.12"
 zip = { version = "4.0", default-features = false, features = ["deflate", "zstd"] }
 active-win-pos-rs = "0.9"
+sysinfo = "0.36"
 semver = "1.0"
 path-slash = "0.2"
-sysinfo = "0.36.1"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

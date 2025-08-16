@@ -1,4 +1,4 @@
-pub mod app_monitor;
+pub mod applications;
 pub mod devices;
 pub mod encoder;
 pub mod keypad;

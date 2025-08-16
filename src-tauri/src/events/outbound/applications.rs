@@ -1,26 +1,22 @@
 use super::send_to_plugin;
 
-#[derive(serde::Serialize)]
-struct ApplicationDidLaunchEvent {
-	event: &'static str,
-	payload: ApplicationPayload,
-}
+use serde::Serialize;
 
-#[derive(serde::Serialize)]
-struct ApplicationDidTerminate {
-	event: &'static str,
-	payload: ApplicationPayload,
-}
-
-#[derive(serde::Serialize)]
+#[derive(Serialize)]
 struct ApplicationPayload {
 	application: String,
+}
+
+#[derive(Serialize)]
+struct ApplicationEvent {
+	event: &'static str,
+	payload: ApplicationPayload,
 }
 
 pub async fn application_did_launch(plugin: &str, application: String) -> Result<(), anyhow::Error> {
 	send_to_plugin(
 		plugin,
-		&ApplicationDidLaunchEvent {
+		&ApplicationEvent {
 			event: "applicationDidLaunch",
 			payload: ApplicationPayload { application },
 		},
@@ -31,7 +27,7 @@ pub async fn application_did_launch(plugin: &str, application: String) -> Result
 pub async fn application_did_terminate(plugin: &str, application: String) -> Result<(), anyhow::Error> {
 	send_to_plugin(
 		plugin,
-		&ApplicationDidTerminate {
+		&ApplicationEvent {
 			event: "applicationDidTerminate",
 			payload: ApplicationPayload { application },
 		},
