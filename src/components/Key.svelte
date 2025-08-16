@@ -20,7 +20,10 @@
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
 	let slot: ActionInstance | null;
-	const update = (inslot: ActionInstance | null) => slot = inslot;
+	const update = (inslot: ActionInstance | null) => {
+		if (inslot && context && inslot.context.split(".")[0] != context.device) return;
+		slot = inslot;
+	};
 	$: update(inslot);
 
 	export let active: boolean = true;
