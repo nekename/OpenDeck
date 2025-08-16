@@ -3,6 +3,7 @@
 	import type { Profile } from "$lib/Profile";
 
 	import { inspectedParentAction } from "$lib/propertyInspector";
+	import { actionList, deviceSelector, profileManager } from "$lib/singletons";
 
 	import ActionList from "../components/ActionList.svelte";
 	import DeviceSelector from "../components/DeviceSelector.svelte";
@@ -17,10 +18,6 @@
 	let devices: { [id: string]: DeviceInfo } = {};
 	let selectedDevice: string;
 	let selectedProfiles: { [id: string]: Profile } = {};
-
-	let actionList: ActionList;
-	let deviceSelector: DeviceSelector;
-	let profileManager: ProfileManager;
 </script>
 
 <svelte:window on:dragover={(event) => event.preventDefault()} on:drop={(event) => event.preventDefault()} />
@@ -51,23 +48,22 @@
 			bind:devices
 			bind:value={selectedDevice}
 			bind:selectedProfiles
-			bind:this={deviceSelector}
-			profileManager={() => profileManager}
+			bind:this={$deviceSelector}
 		/>
 		{#key selectedDevice}
 			{#if selectedDevice && devices[selectedDevice]}
 				<ProfileManager
 					bind:device={devices[selectedDevice]}
 					bind:profile={selectedProfiles[selectedDevice]}
-					bind:this={profileManager}
+					bind:this={$profileManager}
 				/>
 			{/if}
 		{/key}
 	{/if}
-	<ActionList bind:this={actionList} />
+	<ActionList bind:this={$actionList} />
 	<hr class="mt-2 border dark:border-neutral-700" />
 	<div class="flex flex-row">
-		<PluginManager actionList={() => actionList} deviceSelector={() => deviceSelector} />
+		<PluginManager />
 		<SettingsView />
 	</div>
 </div>
