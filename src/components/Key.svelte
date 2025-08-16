@@ -102,7 +102,8 @@
 	let lock = new CanvasLock();
 	export let size = 144;
 	$: (async () => {
-		if (!slot) {
+		const sl = structuredClone(slot);
+		if (!sl) {
 			if (canvas) {
 				let context = canvas.getContext("2d");
 				if (context) context.clearRect(0, 0, canvas.width, canvas.height);
@@ -110,7 +111,7 @@
 		} else {
 			const unlock = await lock.lock();
 			try {
-				let fallback = slot.action.states[slot.current_state]?.image ?? slot.action.icon;
+				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
 				if (state) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed);
 			} finally {
 				unlock();
