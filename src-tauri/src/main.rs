@@ -16,6 +16,7 @@ mod built_info {
 use events::frontend;
 
 use once_cell::sync::OnceCell;
+use psp::monitor::{PowerMonitor, PowerState};
 use tauri::{
 	AppHandle, Builder, Manager, WindowEvent,
 	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
@@ -215,6 +216,22 @@ Enjoy!"#,
 				tokio::spawn(async {
 					if let Err(error) = update().await {
 						log::warn!("Failed to update application: {error}");
+					}
+				});
+			}
+
+			let power_monitor = PowerMonitor::new();
+			let power_event_channel = power_monitor.event_receiver();
+			if let Err(msg) = power_monitor.start_listening() {
+				log::warn!("Failed to start power event listener: {}", msg);
+			} else {
+				tokio::spawn(async move {
+					while let Ok(event) = power_event_channel.recv() {
+						if let PowerState::ScreenUnlocked = event {
+							if let Err(err) = events::outbound::devices::system_did_wake_up().await {
+								log::warn!("Failed to broadcast systemDidWakeUp event: {}", err);
+							}
+						}
 					}
 				});
 			}
