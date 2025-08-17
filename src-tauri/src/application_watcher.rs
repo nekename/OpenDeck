@@ -100,6 +100,7 @@ pub fn init_application_watcher() {
 					}
 				}
 			}
+			drop(application_plugins);
 
 			tokio::time::sleep(std::time::Duration::from_millis(250)).await;
 		}
