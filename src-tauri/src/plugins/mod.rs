@@ -293,6 +293,12 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		}
 	}
 
+	if let Some(applications) = manifest.applications_to_monitor {
+		if let Some(applications) = applications.get(platform) {
+			crate::application_watcher::start_monitoring(plugin_uuid, applications).await;
+		}
+	}
+
 	Ok(())
 }
 
@@ -309,6 +315,8 @@ pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow
 			crate::events::frontend::update_devices().await;
 		}
 	}
+
+	crate::application_watcher::stop_monitoring(uuid).await;
 
 	let mut instances = INSTANCES.lock().await;
 	if let Some(instance) = instances.remove(uuid) {
