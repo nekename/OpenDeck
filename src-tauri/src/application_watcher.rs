@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use active_win_pos_rs::get_active_window;
 use once_cell::sync::Lazy;
-use sysinfo::{Pid, ProcessRefreshKind, System};
+use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System};
 use tauri::{Emitter, Manager};
 use tokio::sync::RwLock;
 
@@ -70,7 +70,7 @@ pub fn init_application_watcher() {
 		let mut system = System::new_all();
 
 		loop {
-			system.refresh_processes_specifics(sysinfo::ProcessesToUpdate::All, true, ProcessRefreshKind::nothing());
+			system.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::nothing());
 
 			for (application, processes) in APPLICATION_PROCESSES.write().await.iter_mut() {
 				let mut alive_processes = Vec::with_capacity(processes.len());
