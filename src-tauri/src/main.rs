@@ -61,6 +61,7 @@ async fn main() {
 			frontend::plugins::install_plugin,
 			frontend::plugins::remove_plugin,
 			frontend::plugins::reload_plugin,
+			frontend::plugins::show_settings_interface,
 			frontend::settings::get_settings,
 			frontend::settings::set_settings,
 			frontend::settings::open_config_directory,

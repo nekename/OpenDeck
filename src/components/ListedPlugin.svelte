@@ -1,14 +1,11 @@
 <script lang="ts">
-	import WarningCircle from "phosphor-svelte/lib/WarningCircle";
-
-	import { invoke } from "@tauri-apps/api/core";
-
 	export let icon: string;
 	export let name: string;
 	export let subtitle: string;
 	export let hidden: boolean = false;
 	export let disconnected: boolean = false;
 	export let action: () => void;
+	export let secondaryAction: (() => void) | undefined = undefined;
 </script>
 
 <div
@@ -21,9 +18,9 @@
 	</div>
 
 	<div class="flex flex-col ml-auto mr-4 space-y-2">
-		{#if disconnected}
-			<button on:click={() => invoke("open_log_directory")}>
-				<WarningCircle size="24" color="#E5A50A" />
+		{#if secondaryAction}
+			<button on:click={secondaryAction}>
+				<slot name="secondary" />
 			</button>
 		{/if}
 		<button on:click={action}>

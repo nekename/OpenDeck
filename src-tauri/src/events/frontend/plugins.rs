@@ -12,6 +12,7 @@ pub struct PluginInfo {
 	author: String,
 	icon: String,
 	version: String,
+	has_settings_interface: bool,
 	builtin: bool,
 	registered: bool,
 }
@@ -47,6 +48,7 @@ pub async fn list_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, Error> {
 				author: manifest.author,
 				icon: crate::shared::convert_icon(path.join(manifest.icon).to_str().unwrap().to_owned()),
 				version: manifest.version,
+				has_settings_interface: manifest.has_settings_interface.unwrap_or(false),
 				builtin: builtins.contains(&id),
 				registered: registered.contains(&id),
 				id,
@@ -151,4 +153,10 @@ pub async fn remove_plugin(app: AppHandle, id: String) -> Result<(), Error> {
 pub async fn reload_plugin(app: AppHandle, id: String) {
 	let _ = crate::plugins::deactivate_plugin(&app, &id).await;
 	let _ = crate::plugins::initialise_plugin(&config_dir().join("plugins").join(id)).await;
+}
+
+#[command]
+pub async fn show_settings_interface(plugin: String) -> Result<(), Error> {
+	crate::events::outbound::settings::show_settings_interface(&plugin).await?;
+	Ok(())
 }

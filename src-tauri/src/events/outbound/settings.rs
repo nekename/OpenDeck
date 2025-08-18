@@ -63,3 +63,7 @@ pub async fn did_receive_global_settings(context: &str, to_property_inspector: b
 
 	Ok(())
 }
+
+pub async fn show_settings_interface(plugin: &str) -> Result<(), anyhow::Error> {
+	send_to_plugin(plugin, &serde_json::json!({ "event": "showSettingsInterface" })).await
+}

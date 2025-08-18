@@ -57,6 +57,9 @@ pub struct PluginManifest {
 
 	#[serde(alias = "ApplicationsToMonitor")]
 	pub applications_to_monitor: Option<HashMap<String, Vec<String>>>,
+
+	#[serde(alias = "HasSettingsInterface")]
+	pub has_settings_interface: Option<bool>,
 }
 
 pub fn read_manifest(base_path: &std::path::Path) -> Result<PluginManifest, anyhow::Error> {

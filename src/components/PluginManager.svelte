@@ -1,16 +1,15 @@
 <script lang="ts">
-	import type ActionList from "./ActionList.svelte";
-	import type DeviceSelector from "./DeviceSelector.svelte";
-
 	import ArrowClockwise from "phosphor-svelte/lib/ArrowClockwise";
 	import ArrowSquareOut from "phosphor-svelte/lib/ArrowSquareOut";
 	import CloudArrowDown from "phosphor-svelte/lib/CloudArrowDown";
 	import FileArrowUp from "phosphor-svelte/lib/FileArrowUp";
-	import Trash from "phosphor-svelte/lib/Trash";
+	import Gear from "phosphor-svelte/lib/Gear";
 	import ListedPlugin from "./ListedPlugin.svelte";
 	import PluginDetails from "./PluginDetails.svelte";
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
+	import Trash from "phosphor-svelte/lib/Trash";
+	import WarningCircle from "phosphor-svelte/lib/WarningCircle";
 
 	import { localisations, settings } from "$lib/settings";
 	import { actionList, deviceSelector } from "$lib/singletons";
@@ -158,7 +157,19 @@
 					if ($settings?.developer) invoke("reload_plugin", { id: plugin.id });
 					else removePlugin(plugin);
 				}}
+				secondaryAction={() => {
+					if (!plugin.registered) invoke("open_log_directory");
+					else if (plugin.has_settings_interface) invoke("show_settings_interface", { plugin: plugin.id });
+				}}
 			>
+				<svelte:fragment slot="secondary">
+					{#if !plugin.registered}
+						<WarningCircle size="24" color="#E5A50A" />
+					{:else if plugin.has_settings_interface}
+						<Gear size="24" color="#26A269" />
+					{/if}
+				</svelte:fragment>
+
 				{#if $settings?.developer}
 					<ArrowClockwise
 						size="24"
