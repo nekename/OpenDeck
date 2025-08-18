@@ -15,10 +15,19 @@
 <div class="grow mt-1 overflow-auto select-none">
 	{#each Object.entries(categories).sort((a, b) => a[0] == "OpenDeck" ? -1 : b[0] == "OpenDeck" ? 1 : a[0].localeCompare(b[0])) as [name, { icon, actions }]}
 		<details open class="mb-2">
-			<summary class="text-xl font-semibold dark:text-neutral-300">{name}</summary>
+			<summary class="text-xl font-semibold dark:text-neutral-300 align-middle">
+				{#if icon}
+					<img
+						src={!icon.startsWith("opendeck/") ? "http://localhost:57118/" + icon : icon.replace("opendeck", "")}
+						alt=""
+						class="w-12 h-12 rounded-xs mr-[3px] inline"
+					/>
+				{/if}
+				<span class="inline">{name}</span>
+			</summary>
 			{#each actions as action}
 				<div
-					class="flex flex-row items-center my-2 space-x-2"
+					class="flex flex-row items-center ml-5 my-2 space-x-2"
 					role="group"
 					draggable="true"
 					on:dragstart={(event) => event.dataTransfer?.setData("action", JSON.stringify(action))}
