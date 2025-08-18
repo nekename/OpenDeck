@@ -3,7 +3,7 @@ pub mod manifest;
 mod webserver;
 
 use crate::APP_HANDLE;
-use crate::shared::{Action, CATEGORIES, config_dir, convert_icon, is_flatpak, log_dir};
+use crate::shared::{CATEGORIES, CategoryInfo, config_dir, convert_icon, is_flatpak, log_dir};
 use crate::store::get_settings;
 
 use std::collections::HashMap;
@@ -35,6 +35,11 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 	let plugin_uuid = path.file_name().unwrap().to_str().unwrap();
 
 	let mut manifest = manifest::read_manifest(path)?;
+
+	if let Some(icon) = manifest.category_icon {
+		let category_icon_path = path.join(icon);
+		manifest.category_icon = Some(convert_icon(category_icon_path.to_str().unwrap().to_owned()))
+	}
 
 	for action in &mut manifest.actions {
 		plugin_uuid.clone_into(&mut action.plugin);
@@ -76,17 +81,20 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		let mut categories = CATEGORIES.write().await;
 		if let Some(category) = categories.get_mut(&manifest.category) {
 			for action in manifest.actions {
-				if let Some(index) = category.iter().position(|v| v.uuid == action.uuid) {
-					category.remove(index);
+				if let Some(index) = category.actions.iter().position(|v| v.uuid == action.uuid) {
+					category.actions.remove(index);
 				}
-				category.push(action);
+				category.actions.push(action);
 			}
 		} else {
-			let mut category: Vec<Action> = vec![];
+			let mut category: CategoryInfo = CategoryInfo {
+				icon: manifest.category_icon,
+				actions: vec![],
+			};
 			for action in manifest.actions {
-				category.push(action);
+				category.actions.push(action);
 			}
-			if !category.is_empty() {
+			if !category.actions.is_empty() {
 				categories.insert(manifest.category, category);
 			}
 		}

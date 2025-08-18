@@ -5,7 +5,7 @@
 
 	import { invoke } from "@tauri-apps/api/core";
 
-	let categories: { [name: string]: Action[] } = {};
+	let categories: { [name: string]: { icon?: string; actions: Action[] } } = {};
 	export async function reload() {
 		categories = await invoke("get_categories");
 	}
@@ -13,7 +13,7 @@
 </script>
 
 <div class="grow mt-1 overflow-auto select-none">
-	{#each Object.entries(categories).sort((a, b) => a[0] == "OpenDeck" ? -1 : b[0] == "OpenDeck" ? 1 : a[0].localeCompare(b[0])) as [name, actions]}
+	{#each Object.entries(categories).sort((a, b) => a[0] == "OpenDeck" ? -1 : b[0] == "OpenDeck" ? 1 : a[0].localeCompare(b[0])) as [name, { icon, actions }]}
 		<details open class="mb-2">
 			<summary class="text-xl font-semibold dark:text-neutral-300">{name}</summary>
 			{#each actions as action}

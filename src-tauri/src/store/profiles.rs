@@ -49,7 +49,7 @@ impl ProfileStores {
 			store.value.sliders.resize(device.encoders as usize, None);
 
 			let categories = crate::shared::CATEGORIES.read().await;
-			let actions = categories.values().flatten().collect::<Vec<_>>();
+			let actions = categories.values().flat_map(|v| v.actions.iter()).collect::<Vec<_>>();
 			let plugins_dir = config_dir().join("plugins");
 			let registered = crate::events::registered_plugins().await;
 			let keep_instance = |instance: &ActionInstance| -> bool {
