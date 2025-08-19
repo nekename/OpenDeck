@@ -150,7 +150,7 @@ impl Default for ActionState {
 
 #[serde_inline_default]
 #[derive(Clone, Serialize, Deserialize)]
-pub struct CategoryInfo {
+pub struct Category {
 	pub icon: Option<String>,
 	pub actions: Vec<Action>,
 }
@@ -295,11 +295,11 @@ pub struct Profile {
 }
 
 /// A map of category names to a list of actions in that category.
-pub static CATEGORIES: Lazy<RwLock<HashMap<String, CategoryInfo>>> = Lazy::new(|| {
+pub static CATEGORIES: Lazy<RwLock<HashMap<String, Category>>> = Lazy::new(|| {
 	let mut hashmap = HashMap::new();
 	hashmap.insert(
 		"OpenDeck".to_owned(),
-		CategoryInfo {
+		Category {
 			icon: None,
 			actions: vec![
 				serde_json::from_value(serde_json::json!(

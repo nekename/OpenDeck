@@ -3,7 +3,7 @@ pub mod manifest;
 mod webserver;
 
 use crate::APP_HANDLE;
-use crate::shared::{CATEGORIES, CategoryInfo, config_dir, convert_icon, is_flatpak, log_dir};
+use crate::shared::{CATEGORIES, Category, config_dir, convert_icon, is_flatpak, log_dir};
 use crate::store::get_settings;
 
 use std::collections::HashMap;
@@ -38,7 +38,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 
 	if let Some(icon) = manifest.category_icon {
 		let category_icon_path = path.join(icon);
-		manifest.category_icon = Some(convert_icon(category_icon_path.to_str().unwrap().to_owned()))
+		manifest.category_icon = Some(convert_icon(category_icon_path.to_string_lossy().to_string()))
 	}
 
 	for action in &mut manifest.actions {
@@ -87,7 +87,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 				category.actions.push(action);
 			}
 		} else {
-			let mut category: CategoryInfo = CategoryInfo {
+			let mut category: Category = Category {
 				icon: manifest.category_icon,
 				actions: vec![],
 			};

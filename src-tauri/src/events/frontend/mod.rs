@@ -4,7 +4,7 @@ pub mod profiles;
 pub mod property_inspector;
 pub mod settings;
 
-use crate::shared::{CATEGORIES, CategoryInfo, DEVICES, DeviceInfo};
+use crate::shared::{CATEGORIES, Category, DEVICES, DeviceInfo};
 
 use std::collections::HashMap;
 
@@ -57,7 +57,7 @@ pub async fn update_devices() {
 }
 
 #[command]
-pub async fn get_categories() -> HashMap<String, CategoryInfo> {
+pub async fn get_categories() -> HashMap<String, Category> {
 	CATEGORIES.read().await.clone()
 }
 
