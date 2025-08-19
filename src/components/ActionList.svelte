@@ -6,8 +6,10 @@
 	import { invoke } from "@tauri-apps/api/core";
 
 	let categories: { [name: string]: { icon?: string; actions: Action[] } } = {};
+	let plugins: any[] = [];
 	export async function reload() {
 		categories = await invoke("get_categories");
+		plugins = await invoke("list_plugins");
 	}
 	reload();
 </script>
@@ -15,19 +17,21 @@
 <div class="grow mt-1 overflow-auto select-none">
 	{#each Object.entries(categories).sort((a, b) => a[0] == "OpenDeck" ? -1 : b[0] == "OpenDeck" ? 1 : a[0].localeCompare(b[0])) as [name, { icon, actions }]}
 		<details open class="mb-2">
-			<summary class="text-xl font-semibold dark:text-neutral-300 align-middle">
-				{#if icon}
+			<summary class="text-xl font-semibold dark:text-neutral-300">
+				{#if icon || (actions[0] && plugins.find((x) => x.id == actions[0].plugin) && actions.every((x) => x.plugin == actions[0].plugin))}
 					<img
-						src={!icon.startsWith("opendeck/") ? "http://localhost:57118/" + icon : icon.replace("opendeck", "")}
+						src={icon
+							? (!icon.startsWith("opendeck/") ? "http://localhost:57118/" + icon : icon.replace("opendeck", ""))
+							: "http://localhost:57118/" + plugins.find((x) => x.id == actions[0].plugin).icon}
 						alt=""
-						class="w-12 h-12 rounded-xs mr-[3px] inline"
+						class="w-5 h-5 rounded-xs ml-1 -mt-1 inline"
 					/>
 				{/if}
-				<span class="inline">{name}</span>
+				<span class="ml-1">{name}</span>
 			</summary>
 			{#each actions as action}
 				<div
-					class="flex flex-row items-center ml-5 my-2 space-x-2"
+					class="flex flex-row items-center my-2 space-x-2"
 					role="group"
 					draggable="true"
 					on:dragstart={(event) => event.dataTransfer?.setData("action", JSON.stringify(action))}
