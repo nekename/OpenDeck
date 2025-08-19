@@ -42,7 +42,7 @@
 	{/if}
 </div>
 
-<div class="flex flex-col p-2 grow max-w-[18rem] h-full border-l dark:border-neutral-700">
+<div class="flex flex-col p-2 w-[18rem] h-full border-l dark:border-neutral-700">
 	{#if !$inspectedParentAction}
 		<DeviceSelector
 			bind:devices
