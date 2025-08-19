@@ -34,6 +34,7 @@
 					class="flex flex-row items-center my-2 space-x-2"
 					role="group"
 					draggable="true"
+					title={$localisations?.[action.plugin]?.[action.uuid]?.Tooltip ?? action.tooltip}
 					on:dragstart={(event) => event.dataTransfer?.setData("action", JSON.stringify(action))}
 				>
 					<img
