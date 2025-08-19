@@ -29,7 +29,7 @@
 				{/if}
 				<span class="ml-1">{name}</span>
 			</summary>
-			{#each actions as action}
+			{#each actions.filter((action) => action.visible_in_action_list) as action}
 				<div
 					class="flex flex-row items-center my-2 space-x-2"
 					role="group"
