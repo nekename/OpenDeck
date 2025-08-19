@@ -38,7 +38,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 
 	if let Some(icon) = manifest.category_icon {
 		let category_icon_path = path.join(icon);
-		manifest.category_icon = Some(convert_icon(category_icon_path.to_string_lossy().to_string()))
+		manifest.category_icon = Some(convert_icon(category_icon_path.to_string_lossy().to_string()));
 	}
 
 	for action in &mut manifest.actions {
