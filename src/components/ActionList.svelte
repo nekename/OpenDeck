@@ -5,7 +5,7 @@
 	import { PRODUCT_NAME } from "$lib/singletons";
 
 	import { invoke } from "@tauri-apps/api/core";
-	import { MagnifyingGlass } from "phosphor-svelte";
+	import { MagnifyingGlass, XCircle } from "phosphor-svelte";
 
 	let categories: { [name: string]: { icon?: string; actions: Action[] } } = {};
 	let plugins: any[] = [];
@@ -37,9 +37,14 @@
 	<input
 		type="text"
 		placeholder="Search"
-		class="p-1 text-sm dark:text-neutral-300 invalid:text-red-400 outline-hidden"
+		class="grow p-1 text-sm dark:text-neutral-300 invalid:text-red-400 outline-hidden"
 		bind:value={query}
 	/>
+	<div class="relative w-0 flex items-center">
+		<button on:click={() => query = ""} class="cursor-default absolute right-0 mr-1.5" hidden={query.length == 0}>
+			<XCircle size={16} color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+		</button>
+	</div>
 </div>
 <div class="grow mt-1 overflow-auto select-none">
 	{#each filteredCategories as [name, { icon, actions }]}
