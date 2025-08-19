@@ -5,6 +5,7 @@
 	import { PRODUCT_NAME } from "$lib/singletons";
 
 	import { invoke } from "@tauri-apps/api/core";
+	import { MagnifyingGlass } from "phosphor-svelte";
 
 	let categories: { [name: string]: { icon?: string; actions: Action[] } } = {};
 	let plugins: any[] = [];
@@ -15,6 +16,14 @@
 	reload();
 </script>
 
+<div class="searchbar flex flex-row items-center mt-1 dark:bg-neutral-700 rounded-md border-2 border-neutral-900">
+	<MagnifyingGlass size={13} class="mx-1" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+	<input
+		type="text"
+		placeholder="Search"
+		class="p-1 text-sm dark:text-neutral-300 invalid:text-red-400 outline-hidden"
+	/>
+</div>
 <div class="grow mt-1 overflow-auto select-none">
 	{#each Object.entries(categories).sort((a, b) => a[0] == PRODUCT_NAME ? -1 : b[0] == PRODUCT_NAME ? 1 : a[0].localeCompare(b[0])) as [name, { icon, actions }]}
 		<details open class="mb-2">
