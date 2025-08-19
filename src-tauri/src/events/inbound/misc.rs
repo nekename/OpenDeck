@@ -1,4 +1,4 @@
-use super::{ContextAndPayloadEvent, ContextEvent, PayloadEvent};
+use super::{ContextEvent, PayloadEvent};
 
 use tauri::{Emitter, Manager};
 
@@ -9,15 +9,15 @@ pub struct OpenUrlEvent {
 	pub url: String,
 }
 
-#[derive(Deserialize)]
-pub struct LogMessageEvent {
-	pub message: String,
-}
-
 pub async fn open_url(event: PayloadEvent<OpenUrlEvent>) -> Result<(), anyhow::Error> {
 	log::debug!("Opening URL {}", event.payload.url);
 	open::that_detached(event.payload.url)?;
 	Ok(())
+}
+
+#[derive(Deserialize)]
+pub struct LogMessageEvent {
+	pub message: String,
 }
 
 pub async fn log_message(uuid: Option<&str>, mut event: PayloadEvent<LogMessageEvent>) -> Result<(), anyhow::Error> {
@@ -27,16 +27,6 @@ pub async fn log_message(uuid: Option<&str>, mut event: PayloadEvent<LogMessageE
 		}
 	}
 	log::info!("{}", event.payload.message.trim());
-	Ok(())
-}
-
-pub async fn send_to_property_inspector(event: ContextAndPayloadEvent<serde_json::Value>) -> Result<(), anyhow::Error> {
-	crate::events::outbound::property_inspector::send_to_property_inspector(event.context, event.payload).await?;
-	Ok(())
-}
-
-pub async fn send_to_plugin(event: ContextAndPayloadEvent<serde_json::Value>) -> Result<(), anyhow::Error> {
-	crate::events::outbound::property_inspector::send_to_plugin(event.context, event.payload).await?;
 	Ok(())
 }
 

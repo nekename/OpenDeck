@@ -12,12 +12,6 @@ struct DeviceDidConnectEvent {
 	deviceInfo: DeviceInfo,
 }
 
-#[derive(Serialize)]
-struct DeviceDidDisconnectEvent {
-	event: &'static str,
-	device: String,
-}
-
 pub async fn device_did_connect(id: &str, info: DeviceInfo) -> Result<(), anyhow::Error> {
 	send_to_all_plugins(&DeviceDidConnectEvent {
 		event: "deviceDidConnect",
@@ -25,6 +19,12 @@ pub async fn device_did_connect(id: &str, info: DeviceInfo) -> Result<(), anyhow
 		deviceInfo: info,
 	})
 	.await
+}
+
+#[derive(Serialize)]
+struct DeviceDidDisconnectEvent {
+	event: &'static str,
+	device: String,
 }
 
 pub async fn device_did_disconnect(id: &str) -> Result<(), anyhow::Error> {

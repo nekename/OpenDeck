@@ -22,22 +22,6 @@ struct DialRotateEvent {
 	payload: DialRotatePayload,
 }
 
-#[derive(Serialize)]
-struct DialPressPayload {
-	controller: &'static str,
-	settings: serde_json::Value,
-	coordinates: Coordinates,
-}
-
-#[derive(Serialize)]
-struct DialPressEvent {
-	event: &'static str,
-	action: String,
-	context: ActionContext,
-	device: String,
-	payload: DialPressPayload,
-}
-
 pub async fn dial_rotate(device: &str, index: u8, ticks: i16) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
 	let selected_profile = locks.device_stores.get_selected_profile(device)?;
@@ -69,6 +53,22 @@ pub async fn dial_rotate(device: &str, index: u8, ticks: i16) -> Result<(), anyh
 		},
 	)
 	.await
+}
+
+#[derive(Serialize)]
+struct DialPressPayload {
+	controller: &'static str,
+	settings: serde_json::Value,
+	coordinates: Coordinates,
+}
+
+#[derive(Serialize)]
+struct DialPressEvent {
+	event: &'static str,
+	action: String,
+	context: ActionContext,
+	device: String,
+	payload: DialPressPayload,
 }
 
 pub async fn dial_press(device: &str, event: &'static str, index: u8) -> Result<(), anyhow::Error> {

@@ -13,17 +13,6 @@ struct DidReceiveSettingsEvent {
 	payload: GenericInstancePayload,
 }
 
-#[derive(Serialize)]
-struct DidReceiveGlobalSettingsPayload {
-	settings: serde_json::Value,
-}
-
-#[derive(Serialize)]
-struct DidReceiveGlobalSettingsEvent {
-	event: &'static str,
-	payload: DidReceiveGlobalSettingsPayload,
-}
-
 pub async fn did_receive_settings(instance: &crate::shared::ActionInstance, to_property_inspector: bool) -> Result<(), anyhow::Error> {
 	let data = DidReceiveSettingsEvent {
 		event: "didReceiveSettings",
@@ -37,6 +26,17 @@ pub async fn did_receive_settings(instance: &crate::shared::ActionInstance, to_p
 	} else {
 		send_to_plugin(&instance.action.plugin, &data).await
 	}
+}
+
+#[derive(Serialize)]
+struct DidReceiveGlobalSettingsPayload {
+	settings: serde_json::Value,
+}
+
+#[derive(Serialize)]
+struct DidReceiveGlobalSettingsEvent {
+	event: &'static str,
+	payload: DidReceiveGlobalSettingsPayload,
 }
 
 pub async fn did_receive_global_settings(context: &str, to_property_inspector: bool) -> Result<(), anyhow::Error> {

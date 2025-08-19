@@ -5,12 +5,15 @@ use crate::shared::{ActionContext, ActionInstance};
 use serde::Serialize;
 
 #[derive(Serialize)]
-struct TitleParametersDidChangeEvent {
-	event: &'static str,
-	action: String,
-	context: ActionContext,
-	device: String,
-	payload: TitleParametersDidChangePayload,
+#[allow(non_snake_case)]
+struct TitleParameters {
+	fontFamily: String,
+	fontSize: u16,
+	fontStyle: String,
+	fontUnderline: bool,
+	showTitle: bool,
+	titleAlignment: String,
+	titleColor: String,
 }
 
 #[derive(Serialize)]
@@ -24,15 +27,12 @@ struct TitleParametersDidChangePayload {
 }
 
 #[derive(Serialize)]
-#[allow(non_snake_case)]
-struct TitleParameters {
-	fontFamily: String,
-	fontSize: u16,
-	fontStyle: String,
-	fontUnderline: bool,
-	showTitle: bool,
-	titleAlignment: String,
-	titleColor: String,
+struct TitleParametersDidChangeEvent {
+	event: &'static str,
+	action: String,
+	context: ActionContext,
+	device: String,
+	payload: TitleParametersDidChangePayload,
 }
 
 pub async fn title_parameters_did_change(instance: &ActionInstance, state: u16) -> Result<(), anyhow::Error> {
