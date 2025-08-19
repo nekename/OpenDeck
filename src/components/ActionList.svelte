@@ -14,6 +14,22 @@
 		plugins = await invoke("list_plugins");
 	}
 	reload();
+
+	let query: string = "";
+	let filteredCategories: [string, { icon?: string; actions: Action[] }][] = [];
+	$: {
+		let lowerCaseQuery = query.toLowerCase().trim();
+
+		filteredCategories = Object.entries(categories)
+			.sort((a, b) => a[0] == PRODUCT_NAME ? -1 : b[0] == PRODUCT_NAME ? 1 : a[0].localeCompare(b[0]))
+			.map(([categoryName, { icon, actions }]): [string, { icon?: string; actions: Action[] }] => {
+				if (!categoryName.toLowerCase().includes(lowerCaseQuery)) {
+					actions = actions.filter((action) => action.name.toLowerCase().includes(lowerCaseQuery));
+				}
+				return [categoryName, { icon, actions }];
+			})
+			.filter(([, { actions }]) => actions.length > 0);
+	}
 </script>
 
 <div class="searchbar flex flex-row items-center mt-1 dark:bg-neutral-700 rounded-md border-2 border-neutral-900">
@@ -22,10 +38,11 @@
 		type="text"
 		placeholder="Search"
 		class="p-1 text-sm dark:text-neutral-300 invalid:text-red-400 outline-hidden"
+		bind:value={query}
 	/>
 </div>
 <div class="grow mt-1 overflow-auto select-none">
-	{#each Object.entries(categories).sort((a, b) => a[0] == PRODUCT_NAME ? -1 : b[0] == PRODUCT_NAME ? 1 : a[0].localeCompare(b[0])) as [name, { icon, actions }]}
+	{#each filteredCategories as [name, { icon, actions }]}
 		<details open class="mb-2">
 			<summary class="text-xl font-semibold dark:text-neutral-300">
 				{#if icon || (actions[0] && plugins.find((x) => x.id == actions[0].plugin) && actions.every((x) => x.plugin == actions[0].plugin))}
