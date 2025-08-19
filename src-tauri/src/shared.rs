@@ -148,6 +148,13 @@ impl Default for ActionState {
 	}
 }
 
+#[serde_inline_default]
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Category {
+	pub icon: Option<String>,
+	pub actions: Vec<Action>,
+}
+
 /// An action, deserialised from the plugin manifest.
 #[serde_inline_default]
 #[derive(Clone, Serialize, Deserialize)]
@@ -288,38 +295,41 @@ pub struct Profile {
 }
 
 /// A map of category names to a list of actions in that category.
-pub static CATEGORIES: Lazy<RwLock<HashMap<String, Vec<Action>>>> = Lazy::new(|| {
+pub static CATEGORIES: Lazy<RwLock<HashMap<String, Category>>> = Lazy::new(|| {
 	let mut hashmap = HashMap::new();
 	hashmap.insert(
 		"OpenDeck".to_owned(),
-		vec![
-			serde_json::from_value(serde_json::json!(
-				{
-					"name": "Multi Action",
-					"icon": "opendeck/multi-action.png",
-					"plugin": "opendeck",
-					"uuid": "opendeck.multiaction",
-					"tooltip": "Execute multiple actions",
-					"controllers": [ "Keypad" ],
-					"states": [ { "image": "opendeck/multi-action.png" } ],
-					"supported_in_multi_actions": false
-				}
-			))
-			.unwrap(),
-			serde_json::from_value(serde_json::json!(
-				{
-					"name": "Toggle Action",
-					"icon": "opendeck/toggle-action.png",
-					"plugin": "opendeck",
-					"uuid": "opendeck.toggleaction",
-					"tooltip": "Cycle through multiple actions",
-					"controllers": [ "Keypad" ],
-					"states": [ { "image": "opendeck/toggle-action.png" } ],
-					"supported_in_multi_actions": false
-				}
-			))
-			.unwrap(),
-		],
+		Category {
+			icon: None,
+			actions: vec![
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Multi Action",
+						"icon": "opendeck/multi-action.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.multiaction",
+						"tooltip": "Execute multiple actions",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/multi-action.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Toggle Action",
+						"icon": "opendeck/toggle-action.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.toggleaction",
+						"tooltip": "Cycle through multiple actions",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/toggle-action.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
+			],
+		},
 	);
 	RwLock::new(hashmap)
 });

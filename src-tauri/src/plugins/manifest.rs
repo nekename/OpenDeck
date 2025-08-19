@@ -31,6 +31,9 @@ pub struct PluginManifest {
 	#[serde(alias = "Category")]
 	pub category: String,
 
+	#[serde(alias = "CategoryIcon")]
+	pub category_icon: Option<String>,
+
 	#[serde(alias = "Actions")]
 	pub actions: Vec<Action>,
 

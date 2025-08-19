@@ -139,9 +139,9 @@ pub async fn remove_plugin(app: AppHandle, id: String) -> Result<(), Error> {
 
 	let mut categories = crate::shared::CATEGORIES.write().await;
 	for category in categories.values_mut() {
-		category.retain(|v| v.plugin != id);
+		category.actions.retain(|v| v.plugin != id);
 	}
-	categories.retain(|_, v| !v.is_empty());
+	categories.retain(|_, v| !v.actions.is_empty());
 
 	let _ = fs::remove_file(log_dir().join("plugins").join(format!("{id}.log"))).await;
 	let _ = fs::remove_file(config_dir().join("settings").join(format!("{id}.json"))).await;
