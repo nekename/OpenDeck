@@ -23,7 +23,7 @@
 						src={icon
 							? (!icon.startsWith("opendeck/") ? "http://localhost:57118/" + icon : icon.replace("opendeck", ""))
 							: "http://localhost:57118/" + plugins.find((x) => x.id == actions[0].plugin).icon}
-						alt=""
+						alt={name}
 						class="w-5 h-5 rounded-xs ml-1 -mt-1 inline"
 					/>
 				{/if}
