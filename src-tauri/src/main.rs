@@ -14,6 +14,7 @@ mod built_info {
 }
 
 use events::frontend;
+use shared::PRODUCT_NAME;
 
 use once_cell::sync::OnceCell;
 use tauri::{
@@ -88,11 +89,11 @@ async fn main() {
 					app.get_webview_window("main").unwrap().close().unwrap();
 					app.dialog()
 						.message(format!(
-							"A newer version of OpenDeck created configuration files on this device. This version is v{}; please upgrade to v{} or newer.",
+							"A newer version of {PRODUCT_NAME} created configuration files on this device. This version is v{}; please upgrade to v{} or newer.",
 							built_info::PKG_VERSION,
 							settings.value.version
 						))
-						.title("OpenDeck upgrade required")
+						.title(format!("{PRODUCT_NAME} upgrade required"))
 						.kind(MessageDialogKind::Error)
 						.show(|_| APP_HANDLE.get().unwrap().exit(1));
 					return Ok(());
@@ -103,16 +104,16 @@ async fn main() {
 					settings.save()?;
 					if old_version == "0.0.0" {
 						app.dialog()
-							.message(
-								r#"Thanks for installing OpenDeck!
+							.message(format!(
+								r#"Thanks for installing {PRODUCT_NAME}!
 If you have any issues, please reach out on any of the support channels listed on GitHub (and make sure to star the project while you're there!).
 
 Some minimal statistics (such as operating system and plugins installed) will be collected from the next time the app starts.
 If you do not wish to support development in this way, please disable statistics in the settings.
 
 Enjoy!"#,
-							)
-							.title("OpenDeck has successfully been installed")
+							))
+							.title(format!("{PRODUCT_NAME} has successfully been installed"))
 							.kind(MessageDialogKind::Info)
 							.show(|_| ());
 						settings.value.statistics = false;
@@ -141,7 +142,7 @@ Enjoy!"#,
 			plugins::initialise_plugins();
 			application_watcher::init_application_watcher();
 
-			let label = IconMenuItemBuilder::with_id("label", "OpenDeck")
+			let label = IconMenuItemBuilder::with_id("label", PRODUCT_NAME)
 				.icon(app.default_window_icon().unwrap().clone())
 				.enabled(false)
 				.build(app)?;
@@ -201,11 +202,11 @@ Enjoy!"#,
 					let app = APP_HANDLE.get().unwrap();
 					app.dialog()
 						.message(format!(
-							"A new version of OpenDeck, {}, is available.\nUpdate description:\n\n{}",
+							"A new version of {PRODUCT_NAME}, {}, is available.\nUpdate description:\n\n{}",
 							tag_name,
 							res.get("body").map(|v| v.as_str().unwrap()).unwrap_or("No description").trim()
 						))
-						.title("OpenDeck update available")
+						.title(format!("{PRODUCT_NAME} update available"))
 						.show(|_| ());
 				}
 

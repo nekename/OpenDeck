@@ -55,10 +55,11 @@ pub fn get_build_info() -> String {
 	format!(
 		r#"
 		<details>
-			<summary> OpenDeck v{} ({}) on {} </summary>
+			<summary> {} v{} ({}) on {} </summary>
 			{}
 		</details>
 		"#,
+		crate::shared::PRODUCT_NAME,
 		built_info::PKG_VERSION,
 		built_info::GIT_COMMIT_HASH_SHORT.unwrap_or("commit hash unknown"),
 		built_info::TARGET,

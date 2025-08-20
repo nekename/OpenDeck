@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { PRODUCT_NAME } from "$lib/singletons";
+
 	import { invoke } from "@tauri-apps/api/core";
 
 	let buildInfo: string;
@@ -17,7 +19,7 @@
 			class="px-2 py-1 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg"
 			on:click={() => invoke("restart")}
 		>
-			Restart OpenDeck
+			Restart {PRODUCT_NAME}
 		</button>
 	</div>
 </div>

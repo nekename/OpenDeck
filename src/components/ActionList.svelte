@@ -2,6 +2,7 @@
 	import type { Action } from "$lib/Action";
 
 	import { localisations } from "$lib/settings";
+	import { PRODUCT_NAME } from "$lib/singletons";
 
 	import { invoke } from "@tauri-apps/api/core";
 
@@ -15,7 +16,7 @@
 </script>
 
 <div class="grow mt-1 overflow-auto select-none">
-	{#each Object.entries(categories).sort((a, b) => a[0] == "OpenDeck" ? -1 : b[0] == "OpenDeck" ? 1 : a[0].localeCompare(b[0])) as [name, { icon, actions }]}
+	{#each Object.entries(categories).sort((a, b) => a[0] == PRODUCT_NAME ? -1 : b[0] == PRODUCT_NAME ? 1 : a[0].localeCompare(b[0])) as [name, { icon, actions }]}
 		<details open class="mb-2">
 			<summary class="text-xl font-semibold dark:text-neutral-300">
 				{#if icon || (actions[0] && plugins.find((x) => x.id == actions[0].plugin) && actions.every((x) => x.plugin == actions[0].plugin))}

@@ -5,6 +5,7 @@
 	import Tooltip from "./Tooltip.svelte";
 
 	import { settings } from "$lib/settings";
+	import { PRODUCT_NAME } from "$lib/singletons";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
@@ -74,7 +75,7 @@
 				</select>
 			</div>
 			<Tooltip>
-				OpenDeck itself is not yet translated. Changing this setting will translate the text from installed plugins into your language for those that support it.
+				{PRODUCT_NAME} itself is not yet translated. Changing this setting will translate the text from installed plugins into your language for those that support it.
 			</Tooltip>
 		</div>
 
@@ -91,13 +92,13 @@
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="dark:text-neutral-400"> Run in background: </span>
 			<input type="checkbox" bind:checked={$settings.background} />
-			<Tooltip> If this option is enabled, OpenDeck will minimise to the tray and run in the background. </Tooltip>
+			<Tooltip> If this option is enabled, {PRODUCT_NAME} will minimise to the tray and run in the background. </Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="dark:text-neutral-400"> Start at login: </span>
 			<input type="checkbox" bind:checked={$settings.autolaunch} />
-			<Tooltip> If this option is enabled, OpenDeck will automatically start at login. </Tooltip>
+			<Tooltip> If this option is enabled, {PRODUCT_NAME} will automatically start at login. </Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
@@ -115,7 +116,8 @@
 				<span class="dark:text-neutral-400"> Create separate Wine prefixes: </span>
 				<input type="checkbox" bind:checked={$settings.separatewine} />
 				<Tooltip>
-					If this option is enabled, OpenDeck will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when initialised.
+					If this option is enabled, {PRODUCT_NAME} will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when
+					initialised.
 				</Tooltip>
 			</div>
 		{/if}

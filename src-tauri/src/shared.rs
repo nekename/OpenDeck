@@ -10,6 +10,8 @@ use once_cell::sync::Lazy;
 use tauri::Manager;
 use tokio::sync::RwLock;
 
+pub const PRODUCT_NAME: &str = include_str!("../../product_name.txt").trim_ascii();
+
 pub fn copy_dir(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), std::io::Error> {
 	use std::fs;
 	fs::create_dir_all(&dst)?;
@@ -298,7 +300,7 @@ pub struct Profile {
 pub static CATEGORIES: Lazy<RwLock<HashMap<String, Category>>> = Lazy::new(|| {
 	let mut hashmap = HashMap::new();
 	hashmap.insert(
-		"OpenDeck".to_owned(),
+		PRODUCT_NAME.to_owned(),
 		Category {
 			icon: None,
 			actions: vec![
