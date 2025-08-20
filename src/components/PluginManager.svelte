@@ -147,7 +147,7 @@
 
 	<h2 class="mx-2 mt-6 mb-2 text-lg dark:text-neutral-400">Installed plugins</h2>
 	<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-		{#each installed as plugin}
+		{#each installed.sort((a, b) => (a.builtin && !b.builtin) ? -1 : (b.builtin && !a.builtin) ? 1 : a.id.localeCompare(b.id)) as plugin}
 			<ListedPlugin
 				icon="http://localhost:57118/{plugin.icon}"
 				name={($localisations && $localisations[plugin.id] && $localisations[plugin.id].Name) ? $localisations[plugin.id].Name : plugin.name}
