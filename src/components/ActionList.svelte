@@ -1,11 +1,13 @@
 <script lang="ts">
 	import type { Action } from "$lib/Action";
 
+	import MagnifyingGlass from "phosphor-svelte/lib/MagnifyingGlass";
+	import XCircle from "phosphor-svelte/lib/XCircle";
+
 	import { localisations } from "$lib/settings";
 	import { PRODUCT_NAME } from "$lib/singletons";
 
 	import { invoke } from "@tauri-apps/api/core";
-	import { MagnifyingGlass, XCircle } from "phosphor-svelte";
 
 	let categories: { [name: string]: { icon?: string; actions: Action[] } } = {};
 	let plugins: any[] = [];
@@ -19,7 +21,6 @@
 	let filteredCategories: [string, { icon?: string; actions: Action[] }][] = [];
 	$: {
 		let lowerCaseQuery = query.toLowerCase().trim();
-
 		filteredCategories = Object.entries(categories)
 			.sort((a, b) => a[0] == PRODUCT_NAME ? -1 : b[0] == PRODUCT_NAME ? 1 : a[0].localeCompare(b[0]))
 			.map(([categoryName, { icon, actions }]): [string, { icon?: string; actions: Action[] }] => {
@@ -28,24 +29,21 @@
 				}
 				return [categoryName, { icon, actions }];
 			})
-			.filter(([, { actions }]) => actions.length > 0);
+			.filter(([_, { actions }]) => actions.length > 0);
 	}
 </script>
 
-<div class="searchbar flex flex-row items-center mt-1 dark:bg-neutral-700 rounded-md border-2 border-neutral-900">
-	<MagnifyingGlass size={13} class="mx-1" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+<div class="flex flex-row items-center mt-1 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-900 rounded-md">
+	<MagnifyingGlass size="13" class="ml-2 mr-1" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
 	<input
-		type="text"
-		placeholder="Search"
-		class="grow p-1 text-sm dark:text-neutral-300 invalid:text-red-400 outline-hidden"
 		bind:value={query}
+		class="w-full p-1 text-sm text-neutral-700 dark:text-neutral-300 outline-hidden"
+		placeholder="Search actions"
+		type="search"
+		spellcheck="false"
 	/>
-	<div class="relative w-0 flex items-center">
-		<button on:click={() => query = ""} class="cursor-default absolute right-0 mr-1.5" hidden={query.length == 0}>
-			<XCircle size={16} color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
-		</button>
-	</div>
 </div>
+
 <div class="grow mt-1 overflow-auto select-none">
 	{#each filteredCategories as [name, { icon, actions }]}
 		<details open class="mb-2">
