@@ -104,7 +104,7 @@
 </script>
 
 <div class="select-wrapper">
-	<select bind:value class="mt-1 w-full">
+	<select bind:value class="my-1 w-full">
 		{#each Object.entries(folders) as [id, profiles]}
 			{#if id && profiles.length}
 				<optgroup label={id}>

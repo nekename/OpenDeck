@@ -5,6 +5,7 @@
 	import FileArrowUp from "phosphor-svelte/lib/FileArrowUp";
 	import Gear from "phosphor-svelte/lib/Gear";
 	import ListedPlugin from "./ListedPlugin.svelte";
+	import MagnifyingGlass from "phosphor-svelte/lib/MagnifyingGlass";
 	import PluginDetails from "./PluginDetails.svelte";
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
@@ -115,7 +116,7 @@
 	let plugins: { [id: string]: GitHubPlugin };
 	(async () => plugins = await (await fetch("https://openactionapi.github.io/plugins/catalogue.json")).json())();
 
-	let search: string = "";
+	let query: string = "";
 
 	onOpenUrl((urls: string[]) => {
 		if (!urls[0].includes("installPlugin/")) return;
@@ -197,10 +198,11 @@
 			<span class="ml-1">Install from file</span>
 		</button>
 	</div>
-	<div class="flex flex-row m-2">
+	<div class="flex flex-row items-center m-2 bg-neutral-200 dark:bg-neutral-700 rounded-md">
+		<MagnifyingGlass size="14" class="ml-3 mr-0.5" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
 		<input
-			bind:value={search}
-			class="grow p-2 dark:text-neutral-300 dark:bg-neutral-700 rounded-md outline-hidden"
+			bind:value={query}
+			class="w-full p-2 dark:text-neutral-300 outline-hidden"
 			placeholder="Search plugins"
 			type="search"
 			spellcheck="false"
@@ -230,7 +232,7 @@
 					icon="https://openactionapi.github.io/plugins/icons/{id}.png"
 					name={plugin.name}
 					subtitle={plugin.author}
-					hidden={!plugin.name.toUpperCase().includes(search.toUpperCase())}
+					hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
 					action={() => openDetailsView = id}
 				>
 					<ArrowSquareOut
@@ -277,7 +279,7 @@
 						icon="https://plugins.amankhanna.me/icons/{plugin.id}.png"
 						name={plugin.name}
 						subtitle={plugin.author}
-						hidden={!plugin.name.toUpperCase().includes(search.toUpperCase())}
+						hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
 						action={() => installPluginElgato(plugin)}
 					>
 						<CloudArrowDown
