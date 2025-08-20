@@ -17,7 +17,7 @@
 		<p class="font-semibold">{name}</p> {subtitle}
 	</div>
 
-	<div class="flex flex-col ml-auto mr-4 space-y-2">
+	<div class="flex flex-col ml-auto mr-4">
 		{#if secondaryAction}
 			<button on:click={secondaryAction}>
 				<slot name="secondary" />

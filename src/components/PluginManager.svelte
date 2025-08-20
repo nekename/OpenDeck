@@ -173,11 +173,13 @@
 				{#if $settings?.developer}
 					<ArrowClockwise
 						size="24"
+						class="mt-2"
 						color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
 					/>
 				{:else if !plugin.builtin}
 					<Trash
 						size="24"
+						class="mt-2"
 						color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
 					/>
 				{/if}
