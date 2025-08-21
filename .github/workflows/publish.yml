@@ -20,6 +20,8 @@ jobs:
             args: "--target x86_64-apple-darwin"
           - platform: "ubuntu-22.04"
             args: ""
+          - platform: "ubuntu-22.04-arm"
+            args: ""
           - platform: "windows-latest"
             args: ""
     runs-on: ${{ matrix.platform }}
@@ -56,10 +58,10 @@ jobs:
         run: deno install
 
       - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
+        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libudev-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libudev-dev xdg-utils
 
       - uses: tauri-apps/tauri-action@v0
         env:

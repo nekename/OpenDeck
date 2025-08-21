@@ -55,18 +55,44 @@ detect_family() {
 fetch_latest_asset() {
     local ext="$1"
     local api_url="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
-    local download_url=""
+    local arch arch_deb arch_rpm arch_pattern download_url
+
+    arch="$(uname -m)"
+    case "$arch" in
+    x86_64)
+        arch_deb="amd64"
+        arch_rpm="x86_64"
+        ;;
+    aarch64)
+        arch_deb="arm64"
+        arch_rpm="aarch64"
+        ;;
+    *)
+        msg_error "Unsupported architecture $arch"
+        exit 1
+        ;;
+    esac
+
+    if [ "$ext" = "deb" ]; then
+        arch_pattern="${arch_deb}"
+    else
+        arch_pattern="${arch_rpm}"
+    fi
 
     if has_cmd curl; then
-        download_url=$(curl -s --retry 3 --retry-delay 3 "$api_url" | grep -Eo "https://[^ \"]+\\.${ext}([^\"]*)" | head -n1 || true)
+        download_url=$(curl -s --retry 3 --retry-delay 3 "$api_url" |
+            grep -Eo "https://[^ \"]+${arch_pattern}\.${ext}([^\"]*)" |
+            head -n1 || true)
     elif has_cmd wget; then
-        download_url=$(wget -qO- --tries=3 "$api_url" | grep -Eo "https://[^ \"]+\\.${ext}([^\"]*)" | head -n1 || true)
+        download_url=$(wget -qO- --tries=3 "$api_url" |
+            grep -Eo "https://[^ \"]+${arch_pattern}\.${ext}([^\"]*)" |
+            head -n1 || true)
     fi
 
     if [ -n "$download_url" ]; then
         echo "$download_url"
     else
-        msg_error "Failed to find a .${ext} release asset"
+        msg_error "Failed to find a .${ext} release asset for arch $arch"
         return 1
     fi
 }
