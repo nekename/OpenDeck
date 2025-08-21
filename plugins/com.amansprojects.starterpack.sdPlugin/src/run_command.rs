@@ -1,4 +1,3 @@
-use std::env::var;
 use std::io::Read;
 use std::process::{Command, Stdio};
 
@@ -6,7 +5,9 @@ use super::ActionEvent;
 
 use openaction::*;
 
+#[cfg(unix)]
 fn is_flatpak() -> bool {
+	use std::env::var;
 	var("FLATPAK_ID").is_ok()
 		|| var("container")
 			.map(|x| x.to_lowercase().trim() == "flatpak")
