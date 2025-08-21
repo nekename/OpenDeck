@@ -69,7 +69,7 @@
 					<img
 						src={!action.icon.startsWith("opendeck/") ? "http://localhost:57118/" + action.icon : action.icon.replace("opendeck", "")}
 						alt={$localisations?.[action.plugin]?.[action.uuid]?.Tooltip ?? action.tooltip}
-						class="w-12 h-12 rounded-xs"
+						class="w-12 h-12 rounded-xs pointer-events-none"
 					/>
 					<span class="dark:text-neutral-400">{$localisations?.[action.plugin]?.[action.uuid]?.Name ?? action.name}</span>
 				</div>
