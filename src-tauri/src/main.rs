@@ -117,6 +117,20 @@ Enjoy!"#,
 							.kind(MessageDialogKind::Info)
 							.show(|_| ());
 						settings.value.statistics = false;
+					} else {
+						app.dialog()
+							.message(format!(
+								r#"{PRODUCT_NAME} has been updated to v{}!
+Every update brings features, bug fixes, and other improvements, which I spend my time implementing for free.
+
+If you spent $125 on your hardware, please consider spending $5 on the software that makes it work.
+You can donate to support development with just a few clicks on GitHub Sponsors.
+If you have already donated, thank you so much for your support!"#,
+								built_info::PKG_VERSION
+							))
+							.title(format!("{PRODUCT_NAME} has successfully been updated"))
+							.kind(MessageDialogKind::Info)
+							.show(|_| ());
 					}
 				}
 				_ => {}
