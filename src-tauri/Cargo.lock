@@ -3216,6 +3216,7 @@ dependencies = [
  "tokio",
  "tokio-tungstenite",
  "urlencoding",
+ "windows 0.61.3",
  "zip",
 ]
 
