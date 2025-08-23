@@ -326,8 +326,7 @@ pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow
 
 	crate::application_watcher::stop_monitoring(uuid).await;
 
-	let mut instances = INSTANCES.lock().await;
-	if let Some(instance) = instances.remove(uuid) {
+	if let Some(instance) = INSTANCES.lock().await.remove(uuid) {
 		match instance {
 			PluginInstance::Webview => {
 				if let Some(window) = app.get_webview_window(&uuid.replace('.', "_")) {
