@@ -16,7 +16,20 @@ fn mime(extension: &str) -> String {
 
 /// Start a simple webserver to serve files of plugins that run in a browser environment.
 pub async fn init_webserver(prefix: PathBuf) {
-	let server = Server::http("0.0.0.0:57118").unwrap();
+	let server = {
+		let listener = std::net::TcpListener::bind("0.0.0.0:57118").unwrap();
+
+		#[cfg(windows)]
+		{
+			use std::os::windows::io::AsRawSocket;
+			use windows_sys::Win32::Foundation::{HANDLE_FLAG_INHERIT, SetHandleInformation};
+
+			unsafe { SetHandleInformation(listener.as_raw_socket() as _, HANDLE_FLAG_INHERIT, 0) };
+		}
+
+		Server::from_listener(listener, None).unwrap()
+	};
+
 	for request in server.incoming_requests() {
 		let mut url = urlencoding::decode(request.url()).unwrap().into_owned();
 		if url.contains('?') {

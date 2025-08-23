@@ -51,5 +51,8 @@ sysinfo = "0.36"
 semver = "1.0"
 path-slash = "0.2"
 
+[target.'cfg(windows)'.dependencies]
+windows-sys = "0.60"
+
 [features]
 custom-protocol = ["tauri/custom-protocol"]

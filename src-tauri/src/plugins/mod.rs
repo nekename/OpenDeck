@@ -434,6 +434,14 @@ async fn init_websocket_server() {
 		}
 	};
 
+	#[cfg(windows)]
+	{
+		use std::os::windows::io::AsRawSocket;
+		use windows_sys::Win32::Foundation::{HANDLE_FLAG_INHERIT, SetHandleInformation};
+
+		unsafe { SetHandleInformation(listener.as_raw_socket() as _, HANDLE_FLAG_INHERIT, 0) };
+	}
+
 	while let Ok((stream, _)) = listener.accept().await {
 		accept_connection(stream).await;
 	}
