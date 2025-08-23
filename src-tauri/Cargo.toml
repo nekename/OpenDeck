@@ -52,7 +52,7 @@ semver = "1.0"
 path-slash = "0.2"
 
 [target.'cfg(windows)'.dependencies]
-windows = "0.61.3"
+windows-sys = "0.60"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

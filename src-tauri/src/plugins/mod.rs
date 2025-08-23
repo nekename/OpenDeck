@@ -437,10 +437,9 @@ async fn init_websocket_server() {
 	#[cfg(windows)]
 	{
 		use std::os::windows::io::AsRawSocket;
-		use windows::Win32::Foundation::{HANDLE, HANDLE_FLAG_INHERIT, SetHandleInformation};
+		use windows_sys::Win32::Foundation::{HANDLE_FLAG_INHERIT, SetHandleInformation};
 
-		let raw_socket = HANDLE(listener.as_raw_socket() as _);
-		let _ = unsafe { SetHandleInformation(raw_socket, HANDLE_FLAG_INHERIT.0, !HANDLE_FLAG_INHERIT) };
+		unsafe { SetHandleInformation(listener.as_raw_socket() as _, HANDLE_FLAG_INHERIT, 0) };
 	}
 
 	while let Ok((stream, _)) = listener.accept().await {
