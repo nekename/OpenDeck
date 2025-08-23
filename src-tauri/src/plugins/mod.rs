@@ -335,7 +335,10 @@ pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow
 					tokio::time::sleep(std::time::Duration::from_millis(10)).await;
 				}
 			}
-			PluginInstance::Node(mut child) | PluginInstance::Wine(mut child) | PluginInstance::Native(mut child) => child.kill()?,
+			PluginInstance::Node(mut child) | PluginInstance::Wine(mut child) | PluginInstance::Native(mut child) => {
+				child.kill()?;
+				child.wait()?;
+			}
 		}
 		Ok(())
 	} else {
