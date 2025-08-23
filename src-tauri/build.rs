@@ -8,7 +8,14 @@ fn main() {
 			let out_dir = std::path::Path::new("target").join("plugins").join(entry.file_name());
 			fs::create_dir_all(&out_dir)?;
 			let status = std::process::Command::new("deno")
-				.args(["run", "--lock=target/deno.lock", "--allow-all", "build.ts", fs::canonicalize(out_dir)?.to_string_lossy().as_ref()])
+				.args([
+					"run",
+					"--lock=target/deno.lock",
+					"--allow-all",
+					"build.ts",
+					fs::canonicalize(out_dir)?.to_string_lossy().as_ref(),
+					&std::env::var("TARGET").unwrap(),
+				])
 				.current_dir(entry.path())
 				.status()?;
 			if !status.success() {
