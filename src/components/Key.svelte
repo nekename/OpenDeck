@@ -121,25 +121,119 @@
 			}
 		}
 	})();
+
+	// Accessibility: keyboard navigation and action assignment
+	export let focused: boolean = false;
+	export let onAssignAction: ((action: any, context: any) => void) | undefined = undefined;
+	let announcementEl: HTMLElement;
+
+	function announceToScreenReader(message: string) {
+		if (announcementEl) {
+			announcementEl.textContent = message;
+		}
+	}
+
+	function handleKeyDown(event: KeyboardEvent) {
+		if (!context) return;
+
+		switch (event.key) {
+			case 'Enter':
+			case ' ':
+				event.preventDefault();
+				// Dispatch event to request action assignment if onAssignAction is provided
+				const requestEvent = new CustomEvent('requestSelectedAction', { 
+					detail: { context },
+					bubbles: true 
+				});
+				dispatchEvent(requestEvent);
+				
+				// If no action to assign and key is empty, show help
+				if (!slot) {
+					setTimeout(() => {
+						// Check if action was assigned after a brief delay
+						if (!slot) {
+							announceToScreenReader('This key is empty. Select an action from the action list first, then navigate back here to assign it.');
+						}
+					}, 100);
+				} else {
+					// If key has action, select it for property inspection
+					select();
+				}
+				break;
+			case 'Delete':
+			case 'Backspace':
+				event.preventDefault();
+				if (slot) {
+					clear();
+					announceToScreenReader('Action removed from key.');
+				}
+				break;
+			case 'c':
+				if (event.ctrlKey && slot) {
+					event.preventDefault();
+					copiedContext.set(context);
+					announceToScreenReader('Action copied to clipboard.');
+				}
+				break;
+			case 'v':
+				if (event.ctrlKey) {
+					event.preventDefault();
+					paste();
+				}
+				break;
+		}
+	}
+
+	function getAccessibleLabel(): string {
+		if (!context) return 'Key';
+		
+		const position = context.position + 1;
+		const controllerType = context.controller === 'Encoder' ? 'Encoder' : 'Key';
+		
+		if (slot) {
+			const actionName = slot.action?.name || 'Unknown action';
+			return `${controllerType} ${position}: ${actionName}`;
+		} else {
+			return `${controllerType} ${position}: Empty`;
+		}
+	}
 </script>
+
+<!-- Screen reader announcements -->
+<div bind:this={announcementEl} class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <canvas
 	bind:this={canvas}
 	class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
 	class:outline-solid={slot && $inspectedInstance == slot.context}
+	class:ring-2={focused}
+	class:ring-blue-500={focused}
+	class:ring-offset-2={focused}
 	class:-m-[2.06rem]={size == 192}
 	class:rounded-full!={context?.controller == "Encoder"}
 	width={size}
 	height={size}
 	style={`transform: scale(${(112 / size) * scale});`}
+	tabindex={active ? "0" : "-1"}
+	role="button"
+	aria-label={getAccessibleLabel()}
+	aria-describedby={slot ? `key-${context?.device}-${context?.profile}-${context?.controller}-${context?.position}-desc` : undefined}
 	draggable={slot != null}
 	on:dragstart
 	on:dragover
 	on:drop
 	on:click|stopPropagation={select}
-	on:keyup|stopPropagation={select}
+	on:keydown|stopPropagation={handleKeyDown}
+	on:focus={() => focused = true}
+	on:blur={() => focused = false}
 	on:contextmenu={contextMenu}
 />
+
+{#if slot}
+	<div id="key-{context?.device}-{context?.profile}-{context?.controller}-{context?.position}-desc" class="sr-only">
+		{slot.action?.tooltip || 'No description available'}
+	</div>
+{/if}
 
 {#if $openContextMenu && $openContextMenu?.context == context}
 	<div
@@ -183,3 +277,16 @@
 {#if slot && showEditor}
 	<InstanceEditor bind:instance={slot} bind:showEditor />
 {/if}
+
+<style>
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		border: 0;
+	}
+</style>
