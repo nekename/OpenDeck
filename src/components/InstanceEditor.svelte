@@ -14,13 +14,24 @@
 
 	let fileInput: HTMLInputElement;
 	let colourInput: HTMLInputElement;
+	let errorMessage: string = "";
+	let announcementEl: HTMLElement;
 
 	function update(instance: ActionInstance) {
 		bold = instance.states[state].style.includes("Bold");
 		italic = instance.states[state].style.includes("Italic");
 	}
 	$: update(instance);
-	$: invoke("set_state", { instance, state });
+	$: invoke("set_state", { instance, state }).catch((error) => {
+		errorMessage = `Failed to set state: ${error}`;
+		announceToScreenReader(errorMessage);
+	});
+
+	function announceToScreenReader(message: string) {
+		if (announcementEl) {
+			announcementEl.textContent = message;
+		}
+	}
 </script>
 
 <svelte:window
@@ -29,7 +40,15 @@
 	}}
 />
 
-<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg z-10">
+<!-- Screen reader announcements -->
+<div bind:this={announcementEl} class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg z-10" role="dialog" aria-label="Edit action instance">
+	{#if errorMessage}
+		<div class="text-red-500 text-sm mb-2" role="alert">
+			{errorMessage}
+		</div>
+	{/if}
 	<div class="flex flex-row">
 		<div class="select-wrapper m-1 w-full">
 			<select class="w-full" bind:value={state}>
@@ -74,9 +93,21 @@
 				reader.onload = async () => {
 					let result = reader.result?.toString();
 					if (result) {
-						let resized = await resizeImage(result);
-						if (resized) instance.states[state].image = resized;
-						else instance.states[state].image = result;
+						try {
+							let resized = await resizeImage(result);
+							if (resized) {
+								instance.states[state].image = resized;
+								errorMessage = "";
+								announceToScreenReader("Image updated successfully.");
+							} else {
+								instance.states[state].image = result;
+								errorMessage = "";
+								announceToScreenReader("Image updated successfully.");
+							}
+						} catch (error) {
+							errorMessage = `Failed to process image: ${error}`;
+							announceToScreenReader(errorMessage);
+						}
 					}
 				};
 
@@ -93,10 +124,16 @@
 				canvas.width = 1;
 				canvas.height = 1;
 				const context = canvas.getContext("2d");
-				if (!context) return;
+				if (!context) {
+					errorMessage = "Failed to create color image.";
+					announceToScreenReader(errorMessage);
+					return;
+				}
 				context.fillStyle = colourInput.value;
 				context.fillRect(0, 0, canvas.width, canvas.height);
 				instance.states[state].image = canvas.toDataURL("image/png");
+				errorMessage = "";
+				announceToScreenReader("Solid color applied successfully.");
 			}}
 		/>
 
@@ -182,3 +219,16 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		border: 0;
+	}
+</style>

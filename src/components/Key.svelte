@@ -3,11 +3,8 @@
 	import type { ActionState } from "$lib/ActionState";
 	import type { Context } from "$lib/Context";
 
-	import Clipboard from "phosphor-svelte/lib/Clipboard";
-	import Copy from "phosphor-svelte/lib/Copy";
-	import Pencil from "phosphor-svelte/lib/Pencil";
-	import Trash from "phosphor-svelte/lib/Trash";
 	import InstanceEditor from "./InstanceEditor.svelte";
+	import ContextMenu from "./ContextMenu.svelte";
 
 	import { copiedContext, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
 	import { CanvasLock, renderImage } from "$lib/rendererHelper";
@@ -66,12 +63,15 @@
 	let showEditor = false;
 	function edit() {
 		showEditor = true;
+		openContextMenu.set(null);
 	}
 
 	export let handlePaste: ((source: Context, destination: Context) => void) | undefined = undefined;
 	async function paste() {
 		if (!$copiedContext || !context) return;
 		if (handlePaste) handlePaste($copiedContext, context);
+		openContextMenu.set(null);
+		announceToScreenReader("Action pasted.");
 	}
 
 	async function clear() {
@@ -81,6 +81,8 @@
 		showEditor = false;
 		slot = null;
 		inslot = slot;
+		openContextMenu.set(null);
+		announceToScreenReader("Action removed from key.");
 	}
 
 	let showAlert: boolean = false;
@@ -135,6 +137,11 @@
 	function handleKeyDown(event: KeyboardEvent) {
 		if (!context) return;
 
+		// Don't handle keyboard events if context menu is open
+		if ($openContextMenu && $openContextMenu.context === context) {
+			return;
+		}
+
 		// Allow arrow keys to bubble up for grid navigation
 		if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
 			return;
@@ -163,7 +170,6 @@
 				event.stopPropagation();
 				if (slot) {
 					clear();
-					announceToScreenReader("Action removed from key.");
 				}
 				break;
 			case "c":
@@ -197,6 +203,16 @@
 			return `${controllerType} ${position}: Empty`;
 		}
 	}
+
+	function getSafeId(): string {
+		if (!context) return "key-unknown";
+		// Replace problematic characters in IDs to avoid NVDA issues
+		// NVDA has issues with dots, colons, and other special characters in IDs
+		const safeDevice = (context.device || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
+		const safeProfile = (context.profile || 'default').replace(/[^a-zA-Z0-9]/g, '_');
+		const safeController = context.controller || 'Keypad';
+		return `key_${safeDevice}_${safeProfile}_${safeController}_${context.position}`;
+	}
 </script>
 
 <!-- Screen reader announcements -->
@@ -204,7 +220,7 @@
 
 <canvas
 	bind:this={canvas}
-	id={`key-${context?.device}-${context?.profile}-${context?.controller}-${context?.position}`}
+	id={getSafeId()}
 	class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
 	class:outline-solid={slot && $inspectedInstance == slot.context}
 	class:ring-2={focused}
@@ -218,7 +234,7 @@
 	tabindex="-1"
 	role="gridcell"
 	aria-label={getAccessibleLabel()}
-	aria-describedby={slot ? `key-${context?.device}-${context?.profile}-${context?.controller}-${context?.position}-desc` : undefined}
+	aria-describedby={slot ? `${getSafeId()}-desc` : undefined}
 	draggable={slot != null}
 	on:dragstart
 	on:dragover
@@ -231,48 +247,27 @@
 />
 
 {#if slot}
-	<div id="key-{context?.device}-{context?.profile}-{context?.controller}-{context?.position}-desc" class="sr-only">
+	<div id="{getSafeId()}-desc" class="sr-only">
 		{slot.action?.tooltip || "No description available"}
 	</div>
 {/if}
 
 {#if $openContextMenu && $openContextMenu?.context == context}
-	<div
-		class="absolute text-sm font-semibold w-32 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg divide-y z-10"
-		style={`left: ${$openContextMenu.x}px; top: ${$openContextMenu.y}px;`}
-	>
-		{#if !slot}
-			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
-				on:click={paste}
-			>
-				<Clipboard size="18" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
-				<span class="ml-2"> Paste </span>
-			</button>
-		{:else}
-			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
-				on:click={edit}
-			>
-				<Pencil size="18" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
-				<span class="ml-2"> Edit </span>
-			</button>
-			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
-				on:click={() => copiedContext.set(context)}
-			>
-				<Copy size="18" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
-				<span class="ml-2"> Copy </span>
-			</button>
-			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
-				on:click={clear}
-			>
-				<Trash size="18" color="#F66151" />
-				<span class="ml-2"> Delete </span>
-			</button>
-		{/if}
-	</div>
+	<ContextMenu
+		{slot}
+		{context}
+		x={$openContextMenu.x}
+		y={$openContextMenu.y}
+		on:edit={edit}
+		on:paste={paste}
+		on:clear={clear}
+		on:copy={() => {
+			copiedContext.set(context);
+			openContextMenu.set(null);
+			announceToScreenReader("Action copied to clipboard.");
+		}}
+		on:close={() => openContextMenu.set(null)}
+	/>
 {/if}
 
 {#if slot && showEditor}
