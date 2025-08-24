@@ -124,7 +124,6 @@
 
 	// Accessibility: keyboard navigation and action assignment
 	export let focused: boolean = false;
-	export let onAssignAction: ((action: any, context: any) => void) | undefined = undefined;
 	let announcementEl: HTMLElement;
 
 	function announceToScreenReader(message: string) {
@@ -136,48 +135,49 @@
 	function handleKeyDown(event: KeyboardEvent) {
 		if (!context) return;
 
+		// Allow arrow keys to bubble up for grid navigation
+		if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+			return;
+		}
+
 		switch (event.key) {
-			case 'Enter':
-			case ' ':
+			case "Enter":
+			case " ":
 				event.preventDefault();
-				// Dispatch event to request action assignment if onAssignAction is provided
-				const requestEvent = new CustomEvent('requestSelectedAction', { 
-					detail: { context },
-					bubbles: true 
-				});
-				dispatchEvent(requestEvent);
-				
-				// If no action to assign and key is empty, show help
+				event.stopPropagation();
 				if (!slot) {
-					setTimeout(() => {
-						// Check if action was assigned after a brief delay
-						if (!slot) {
-							announceToScreenReader('This key is empty. Select an action from the action list first, then navigate back here to assign it.');
-						}
-					}, 100);
+					// Key is empty - try to assign selected action
+					const requestEvent = new CustomEvent("requestSelectedAction", {
+						detail: { context },
+						bubbles: true,
+					});
+					dispatchEvent(requestEvent);
 				} else {
 					// If key has action, select it for property inspection
 					select();
 				}
 				break;
-			case 'Delete':
-			case 'Backspace':
+			case "Delete":
+			case "Backspace":
 				event.preventDefault();
+				event.stopPropagation();
 				if (slot) {
 					clear();
-					announceToScreenReader('Action removed from key.');
+					announceToScreenReader("Action removed from key.");
 				}
 				break;
-			case 'c':
+			case "c":
 				if (event.ctrlKey && slot) {
 					event.preventDefault();
+					event.stopPropagation();
 					copiedContext.set(context);
-					announceToScreenReader('Action copied to clipboard.');
+					announceToScreenReader("Action copied to clipboard.");
 				}
 				break;
-			case 'v':
+			case "v":
 				if (event.ctrlKey) {
 					event.preventDefault();
+					event.stopPropagation();
 					paste();
 				}
 				break;
@@ -185,13 +185,13 @@
 	}
 
 	function getAccessibleLabel(): string {
-		if (!context) return 'Key';
-		
+		if (!context) return "Key";
+
 		const position = context.position + 1;
-		const controllerType = context.controller === 'Encoder' ? 'Encoder' : 'Key';
-		
+		const controllerType = context.controller === "Encoder" ? "Encoder" : "Key";
+
 		if (slot) {
-			const actionName = slot.action?.name || 'Unknown action';
+			const actionName = slot.action?.name || "Unknown action";
 			return `${controllerType} ${position}: ${actionName}`;
 		} else {
 			return `${controllerType} ${position}: Empty`;
@@ -204,6 +204,7 @@
 
 <canvas
 	bind:this={canvas}
+	id={`key-${context?.device}-${context?.profile}-${context?.controller}-${context?.position}`}
 	class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
 	class:outline-solid={slot && $inspectedInstance == slot.context}
 	class:ring-2={focused}
@@ -214,8 +215,8 @@
 	width={size}
 	height={size}
 	style={`transform: scale(${(112 / size) * scale});`}
-	tabindex={active ? "0" : "-1"}
-	role="button"
+	tabindex="-1"
+	role="gridcell"
 	aria-label={getAccessibleLabel()}
 	aria-describedby={slot ? `key-${context?.device}-${context?.profile}-${context?.controller}-${context?.position}-desc` : undefined}
 	draggable={slot != null}
@@ -223,15 +224,15 @@
 	on:dragover
 	on:drop
 	on:click|stopPropagation={select}
-	on:keydown|stopPropagation={handleKeyDown}
-	on:focus={() => focused = true}
-	on:blur={() => focused = false}
+	on:keydown={handleKeyDown}
+	on:focus
+	on:blur
 	on:contextmenu={contextMenu}
 />
 
 {#if slot}
 	<div id="key-{context?.device}-{context?.profile}-{context?.controller}-{context?.position}-desc" class="sr-only">
-		{slot.action?.tooltip || 'No description available'}
+		{slot.action?.tooltip || "No description available"}
 	</div>
 {/if}
 
