@@ -68,8 +68,7 @@ pub async fn reset_devices() {
 	}
 }
 
-async fn init(device: AsyncStreamDeck, serial: String) {
-	let device_id = format!("sd-{serial}");
+async fn init(device: AsyncStreamDeck, device_id: String) {
 	if ELGATO_DEVICES.read().await.contains_key(&device_id) {
 		return;
 	}
@@ -151,9 +150,13 @@ pub async fn initialise_devices() {
 	match elgato_streamdeck::new_hidapi() {
 		Ok(hid) => {
 			for (kind, serial) in elgato_streamdeck::asynchronous::list_devices_async(&hid) {
+				let device_id = format!("sd-{serial}");
+				if ELGATO_DEVICES.read().await.contains_key(&device_id) {
+					continue;
+				}
 				match elgato_streamdeck::AsyncStreamDeck::connect(&hid, kind, &serial) {
 					Ok(device) => {
-						tokio::spawn(init(device, serial));
+						tokio::spawn(init(device, device_id));
 					}
 					Err(error) => log::warn!("Failed to connect to Elgato device: {error}"),
 				}
