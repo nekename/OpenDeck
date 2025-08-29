@@ -29,6 +29,7 @@ static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
 #[tokio::main]
 async fn main() {
 	log_panics::init();
+	let _ = fix_path_env::fix();
 
 	#[cfg(target_os = "linux")]
 	// SAFETY: std::env::set_var can cause race conditions in multithreaded contexts. We have not spawned any other threads at this point.
