@@ -43,6 +43,11 @@
 </div>
 
 <div class="flex flex-col p-2 w-[18rem] h-full border-l dark:border-neutral-700">
+	<div class="flex flex-row space-x-2">
+		<PluginManager />
+		<SettingsView />
+	</div>
+	<hr class="my-2 border dark:border-neutral-700" />
 	{#if !$inspectedParentAction}
 		<DeviceSelector
 			bind:devices
@@ -61,9 +66,4 @@
 		{/key}
 	{/if}
 	<ActionList bind:this={$actionList} />
-	<hr class="mt-2 border dark:border-neutral-700" />
-	<div class="flex flex-row">
-		<PluginManager />
-		<SettingsView />
-	</div>
 </div>
