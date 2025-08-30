@@ -49,6 +49,23 @@
 	</branding>
 
 	<releases>
+		<release version="2.6.0" date="2025-08-30">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.6.0</url>
+			<description>
+				<ul>
+					<li>Create automated installation script</li>
+					<li>Process messages from the CLI for use in scripts</li>
+					<li>Support disabling Elgato device discovery</li>
+					<li>Implement the `applicationDidLaunch` and `applicationDidTerminate` events</li>
+					<li>Display settings interfaces for supported plugins</li>
+					<li>Display category icons in action list</li>
+					<li>Add a search bar to the action list</li>
+					<li>Build for aarch64-unknown-linux-gnu</li>
+					<li>Move plugins and settings buttons to the top of the sidebar</li>
+					<li>Numerous bug fixes</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.5.1" date="2025-08-11">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.5.1</url>
 			<description>

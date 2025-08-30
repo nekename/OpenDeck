@@ -1,6 +1,6 @@
 [package]
 name = "opendeck-starterpack"
-version = "2.5.1"
+version = "2.6.0"
 authors = ["Aman Khanna (nekename)"]
 license = "GPL-3.0-or-later"
 edition = "2024"
