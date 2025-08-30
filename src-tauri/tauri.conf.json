@@ -36,7 +36,8 @@
 			"icons/icon.ico"
 		],
 		"macOS": {
-			"exceptionDomain": "localhost"
+			"exceptionDomain": "localhost",
+			"signingIdentity": "-"
 		}
 	},
 	"productName": "OpenDeck",
