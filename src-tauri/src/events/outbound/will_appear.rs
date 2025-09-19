@@ -22,7 +22,11 @@ pub async fn will_appear(instance: &ActionInstance) -> Result<(), anyhow::Error>
 			payload: GenericInstancePayload::new(instance),
 		},
 	)
-	.await
+	.await?;
+
+	super::states::title_parameters_did_change(instance, instance.current_state).await?;
+
+	Ok(())
 }
 
 pub async fn will_disappear(instance: &ActionInstance, clear_on_device: bool) -> Result<(), anyhow::Error> {
