@@ -1,6 +1,11 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@std/fs@1": "1.0.19",
+    "jsr:@std/internal@^1.0.10": "1.0.10",
+    "jsr:@std/internal@^1.0.9": "1.0.10",
+    "jsr:@std/path@1": "1.1.2",
+    "jsr:@std/path@^1.1.1": "1.1.2",
     "npm:@sveltejs/adapter-static@3": "3.0.9_@sveltejs+kit@2.37.0__@sveltejs+vite-plugin-svelte@3.1.2___svelte@4.2.20___vite@5.4.19____lightningcss@1.30.1___lightningcss@1.30.1__svelte@4.2.20__vite@5.4.19___lightningcss@1.30.1__acorn@8.15.0__lightningcss@1.30.1_@sveltejs+vite-plugin-svelte@3.1.2__svelte@4.2.20__vite@5.4.19___lightningcss@1.30.1__lightningcss@1.30.1_svelte@4.2.20_vite@5.4.19__lightningcss@1.30.1_lightningcss@1.30.1",
     "npm:@sveltejs/kit@^2.21.0": "2.37.0_@sveltejs+vite-plugin-svelte@3.1.2__svelte@4.2.20__vite@5.4.19___lightningcss@1.30.1__lightningcss@1.30.1_svelte@4.2.20_vite@5.4.19__lightningcss@1.30.1_acorn@8.15.0_lightningcss@1.30.1",
     "npm:@sveltejs/vite-plugin-svelte@^3.1.0": "3.1.2_svelte@4.2.20_vite@5.4.19__lightningcss@1.30.1_lightningcss@1.30.1",
@@ -19,6 +24,24 @@
     "npm:tailwindcss@^4.1.0": "4.1.12",
     "npm:typescript@^5.8.0": "5.9.2",
     "npm:vite@^5.4.0": "5.4.19_lightningcss@1.30.1"
+  },
+  "jsr": {
+    "@std/fs@1.0.19": {
+      "integrity": "051968c2b1eae4d2ea9f79a08a3845740ef6af10356aff43d3e2ef11ed09fb06",
+      "dependencies": [
+        "jsr:@std/internal@^1.0.9",
+        "jsr:@std/path@^1.1.1"
+      ]
+    },
+    "@std/internal@1.0.10": {
+      "integrity": "e3be62ce42cab0e177c27698e5d9800122f67b766a0bea6ca4867886cbde8cf7"
+    },
+    "@std/path@1.1.2": {
+      "integrity": "c0b13b97dfe06546d5e16bf3966b1cadf92e1cc83e56ba5476ad8b498d9e3038",
+      "dependencies": [
+        "jsr:@std/internal@^1.0.10"
+      ]
+    }
   },
   "npm": {
     "@ampproject/remapping@2.3.0": {

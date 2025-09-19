@@ -1,7 +1,8 @@
 /// <reference lib="deno.ns" />
+// deno-lint-ignore-file no-import-prefix
 
-import { copy } from "jsr:@std/fs";
-import { join } from "jsr:@std/path";
+import { copy } from "jsr:@std/fs@^1.0";
+import { join } from "jsr:@std/path@^1.0";
 
 if (Deno.args.length < 2) Deno.exit(1);
 const outDir = Deno.args[0];
