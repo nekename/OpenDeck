@@ -42,10 +42,21 @@
 	let choices: any[] | undefined;
 	let choice: number;
 	let finishChoice = (_: unknown) => {};
+	let cancelChoice = () => {};
 	async function chooseAsset(assets: any[]): Promise<any> {
 		choices = assets;
-		await new Promise((resolve) => finishChoice = resolve);
-		choices = undefined;
+		try {
+			await new Promise((resolve, reject) => {
+				finishChoice = resolve;
+				cancelChoice = reject;
+			});
+		} catch (e) {
+			throw e;
+		} finally {
+			choices = undefined;
+			finishChoice = (_: unknown) => {};
+			cancelChoice = () => {};
+		}
 		return assets[choice];
 	}
 
@@ -82,7 +93,13 @@
 		}
 		let selected;
 		if (assets.length == 1) selected = assets[0];
-		else selected = await chooseAsset(assets);
+		else {
+			try {
+				selected = await chooseAsset(assets);
+			} catch {
+				return;
+			}
+		}
 
 		await installPlugin(plugin.name, selected.browser_download_url, null, id);
 	}
@@ -136,7 +153,8 @@
 <svelte:window
 	on:keydown={(event) => {
 		if (event.key == "Escape") {
-			if (openDetailsView) openDetailsView = null;
+			if (choices) cancelChoice();
+			else if (openDetailsView) openDetailsView = null;
 			else showPopup = false;
 		}
 	}}
@@ -244,27 +262,6 @@
 		</div>
 	{/if}
 
-	{#if choices}
-		<div
-			class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 p-2 w-96 text-xs dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg z-40"
-		>
-			<h3 class="mb-2 font-semibold text-lg text-center">Choose a release asset</h3>
-			<div class="select-wrapper">
-				<select class="w-full" bind:value={choice}>
-					{#each choices as choice, i}
-						<option value={i}>{choice.name}</option>
-					{/each}
-				</select>
-			</div>
-			<button
-				class="mt-2 p-1 w-full text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-800 border dark:border-neutral-600 rounded-lg"
-				on:click={finishChoice}
-			>
-				Install
-			</button>
-		</div>
-	{/if}
-
 	{#await fetch("https://plugins.amankhanna.me/catalogue.json")}
 		<h2 class="mx-2 mt-6 mb-2 text-md dark:text-neutral-400">Loading Elgato App Store archive plugin list...</h2>
 	{:then archiveRes}
@@ -303,4 +300,23 @@
 		}}
 		close={() => openDetailsView = null}
 	/>
+{/if}
+
+{#if choices}
+	<div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 p-2 w-96 text-xs dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg z-40">
+		<h3 class="mb-2 font-semibold text-lg text-center">Choose a release asset</h3>
+		<div class="select-wrapper">
+			<select class="w-full" bind:value={choice}>
+				{#each choices as choice, i}
+					<option value={i}>{choice.name}</option>
+				{/each}
+			</select>
+		</div>
+		<button
+			class="mt-2 p-1 w-full text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-800 border dark:border-neutral-600 rounded-lg"
+			on:click={finishChoice}
+		>
+			Install
+		</button>
+	</div>
 {/if}
