@@ -49,6 +49,21 @@
 	</branding>
 
 	<releases>
+		<release version="2.6.1" date="2025-09-20">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.6.1</url>
+			<description>
+				<ul>
+					<li>Remove app_exited event due to limited function</li>
+					<li>Keep window visible by default except on Windows due to bug on KDE Plasma</li>
+					<li>Remove plugdev group setting from udev rules file</li>
+					<li>Prevent asset choice dialog being shown behind plugin details popup</li>
+					<li>Send titleParametersDidChange alongside willAppear like ESD does</li>
+					<li>Increase width of input fields in the starter pack plugin property inspectors</li>
+					<li>Only compare major and minor app versions to allow downgrading within the same minor version</li>
+					<li>Integrate app icon better on macOS</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.6.0" date="2025-08-30">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.6.0</url>
 			<description>
