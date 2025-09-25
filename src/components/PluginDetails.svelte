@@ -13,7 +13,7 @@
 
 	export let id: string;
 	export let details: { repository: string; name: string; author: string; download_url: string | undefined };
-	let readme = "<h2>Loading plugin details...</h2>";
+	let readme = "<strong>Loading plugin details...</strong>";
 	let downloadCount = 0;
 
 	export let install: () => void;
@@ -22,18 +22,33 @@
 	// @ts-expect-error
 	const fetch = window.fetchNative ?? window.fetch;
 
-	onMount(async () => {
-		const repo = details.repository.split("/")[3] + "/" + details.repository.split("/")[4];
-
-		const readmeResponse = await fetch("https://raw.githubusercontent.com/" + repo + "/master/README.md");
-		marked.use(baseUrl("https://raw.githubusercontent.com/" + repo + "/master/"));
+	async function getReadme(repo: string): Promise<string> {
 		const renderer = new marked.Renderer();
 		renderer.link = function (token) {
 			const rendered = marked.Renderer.prototype.link.call(this, token);
 			return rendered.replace("<a", `<a target="_blank" onclick="window.open('${token.href}')" `);
 		};
 		marked.use({ renderer });
-		readme = await marked.parse(DOMPurify.sanitize(await readmeResponse.text()).replace(/<a/g, '<a target="_blank" '));
+		const urls = [
+			"https://raw.githubusercontent.com/" + repo + "/main/README.md",
+			"https://raw.githubusercontent.com/" + repo + "/main/readme.md",
+			"https://raw.githubusercontent.com/" + repo + "/master/README.md",
+			"https://raw.githubusercontent.com/" + repo + "/master/readme.md",
+		];
+		for (const url of urls) {
+			const response = await fetch(url);
+			if (response.ok) {
+				marked.use(baseUrl(url));
+				return await marked.parse(DOMPurify.sanitize(await response.text()).replace(/<a/g, '<a target="_blank" '));
+			}
+		}
+		return await marked.parse("**Plugin README file not found**\n\n[View plugin on GitHub](https://github.com/" + repo + ")");
+	}
+
+	onMount(async () => {
+		const repo = details.repository.split("/")[3] + "/" + details.repository.split("/")[4];
+
+		readme = await getReadme(repo);
 
 		const releasesResponse = await fetch("https://api.github.com/repos/" + repo + "/releases");
 		const releases = await releasesResponse.json();
@@ -63,7 +78,9 @@
 					class="size-7 mr-1.5 rounded-full"
 				/>
 				<a
+					target="_blank"
 					href={"https://github.com/" + details.repository.split("/")[3]}
+					on:click={() => window.open("https://github.com/" + details.repository.split("/")[3])}
 					class="underline"
 				>
 					{details.author}
