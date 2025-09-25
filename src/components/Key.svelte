@@ -47,7 +47,8 @@
 		if (JSON.stringify(context) == JSON.stringify(payload.context)) pressed = payload.pressed;
 	});
 
-	function select() {
+	function select(event: MouseEvent | KeyboardEvent) {
+		if (event instanceof MouseEvent && event.ctrlKey) return;
 		if (!slot) return;
 		if (slot.action.uuid == "opendeck.multiaction" || slot.action.uuid == "opendeck.toggleaction") {
 			inspectedParentAction.set(context);
@@ -59,7 +60,6 @@
 	async function contextMenu(event: MouseEvent) {
 		event.preventDefault();
 		if (!active || !context) return;
-		if (event.ctrlKey) return;
 		$openContextMenu = { context, x: event.x, y: event.y };
 	}
 
