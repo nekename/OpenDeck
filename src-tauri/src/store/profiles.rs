@@ -223,7 +223,7 @@ fn migrate_profile(path: PathBuf) -> Result<(), anyhow::Error> {
 	let migrated: DiskProfile = match profile {
 		ProfileVersions::V1(v1) => v1.into(),
 		ProfileVersions::V2(v2) => (&v2).into(),
-		ProfileVersions::V3(v3) => v3,
+		ProfileVersions::V3(_) => return Ok(()),
 	};
 	let mut as_value = serde_json::to_value(migrated)?;
 	fn replace_old_identifier(value: &mut Value) {
