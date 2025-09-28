@@ -49,6 +49,28 @@
 	</branding>
 
 	<releases>
+		<release version="2.6.1" date="2025-09-29">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.6.1</url>
+			<description>
+				<ul>
+					<li>Remove app_exited event due to limited function</li>
+					<li>Keep window visible by default except on Windows due to bug on KDE Plasma</li>
+					<li>Remove plugdev group setting from udev rules file</li>
+					<li>Prevent asset choice dialog being shown behind plugin details popup</li>
+					<li>Send titleParametersDidChange alongside willAppear like ESD does</li>
+					<li>Increase width of input fields in the starter pack plugin property inspectors</li>
+					<li>Only compare major and minor app versions to allow downgrading within the same minor version</li>
+					<li>Integrate app icon better on macOS</li>
+					<li>Improve plugin README file discovery for plugin details view</li>
+					<li>Allow ctrl-clicking to open instance context menu on macOS</li>
+					<li>Add support for code paths mapped by target triple in plugin manifests</li>
+					<li>Save files atomically and restore from partial saves</li>
+					<li>Remove replacement of old app identifier for v3 profiles</li>
+					<li>Send willAppear after reloading a plugin for all instances of the plugin's actions</li>
+					<li>Update injected connection code to support connectOpenActionSocket definition</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.6.0" date="2025-08-30">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.6.0</url>
 			<description>
