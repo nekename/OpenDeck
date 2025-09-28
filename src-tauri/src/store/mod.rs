@@ -33,7 +33,7 @@ where
 	}
 }
 
-/// Allows for easy persistence of values using JSON files.
+/// Allows for easy persistence of values using JSON files
 pub struct Store<T>
 where
 	T: FromAndIntoDiskValue,
@@ -46,31 +46,63 @@ impl<T> Store<T>
 where
 	T: FromAndIntoDiskValue,
 {
-	/// Create a new Store given an ID and storage directory.
+	/// Validate that a file contains valid data for type T
+	fn validate_file_contents(path: &Path) -> Result<T, anyhow::Error> {
+		let file_contents = fs::read(path)?;
+		let value: T = T::from_value(serde_json::from_slice(&file_contents)?, path)?;
+		Ok(value)
+	}
+
+	/// Create a new Store given an ID and storage directory
 	pub fn new(id: &str, config_dir: &Path, default: T) -> Result<Self, anyhow::Error> {
 		let path = config_dir.join(format!("{}.json", id));
+		let temp_path = path.with_extension("json.temp");
+		let backup_path = path.with_extension("json.bak");
 
-		if path.exists() {
-			let file_contents = fs::read(&path)?;
-			let existing_value: T = T::from_value(serde_json::from_slice(&file_contents)?, &path)?;
-
-			Ok(Self { path, value: existing_value })
+		if let Ok(value) = Self::validate_file_contents(&path) {
+			let _ = fs::remove_file(&temp_path);
+			let _ = fs::remove_file(&backup_path);
+			Ok(Self { path, value })
+		} else if let Ok(value) = Self::validate_file_contents(&temp_path) {
+			fs::rename(&temp_path, &path)?;
+			Ok(Self { path, value })
+		} else if let Ok(value) = Self::validate_file_contents(&backup_path) {
+			fs::rename(&backup_path, &path)?;
+			Ok(Self { path, value })
 		} else {
 			Ok(Self { path, value: default })
 		}
 	}
 
-	/// Save the relevant Store as a file.
+	/// Save the relevant Store as a file
 	pub fn save(&self) -> Result<(), anyhow::Error> {
 		fs::create_dir_all(self.path.parent().unwrap())?;
 
 		let contents = serde_json::to_string_pretty(&T::into_value(&self.value)?)?;
-		let mut file = fs::OpenOptions::new().read(true).write(true).create(true).truncate(true).open(&self.path)?;
 
-		FileExt::lock_exclusive(&file)?;
-		file.write_all(contents.as_bytes())?;
-		file.sync_all()?;
-		FileExt::unlock(&file)?;
+		let temp_path = self.path.with_extension("json.temp");
+		let backup_path = self.path.with_extension("json.bak");
+
+		// Write to temporary file
+		let mut temp_file = fs::OpenOptions::new().write(true).create(true).truncate(true).open(&temp_path)?;
+		FileExt::lock_exclusive(&temp_file)?;
+		temp_file.write_all(contents.as_bytes())?;
+		temp_file.sync_all()?;
+		FileExt::unlock(&temp_file)?;
+		drop(temp_file);
+
+		// If main file exists, back it up
+		if self.path.exists() {
+			fs::rename(&self.path, &backup_path)?;
+		}
+
+		// Rename temp file to main file
+		fs::rename(&temp_path, &self.path)?;
+
+		// Remove backup file if everything succeeded
+		if backup_path.exists() {
+			let _ = fs::remove_file(&backup_path);
+		}
 
 		Ok(())
 	}

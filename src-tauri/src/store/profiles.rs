@@ -257,10 +257,15 @@ pub fn get_device_profiles(device: &str) -> Result<Vec<String>, anyhow::Error> {
 	for entry in entries.flatten() {
 		if entry.metadata()?.is_file() {
 			let mut id = entry.file_name().to_string_lossy().into_owned();
-			if !id.ends_with(".json") {
+			if id.ends_with(".json") {
+				id.truncate(id.len() - 5);
+			} else if id.ends_with(".json.bak") {
+				id.truncate(id.len() - 9);
+			} else if id.ends_with(".json.temp") {
+				id.truncate(id.len() - 10);
+			} else {
 				continue;
 			}
-			id.truncate(id.len() - 5);
 			if let Err(error) = migrate_profile(entry.path()) {
 				log::warn!("Failed to migrate profile {id}: {error}");
 			} else {
