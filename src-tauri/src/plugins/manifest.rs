@@ -43,6 +43,9 @@ pub struct PluginManifest {
 	#[serde(alias = "CodePath")]
 	pub code_path: Option<String>,
 
+	#[serde(alias = "CodePaths")]
+	pub code_paths: Option<HashMap<String, String>>,
+
 	#[serde(alias = "CodePathWin")]
 	pub code_path_windows: Option<String>,
 

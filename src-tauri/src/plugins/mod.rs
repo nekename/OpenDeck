@@ -3,6 +3,7 @@ pub mod manifest;
 mod webserver;
 
 use crate::APP_HANDLE;
+use crate::built_info::TARGET;
 use crate::shared::{CATEGORIES, Category, config_dir, convert_icon, is_flatpak, log_dir};
 use crate::store::get_settings;
 
@@ -130,6 +131,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 			if manifest.code_path_linux.is_some() {
 				code_path = manifest.code_path_linux;
 			}
+			code_path = manifest.code_paths.and_then(|p| p.get(TARGET).cloned()).or(code_path);
 
 			use_wine = false;
 
