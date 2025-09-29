@@ -80,7 +80,8 @@ pub async fn init_webserver(prefix: PathBuf) {
 					window.addEventListener("message", ({ data }) => {
 						if (data.event == "connect") {
 							event.stopImmediatePropagation();
-							connectElgatoStreamDeckSocket(...data.payload);
+							if (typeof connectOpenActionSocket === "function") connectOpenActionSocket(...data.payload);
+							else connectElgatoStreamDeckSocket(...data.payload);
 						} else if (data.event == "windowClosed") {
 							event.stopImmediatePropagation();
 							if (opendeck_iframe_container.firstElementChild) opendeck_iframe_container.firstElementChild.remove();

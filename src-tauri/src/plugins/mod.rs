@@ -170,19 +170,20 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 
 		let info = info_param::make_info(plugin_uuid.to_owned(), manifest.version, false).await;
 		window.eval(format!(
-			"const opendeckInit = () => {{
+			r#"const opendeckInit = () => {{
 				try {{
-					connectElgatoStreamDeckSocket({}, \"{}\", \"{}\", `{}`);
+					if (typeof connectOpenActionSocket === "function") connectOpenActionSocket({port}, "{uuid}", "{event}", `{info}`);
+					else connectElgatoStreamDeckSocket({port}, "{uuid}", "{event}", `{info}`);
 				}} catch (e) {{
 					setTimeout(opendeckInit, 10);
 				}}
 			}};
 			opendeckInit();
-			",
-			57116,
-			plugin_uuid,
-			"registerPlugin",
-			serde_json::to_string(&info)?
+			"#,
+			port = 57116,
+			uuid = plugin_uuid,
+			event = "registerPlugin",
+			info = serde_json::to_string(&info)?
 		))?;
 
 		INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Webview);
