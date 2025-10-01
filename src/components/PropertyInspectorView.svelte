@@ -151,7 +151,8 @@
 	$: instances = profile
 		.keys.filter(nonNull)
 		.reduce((prev, current) => prev.concat(current.children ? [current, ...current.children] : current), [] as ActionInstance[])
-		.concat(profile.sliders.filter(nonNull));
+		.concat(profile.sliders.filter(nonNull))
+		.concat(profile.touchpoints.filter(nonNull));
 </script>
 
 <svelte:window

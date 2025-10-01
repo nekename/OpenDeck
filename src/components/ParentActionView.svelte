@@ -12,9 +12,23 @@
 	export let profile: Profile;
 
 	let children: ActionInstance[];
-	$: children = profile.keys[$inspectedParentAction!.position]!.children!;
+	$: {
+		const array = $inspectedParentAction!.controller == "Encoder" 
+			? profile.sliders 
+			: $inspectedParentAction!.controller == "TouchPoint" 
+				? profile.touchpoints 
+				: profile.keys;
+		children = array[$inspectedParentAction!.position]!.children!;
+	}
 	let parentUuid: string;
-	$: parentUuid = profile.keys[$inspectedParentAction!.position]!.action.uuid;
+	$: {
+		const array = $inspectedParentAction!.controller == "Encoder" 
+			? profile.sliders 
+			: $inspectedParentAction!.controller == "TouchPoint" 
+				? profile.touchpoints 
+				: profile.keys;
+		parentUuid = array[$inspectedParentAction!.position]!.action.uuid;
+	}
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
@@ -34,14 +48,28 @@
 				return;
 			}
 			let response: ActionInstance | null = await invoke("create_instance", { context: $inspectedParentAction, action });
-			if (response) profile.keys[$inspectedParentAction!.position]!.children = [...children, response];
+			const array = $inspectedParentAction!.controller == "Encoder" 
+				? profile.sliders 
+				: $inspectedParentAction!.controller == "TouchPoint" 
+					? profile.touchpoints 
+					: profile.keys;
+			if (response) {
+				array[$inspectedParentAction!.position]!.children = [...children, response];
+				profile = profile; // Trigger reactivity
+			}
 		}
 	}
 
 	async function removeInstance(index: number) {
 		await invoke("remove_instance", { context: children[index].context });
 		children.splice(index, 1);
-		profile.keys[$inspectedParentAction!.position]!.children = children;
+		const array = $inspectedParentAction!.controller == "Encoder" 
+			? profile.sliders 
+			: $inspectedParentAction!.controller == "TouchPoint" 
+				? profile.touchpoints 
+				: profile.keys;
+		array[$inspectedParentAction!.position]!.children = children;
+		profile = profile; // Trigger reactivity
 	}
 </script>
 

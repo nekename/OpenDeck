@@ -26,6 +26,12 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 						&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
 					)
 					.await?;
+			} else if context.controller == "TouchPoint" {
+				// Touch points don't have images, they use LED colors
+				// Extract dominant color from the image and set the LED
+				let img = image::load_from_memory(&bytes)?;
+				let (red, green, blue) = extract_dominant_color(&img);
+				device.set_touchpoint_color(context.position, red, green, blue).await?;
 			} else {
 				device.set_button_image(context.position, image::load_from_memory(&bytes)?).await?;
 			}
@@ -33,12 +39,43 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			device
 				.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
 				.await?;
+		} else if context.controller == "TouchPoint" {
+			// Turn off LED when no action is assigned
+			device.set_touchpoint_color(context.position, 0, 0, 0).await?;
 		} else {
 			device.clear_button_image(context.position).await?;
 		}
 		device.flush().await?;
 	}
 	Ok(())
+}
+
+/// Extracts the dominant color from an image by calculating the average color
+fn extract_dominant_color(img: &image::DynamicImage) -> (u8, u8, u8) {
+	let rgb_img = img.to_rgb8();
+	let pixels = rgb_img.pixels();
+	
+	let mut total_r: u64 = 0;
+	let mut total_g: u64 = 0;
+	let mut total_b: u64 = 0;
+	let mut count: u64 = 0;
+	
+	for pixel in pixels {
+		total_r += pixel[0] as u64;
+		total_g += pixel[1] as u64;
+		total_b += pixel[2] as u64;
+		count += 1;
+	}
+	
+	if count > 0 {
+		(
+			(total_r / count) as u8,
+			(total_g / count) as u8,
+			(total_b / count) as u8,
+		)
+	} else {
+		(255, 255, 255) // Default to white if no pixels
+	}
 }
 
 pub async fn clear_screen(id: &str) -> Result<(), anyhow::Error> {
@@ -97,6 +134,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				rows: kind.row_count(),
 				columns: kind.column_count(),
 				encoders: kind.encoder_count(),
+				touchpoints: kind.touchpoint_count(),
 				r#type: device_type,
 			},
 		},
@@ -118,6 +156,8 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				DeviceStateUpdate::EncoderTwist(dial, ticks) => encoder::dial_rotate(&device_id, dial, ticks.into()).await,
 				DeviceStateUpdate::EncoderDown(dial) => encoder::dial_press(&device_id, "dialDown", dial).await,
 				DeviceStateUpdate::EncoderUp(dial) => encoder::dial_press(&device_id, "dialUp", dial).await,
+				DeviceStateUpdate::TouchPointDown(point) => keypad::touchpoint_down(&device_id, point).await,
+				DeviceStateUpdate::TouchPointUp(point) => keypad::touchpoint_up(&device_id, point).await,
 				_ => Ok(()),
 			} {
 				Ok(_) => (),

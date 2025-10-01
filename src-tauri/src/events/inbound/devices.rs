@@ -26,7 +26,7 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 		let mut locks = crate::store::profiles::acquire_locks_mut().await;
 		let selected_profile = locks.device_stores.get_selected_profile(&event.payload.id)?;
 		let profile = locks.profile_stores.get_profile_store(&DEVICES.get(&event.payload.id).unwrap(), &selected_profile)?;
-		for instance in profile.value.keys.iter().flatten().chain(profile.value.sliders.iter().flatten()) {
+		for instance in profile.value.keys.iter().flatten().chain(profile.value.sliders.iter().flatten()).chain(profile.value.touchpoints.iter().flatten()) {
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		}
 
@@ -52,7 +52,7 @@ pub async fn deregister_device(uuid: &str, event: PayloadEvent<String>) -> Resul
 
 		let selected_profile = locks.device_stores.get_selected_profile(&event.payload)?;
 		let profile = locks.profile_stores.get_profile_store(&DEVICES.get(&event.payload).unwrap(), &selected_profile)?;
-		for instance in profile.value.keys.iter().flatten().chain(profile.value.sliders.iter().flatten()) {
+		for instance in profile.value.keys.iter().flatten().chain(profile.value.sliders.iter().flatten()).chain(profile.value.touchpoints.iter().flatten()) {
 			let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
 		}
 

@@ -8,7 +8,9 @@ use tokio::fs::remove_dir_all;
 
 #[command]
 pub async fn create_instance(app: AppHandle, action: Action, context: Context) -> Result<Option<ActionInstance>, Error> {
-	if !action.controllers.contains(&context.controller) {
+	// TouchPoint should be treated like Keypad for controller compatibility
+	let controller_type = if context.controller == "TouchPoint" { "Keypad" } else { &context.controller };
+	if !action.controllers.contains(&controller_type.to_string()) {
 		return Ok(None);
 	}
 
@@ -78,7 +80,11 @@ fn instance_images_dir(context: &ActionContext) -> std::path::PathBuf {
 
 #[command]
 pub async fn move_instance(source: Context, destination: Context, retain: bool) -> Result<Option<ActionInstance>, Error> {
-	if source.controller != destination.controller {
+	// Allow moving between Keypad and TouchPoint since they're compatible
+	let src_type = if source.controller == "TouchPoint" { "Keypad" } else { source.controller.as_str() };
+	let dst_type = if destination.controller == "TouchPoint" { "Keypad" } else { destination.controller.as_str() };
+	
+	if src_type != dst_type {
 		return Ok(None);
 	}
 
