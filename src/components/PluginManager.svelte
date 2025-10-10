@@ -4,14 +4,15 @@
 	import CloudArrowDown from "phosphor-svelte/lib/CloudArrowDown";
 	import FileArrowUp from "phosphor-svelte/lib/FileArrowUp";
 	import Gear from "phosphor-svelte/lib/Gear";
-	import ListedPlugin from "./ListedPlugin.svelte";
 	import MagnifyingGlass from "phosphor-svelte/lib/MagnifyingGlass";
+	import Trash from "phosphor-svelte/lib/Trash";
+	import WarningCircle from "phosphor-svelte/lib/WarningCircle";
+	import ListedPlugin from "./ListedPlugin.svelte";
 	import PluginDetails from "./PluginDetails.svelte";
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
-	import Trash from "phosphor-svelte/lib/Trash";
-	import WarningCircle from "phosphor-svelte/lib/WarningCircle";
 
+	import { getWebserverUrl } from "$lib/ports";
 	import { localisations, settings } from "$lib/settings";
 	import { actionList, deviceSelector } from "$lib/singletons";
 
@@ -168,7 +169,7 @@
 	<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 		{#each installed.sort((a, b) => (a.builtin && !b.builtin) ? -1 : (b.builtin && !a.builtin) ? 1 : a.id.localeCompare(b.id)) as plugin}
 			<ListedPlugin
-				icon="http://localhost:57118/{plugin.icon}"
+				icon={getWebserverUrl(plugin.icon)}
 				name={($localisations && $localisations[plugin.id] && $localisations[plugin.id].Name) ? $localisations[plugin.id].Name : plugin.name}
 				subtitle={plugin.version}
 				disconnected={!plugin.registered}

@@ -3,6 +3,7 @@
 
 	import MagnifyingGlass from "phosphor-svelte/lib/MagnifyingGlass";
 
+	import { getWebserverUrl } from "$lib/ports";
 	import { localisations } from "$lib/settings";
 	import { PRODUCT_NAME } from "$lib/singletons";
 
@@ -49,9 +50,7 @@
 			<summary class="text-xl font-semibold dark:text-neutral-300">
 				{#if icon || (actions[0] && plugins.find((x) => x.id == actions[0].plugin) && categories[name].actions.every((x) => x.plugin == actions[0].plugin))}
 					<img
-						src={icon
-							? (!icon.startsWith("opendeck/") ? "http://localhost:57118/" + icon : icon.replace("opendeck", ""))
-							: "http://localhost:57118/" + plugins.find((x) => x.id == actions[0].plugin).icon}
+						src={icon ? (!icon.startsWith("opendeck/") ? getWebserverUrl(icon) : icon.replace("opendeck", "")) : getWebserverUrl(plugins.find((x) => x.id == actions[0].plugin).icon)}
 						alt={name}
 						class="w-5 h-5 rounded-xs ml-1 -mt-1 inline"
 					/>
@@ -67,7 +66,7 @@
 					on:dragstart={(event) => event.dataTransfer?.setData("action", JSON.stringify(action))}
 				>
 					<img
-						src={!action.icon.startsWith("opendeck/") ? "http://localhost:57118/" + action.icon : action.icon.replace("opendeck", "")}
+						src={!action.icon.startsWith("opendeck/") ? getWebserverUrl(action.icon) : action.icon.replace("opendeck", "")}
 						alt={$localisations?.[action.plugin]?.[action.uuid]?.Tooltip ?? action.tooltip}
 						class="w-12 h-12 rounded-xs pointer-events-none"
 					/>

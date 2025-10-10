@@ -40,8 +40,9 @@ async fn main() {
 
 	let app = match Builder::default()
 		.invoke_handler(tauri::generate_handler![
-			frontend::get_devices,
 			frontend::restart,
+			frontend::get_devices,
+			frontend::get_port_base,
 			frontend::get_categories,
 			frontend::get_localisations,
 			frontend::get_applications,

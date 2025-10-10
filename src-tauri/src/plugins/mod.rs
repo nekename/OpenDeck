@@ -31,6 +31,20 @@ enum PluginInstance {
 pub static DEVICE_NAMESPACES: Lazy<RwLock<HashMap<String, String>>> = Lazy::new(|| RwLock::new(HashMap::new()));
 static INSTANCES: Lazy<Mutex<HashMap<String, PluginInstance>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
+pub static PORT_BASE: Lazy<u16> = Lazy::new(|| {
+	let mut base = 57116;
+	loop {
+		let websocket_result = std::net::TcpListener::bind(format!("0.0.0.0:{}", base));
+		let webserver_result = std::net::TcpListener::bind(format!("0.0.0.0:{}", base + 2));
+		if websocket_result.is_ok() && webserver_result.is_ok() {
+			log::debug!("Using ports {} and {}", base, base + 2);
+			break;
+		}
+		base += 1;
+	}
+	base
+});
+
 /// Initialise a plugin from a given directory.
 pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 	let plugin_uuid = path.file_name().unwrap().to_str().unwrap();
@@ -152,10 +166,11 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 	}
 
 	let code_path = code_path.unwrap();
-	let args = ["-port", "57116", "-pluginUUID", plugin_uuid, "-registerEvent", "registerPlugin", "-info"];
+	let port_string = PORT_BASE.to_string();
+	let args = ["-port", port_string.as_str(), "-pluginUUID", plugin_uuid, "-registerEvent", "registerPlugin", "-info"];
 
 	if code_path.to_lowercase().ends_with(".html") || code_path.to_lowercase().ends_with(".htm") || code_path.to_lowercase().ends_with(".xhtml") {
-		let url = "http://localhost:57118/".to_owned() + path.join(code_path).to_str().unwrap();
+		let url = format!("http://localhost:{}/", *PORT_BASE + 2) + path.join(code_path).to_str().unwrap();
 		let window = tauri::WebviewWindowBuilder::new(APP_HANDLE.get().unwrap(), plugin_uuid.replace('.', "_"), tauri::WebviewUrl::External(url.parse()?))
 			.title(plugin_uuid)
 			.visible(false)
@@ -180,7 +195,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 			}};
 			opendeckInit();
 			"#,
-			port = 57116,
+			port = *PORT_BASE,
 			uuid = plugin_uuid,
 			event = "registerPlugin",
 			info = serde_json::to_string(&info)?
@@ -431,7 +446,7 @@ pub fn initialise_plugins() {
 
 /// Start the WebSocket server that plugins communicate with.
 async fn init_websocket_server() {
-	let listener = match TcpListener::bind("0.0.0.0:57116").await {
+	let listener = match TcpListener::bind(format!("0.0.0.0:{}", *PORT_BASE)).await {
 		Ok(listener) => listener,
 		Err(error) => {
 			error!("Failed to bind plugin WebSocket server to socket: {}", error);

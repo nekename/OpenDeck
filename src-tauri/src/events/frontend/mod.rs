@@ -57,6 +57,11 @@ pub async fn update_devices() {
 }
 
 #[command]
+pub async fn get_port_base() -> u16 {
+	*crate::plugins::PORT_BASE
+}
+
+#[command]
 pub async fn get_categories() -> HashMap<String, Category> {
 	CATEGORIES.read().await.clone()
 }

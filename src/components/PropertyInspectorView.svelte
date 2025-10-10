@@ -3,6 +3,7 @@
 	import type { DeviceInfo } from "$lib/DeviceInfo";
 	import type { Profile } from "$lib/Profile";
 
+	import { getWebserverUrl, getWebSocketPort } from "$lib/ports";
 	import { inspectedInstance } from "$lib/propertyInspector";
 
 	import { invoke } from "@tauri-apps/api/core";
@@ -27,13 +28,13 @@
 			coordinates = { row: Math.floor(position / device.columns), column: position % device.columns };
 		}
 
-		if (instance == null || !iframe.src || !iframe.src.startsWith("http://localhost:57118")) return;
+		if (instance == null || !iframe.src || !iframe.src.startsWith(getWebserverUrl())) return;
 		const info = JSON.stringify(await invoke("make_info", { plugin: instance.action.plugin }));
 
 		iframe?.contentWindow?.postMessage({
 			event: "connect",
 			payload: [
-				57116,
+				getWebSocketPort(),
 				instance.context,
 				"registerPropertyInspector",
 				info,
@@ -50,7 +51,7 @@
 					},
 				}),
 			],
-		}, "http://localhost:57118");
+		}, getWebserverUrl());
 	}
 
 	const closePopup = (context: string) => {
@@ -62,7 +63,7 @@
 			iframe.style.width = "100%";
 			iframe.style.height = "100%";
 			iframe.style.display = $inspectedInstance == context ? "block" : "none";
-			iframe.contentWindow?.postMessage({ event: "windowClosed" }, "http://localhost:57118");
+			iframe.contentWindow?.postMessage({ event: "windowClosed" }, getWebserverUrl());
 		}
 
 		iframePopupsOpen = iframePopupsOpen.filter((e) => e != context);
@@ -140,9 +141,9 @@
 							statusText: response.statusText,
 						},
 					},
-				}, "http://localhost:57118");
+				}, getWebserverUrl());
 			}).catch((error: any) => {
-				iframes[data.payload.context]?.contentWindow?.postMessage({ event: "fetchError", payload: { id: data.payload.id, error } }, "http://localhost:57118");
+				iframes[data.payload.context]?.contentWindow?.postMessage({ event: "fetchError", payload: { id: data.payload.id, error } }, getWebserverUrl());
 			});
 		}
 	});
@@ -176,7 +177,7 @@
 				title="Property inspector"
 				class="w-full h-full hidden"
 				class:block!={$inspectedInstance == instance.context}
-				src={"http://localhost:57118/" + instance.action.property_inspector + "|opendeck_property_inspector"}
+				src={getWebserverUrl(instance.action.property_inspector + "|opendeck_property_inspector")}
 				name={instance.context}
 				bind:this={iframes[instance.context]}
 				on:load={() => iframeOnLoad(instance)}

@@ -2,6 +2,7 @@
 	import type { DeviceInfo } from "$lib/DeviceInfo";
 	import type { Profile } from "$lib/Profile";
 
+	import { initPortBase } from "$lib/ports";
 	import { inspectedParentAction } from "$lib/propertyInspector";
 	import { actionList, deviceSelector, profileManager } from "$lib/singletons";
 
@@ -18,6 +19,8 @@
 	let devices: { [id: string]: DeviceInfo } = {};
 	let selectedDevice: string;
 	let selectedProfiles: { [id: string]: Profile } = {};
+
+	initPortBase();
 </script>
 
 <svelte:window on:dragover={(event) => event.preventDefault()} on:drop={(event) => event.preventDefault()} />
