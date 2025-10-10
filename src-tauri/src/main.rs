@@ -26,6 +26,30 @@ use tauri_plugin_log::{Target, TargetKind};
 
 static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
 
+fn show_window(app: &AppHandle) -> Result<(), tauri::Error> {
+	#[cfg(target_os = "macos")]
+	{
+		use tauri::ActivationPolicy;
+		let _ = app.set_activation_policy(ActivationPolicy::Regular);
+	}
+
+	let window = app.get_webview_window("main").ok_or_else(|| tauri::Error::WebviewNotFound)?;
+	window.show().and_then(|_| window.set_focus())
+}
+
+fn hide_window(app: &AppHandle) -> Result<(), tauri::Error> {
+	let window = app.get_webview_window("main").ok_or_else(|| tauri::Error::WebviewNotFound)?;
+	window.hide()?;
+
+	#[cfg(target_os = "macos")]
+	{
+		use tauri::ActivationPolicy;
+		let _ = app.set_activation_policy(ActivationPolicy::Accessory);
+	}
+
+	Ok(())
+}
+
 #[tokio::main]
 async fn main() {
 	log_panics::init();
@@ -80,7 +104,7 @@ async fn main() {
 			}
 			#[cfg(not(windows))]
 			if std::env::args().any(|v| v == "--hide") {
-				let _ = app.get_webview_window("main").unwrap().hide();
+				let _ = hide_window(app.handle());
 			}
 
 			let old = app.path().config_dir().unwrap().join("com.amansprojects.opendeck");
@@ -184,19 +208,16 @@ If you have already donated, thank you so much for your support!"#,
 						if button != MouseButton::Left || button_state != MouseButtonState::Down {
 							return;
 						}
-						let window = icon.app_handle().get_webview_window("main").unwrap();
-						let _ = if window.is_visible().unwrap_or(false) {
-							window.hide()
-						} else {
-							window.show().and_then(|_| window.set_focus())
-						};
+
+						let app_handle = icon.app_handle();
+						let window = app_handle.get_webview_window("main").unwrap();
+						let _ = if window.is_visible().unwrap_or(false) { hide_window(app_handle) } else { show_window(app_handle) };
 					}
 				})
 				.on_menu_event(move |app, event| {
-					let window = app.get_webview_window("main").unwrap();
 					let _ = match event.id().as_ref() {
-						"show" => window.show().and_then(|_| window.set_focus()),
-						"hide" => window.hide(),
+						"show" => show_window(app),
+						"hide" => hide_window(app),
 						"quit" => {
 							app.exit(0);
 							Ok(())
@@ -269,8 +290,7 @@ If you have already donated, thank you so much for your support!"#,
 					));
 				}
 			} else {
-				let window = app.get_webview_window("main").unwrap();
-				let _ = window.show().and_then(|_| window.set_focus());
+				let _ = show_window(app);
 			}
 		}))
 		.plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--hide"])))
@@ -282,7 +302,7 @@ If you have already donated, thank you so much for your support!"#,
 			}
 			if let WindowEvent::CloseRequested { api, .. } = event {
 				if let Ok(true) = store::get_settings().map(|store| store.value.background) {
-					window.hide().unwrap();
+					let _ = hide_window(window.app_handle());
 					api.prevent_close();
 				} else {
 					window.app_handle().exit(0);
