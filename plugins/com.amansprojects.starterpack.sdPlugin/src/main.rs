@@ -47,7 +47,7 @@ impl openaction::ActionEventHandler for ActionEventHandler {
 		match &event.action[..] {
 			"com.amansprojects.starterpack.runcommand" => run_command::down_up("down", event),
 			"com.amansprojects.starterpack.inputsimulation" => {
-				input_simulation::down_up(event, "down").await
+				input_simulation::down_up("down", event).await
 			}
 			_ => Ok(()),
 		}
@@ -61,7 +61,7 @@ impl openaction::ActionEventHandler for ActionEventHandler {
 		match &event.action[..] {
 			"com.amansprojects.starterpack.runcommand" => run_command::down_up("up", event),
 			"com.amansprojects.starterpack.inputsimulation" => {
-				input_simulation::down_up(event, "up").await
+				input_simulation::down_up("up", event).await
 			}
 			"com.amansprojects.starterpack.switchprofile" => {
 				switch_profile::key_up(event, outbound).await
@@ -80,6 +80,9 @@ impl openaction::ActionEventHandler for ActionEventHandler {
 	) -> EventHandlerResult {
 		match &event.action[..] {
 			"com.amansprojects.starterpack.runcommand" => run_command::down_up("down", event),
+			"com.amansprojects.starterpack.inputsimulation" => {
+				input_simulation::down_up("down", event).await
+			}
 			_ => Ok(()),
 		}
 	}
@@ -91,6 +94,9 @@ impl openaction::ActionEventHandler for ActionEventHandler {
 	) -> EventHandlerResult {
 		match &event.action[..] {
 			"com.amansprojects.starterpack.runcommand" => run_command::down_up("up", event),
+			"com.amansprojects.starterpack.inputsimulation" => {
+				input_simulation::down_up("up", event).await
+			}
 			"com.amansprojects.starterpack.devicebrightness" => {
 				device_brightness::up(event, outbound).await
 			}
@@ -105,6 +111,9 @@ impl openaction::ActionEventHandler for ActionEventHandler {
 	) -> EventHandlerResult {
 		match &event.action[..] {
 			"com.amansprojects.starterpack.runcommand" => run_command::rotate(event),
+			"com.amansprojects.starterpack.inputsimulation" => {
+				input_simulation::rotate(event).await
+			}
 			"com.amansprojects.starterpack.devicebrightness" => {
 				device_brightness::rotate(event, outbound).await
 			}

@@ -18,6 +18,18 @@
 				down.value = inActionInfo.payload.settings.down ?? "";
 				const up = document.getElementById("up");
 				up.value = inActionInfo.payload.settings.up ?? "";
+				const anticlockwise = document.getElementById("anticlockwise");
+				anticlockwise.value = inActionInfo.payload.settings.anticlockwise ?? "";
+				const clockwise = document.getElementById("clockwise");
+				clockwise.value = inActionInfo.payload.settings.clockwise ?? "";
+
+				if (inActionInfo.payload.controller == "Encoder") {
+					document.getElementById("encoder").style.display = "block";
+					document.getElementById("down-label").innerText = "Dial down";
+					document.getElementById("up-label").innerText = "Dial up";
+					down.placeholder = down.placeholder.replace("key", "dial");
+					up.placeholder = up.placeholder.replace("key", "dial");
+				}
 
 				update = () => {
 					websocket.send(JSON.stringify({
@@ -26,6 +38,8 @@
 						payload: {
 							down: down.value,
 							up: up.value,
+							anticlockwise: anticlockwise.value,
+							clockwise: clockwise.value,
 						},
 					}));
 				};
@@ -35,16 +49,30 @@
 	</head>
 	<body>
 		<div type="textarea" class="sdpi-item">
-			<div class="sdpi-item-label">Key down</div>
+			<div class="sdpi-item-label" id="down-label">Key down</div>
 			<span class="sdpi-item-value textarea">
 				<textarea oninput="update();" id="down" style="font-family: monospace" placeholder="Input to be executed on key down"></textarea>
 			</span>
 		</div>
 		<div type="textarea" class="sdpi-item">
-			<div class="sdpi-item-label">Key up</div>
+			<div class="sdpi-item-label" id="up-label">Key up</div>
 			<span class="sdpi-item-value textarea">
 				<textarea oninput="update();" id="up" style="font-family: monospace" placeholder="Input to be executed on key up"></textarea>
 			</span>
+		</div>
+		<div id="encoder" style="display: none">
+			<div type="textarea" class="sdpi-item">
+				<div class="sdpi-item-label">Dial rotate anticlockwise</div>
+				<span class="sdpi-item-value textarea">
+					<textarea oninput="update();" id="anticlockwise" style="font-family: monospace" placeholder="Input to be executed on dial rotate anticlockwise"></textarea>
+				</span>
+			</div>
+			<div type="textarea" class="sdpi-item">
+				<div class="sdpi-item-label">Dial rotate clockwise</div>
+				<span class="sdpi-item-value textarea">
+					<textarea oninput="update();" id="clockwise" style="font-family: monospace" placeholder="Input to be executed on dial rotate clockwise"></textarea>
+				</span>
+			</div>
 		</div>
 		<details open>
 			<summary style="margin-bottom: 0.25rem; font-size: 1.25rem">Details</summary>

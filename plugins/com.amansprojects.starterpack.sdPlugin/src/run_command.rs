@@ -1,7 +1,7 @@
+use super::ActionEvent;
+
 use std::io::Read;
 use std::process::{Command, Stdio};
-
-use super::ActionEvent;
 
 use openaction::*;
 
@@ -29,7 +29,7 @@ async fn run_command(
 	else {
 		return Ok(());
 	};
-	if value.is_empty() {
+	if value.trim().is_empty() {
 		return Ok(());
 	}
 	if let Some(ticks) = ticks {
