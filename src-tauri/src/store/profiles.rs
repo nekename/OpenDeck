@@ -1,19 +1,14 @@
-use super::{
-	Store,
-	simplified_profile::{DiskActionInstance, DiskProfile},
-};
+use super::Store;
 
-use crate::shared::{Action, ActionInstance, ActionState, DEVICES, DeviceInfo, Profile, config_dir};
+use crate::shared::{ActionInstance, DEVICES, DeviceInfo, Profile, config_dir};
 
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-
 use anyhow::{Context, anyhow};
 use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 pub struct ProfileStores {
@@ -148,105 +143,6 @@ impl DeviceStores {
 	}
 }
 
-#[derive(Deserialize)]
-#[allow(dead_code)]
-struct ProfileV1 {
-	id: String,
-	keys: Vec<Vec<ActionInstance>>,
-	sliders: Vec<Vec<ActionInstance>>,
-}
-
-impl From<ProfileV1> for DiskProfile {
-	fn from(val: ProfileV1) -> Self {
-		let mut keys = vec![];
-		for slot in val.keys {
-			if slot.len() == 1 {
-				keys.push(Some(slot[0].clone().into()));
-			} else if !slot.is_empty() {
-				let mut children = slot.clone();
-				for child in &mut children {
-					child.context.index += 1;
-				}
-				keys.push(Some(DiskActionInstance {
-					action: Action {
-						name: "Multi Action".to_owned(),
-						uuid: "opendeck.multiaction".to_owned(),
-						plugin: "opendeck".to_owned(),
-						tooltip: "Execute multiple actions".to_owned(),
-						icon: "opendeck/multi-action.png".to_owned(),
-						disable_automatic_states: false,
-						visible_in_action_list: true,
-						supported_in_multi_actions: false,
-						property_inspector: String::new(),
-						controllers: vec!["Keypad".to_owned()],
-						states: vec![ActionState {
-							image: "opendeck/multi-action.png".to_owned(),
-							..Default::default()
-						}],
-					},
-					context: slot[0].context.clone().into(),
-					states: vec![ActionState {
-						image: "opendeck/multi-action.png".to_owned(),
-						..Default::default()
-					}],
-					current_state: 0,
-					settings: Value::Object(serde_json::Map::new()),
-					children: Some(children.into_iter().map(|v| v.into()).collect()),
-				}));
-			} else {
-				keys.push(None);
-			}
-		}
-		let mut sliders = vec![];
-		for slot in val.sliders {
-			if !slot.is_empty() {
-				sliders.push(Some(slot[0].clone().into()));
-			} else {
-				sliders.push(None);
-			}
-		}
-		Self { keys, sliders }
-	}
-}
-
-#[derive(Deserialize)]
-#[serde(untagged)]
-#[allow(dead_code)]
-enum ProfileVersions {
-	V1(ProfileV1),
-	V2(Profile),
-	V3(DiskProfile),
-}
-
-fn migrate_profile(path: PathBuf) -> Result<(), anyhow::Error> {
-	let profile = serde_json::from_slice(&fs::read(&path)?)?;
-	let migrated: DiskProfile = match profile {
-		ProfileVersions::V1(v1) => v1.into(),
-		ProfileVersions::V2(v2) => (&v2).into(),
-		ProfileVersions::V3(_) => return Ok(()),
-	};
-	let mut as_value = serde_json::to_value(migrated)?;
-	fn replace_old_identifier(value: &mut Value) {
-		match value {
-			Value::String(v) => *v = v.replace("com.amansprojects.opendeck", "opendeck"),
-			Value::Object(v) => {
-				for value in v.values_mut() {
-					replace_old_identifier(value);
-				}
-			}
-			Value::Array(v) => {
-				for value in v.iter_mut() {
-					replace_old_identifier(value);
-				}
-			}
-			_ => (),
-		}
-	}
-	replace_old_identifier(&mut as_value);
-	fs::write(path, serde_json::to_string_pretty(&as_value)?)?;
-	Ok(())
-}
-
 pub fn get_device_profiles(device: &str) -> Result<Vec<String>, anyhow::Error> {
 	let mut profiles: Vec<String> = vec![];
 
@@ -266,25 +162,22 @@ pub fn get_device_profiles(device: &str) -> Result<Vec<String>, anyhow::Error> {
 			} else {
 				continue;
 			}
-			if let Err(error) = migrate_profile(entry.path()) {
-				log::warn!("Failed to migrate profile {id}: {error}");
-			} else {
-				profiles.push(id);
-			}
+			profiles.push(id);
 		} else if entry.metadata()?.is_dir() {
 			let entries = fs::read_dir(entry.path())?;
 			for subentry in entries.flatten() {
 				if subentry.metadata()?.is_file() {
 					let mut id = format!("{}/{}", entry.file_name().to_string_lossy(), &subentry.file_name().to_string_lossy());
-					if !id.ends_with(".json") {
+					if id.ends_with(".json") {
+						id.truncate(id.len() - 5);
+					} else if id.ends_with(".json.bak") {
+						id.truncate(id.len() - 9);
+					} else if id.ends_with(".json.temp") {
+						id.truncate(id.len() - 10);
+					} else {
 						continue;
 					}
-					id.truncate(id.len() - 5);
-					if let Err(error) = migrate_profile(subentry.path()) {
-						log::warn!("Failed to migrate profile {id}: {error}");
-					} else {
-						profiles.push(id);
-					}
+					profiles.push(id);
 				}
 			}
 		}
