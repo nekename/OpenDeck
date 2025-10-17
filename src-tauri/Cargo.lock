@@ -1270,9 +1270,9 @@ checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 
 [[package]]
 name = "elgato-streamdeck"
-version = "0.11.1"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1190db3a681c5748e34b39225c02cefc6b013cea023f46814e0ac57b620fab20"
+checksum = "24379f002d631a8561daf70751ce7680ba7045b6fdd9548d08c6681d4dea2596"
 dependencies = [
  "hidapi",
  "image",
