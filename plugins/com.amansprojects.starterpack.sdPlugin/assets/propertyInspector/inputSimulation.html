@@ -48,30 +48,22 @@
 		<link rel="stylesheet" href="sdpi.css" />
 	</head>
 	<body>
-		<div type="textarea" class="sdpi-item">
+		<div class="sdpi-item">
 			<div class="sdpi-item-label" id="down-label">Key down</div>
-			<span class="sdpi-item-value textarea">
-				<textarea oninput="update();" id="down" style="font-family: monospace" placeholder="Input to be executed on key down"></textarea>
-			</span>
+			<input id="down" oninput="update();" class="sdpi-item-value" style="font-family: monospace" placeholder="Input to be executed on key down" />
 		</div>
-		<div type="textarea" class="sdpi-item">
+		<div class="sdpi-item">
 			<div class="sdpi-item-label" id="up-label">Key up</div>
-			<span class="sdpi-item-value textarea">
-				<textarea oninput="update();" id="up" style="font-family: monospace" placeholder="Input to be executed on key up"></textarea>
-			</span>
+			<input id="up" oninput="update();" class="sdpi-item-value" style="font-family: monospace" placeholder="Input to be executed on key up" />
 		</div>
 		<div id="encoder" style="display: none">
-			<div type="textarea" class="sdpi-item">
+			<div class="sdpi-item">
 				<div class="sdpi-item-label">Dial rotate anticlockwise</div>
-				<span class="sdpi-item-value textarea">
-					<textarea oninput="update();" id="anticlockwise" style="font-family: monospace" placeholder="Input to be executed on dial rotate anticlockwise"></textarea>
-				</span>
+				<input id="anticlockwise" oninput="update();" class="sdpi-item-value" style="font-family: monospace" placeholder="Input to be executed on dial rotate anticlockwise" />
 			</div>
-			<div type="textarea" class="sdpi-item">
+			<div class="sdpi-item">
 				<div class="sdpi-item-label">Dial rotate clockwise</div>
-				<span class="sdpi-item-value textarea">
-					<textarea oninput="update();" id="clockwise" style="font-family: monospace" placeholder="Input to be executed on dial rotate clockwise"></textarea>
-				</span>
+				<input id="clockwise" oninput="update();" class="sdpi-item-value" style="font-family: monospace" placeholder="Input to be executed on dial rotate clockwise" />
 			</div>
 		</div>
 		<details open>
