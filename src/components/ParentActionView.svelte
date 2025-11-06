@@ -58,7 +58,7 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-	class="flex flex-col h-80 overflow-scroll"
+	class="flex flex-col h-80 overflow-auto"
 	on:click={() => inspectedInstance.set(null)}
 	on:keyup={() => inspectedInstance.set(null)}
 >
