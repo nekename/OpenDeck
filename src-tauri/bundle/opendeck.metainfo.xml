@@ -49,6 +49,24 @@
 	</branding>
 
 	<releases>
+		<release version="2.7.0" date="2025-11-08">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.7.0</url>
+			<description>
+				<ul>
+					<li>Use alternative ports if default ports are already in use</li>
+					<li>Hide and show the Dock icon on macOS</li>
+					<li>Revise sysinfo usage to optimise process monitoring</li>
+					<li>Support encoders in Input Simulation</li>
+					<li>Update elgato-streamdeck to support Stream Deck Modules</li>
+					<li>Remove support for pre-v2.1.0 profile formats</li>
+					<li>Skip refreshing processes if no installed plugins use application monitoring</li>
+					<li>Make input fields in starter pack property inspectors consistently sized</li>
+					<li>Only show scrollbars if necessary in ParentActionView and Popup components</li>
+					<li>Ensure context menus close when clicking on another key or into a property inspector</li>
+					<li>Use tailwindcss colours for icons instead of Adwaita hex codes</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.6.1" date="2025-09-29">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.6.1</url>
 			<description>
