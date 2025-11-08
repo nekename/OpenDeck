@@ -152,7 +152,7 @@
 				class="flex flex-row p-2 w-full cursor-pointer items-center"
 				on:click={paste}
 			>
-				<Clipboard size="18" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+				<Clipboard size="18" class="text-neutral-500 dark:text-neutral-300" />
 				<span class="ml-2"> Paste </span>
 			</button>
 		{:else}
@@ -160,21 +160,21 @@
 				class="flex flex-row p-2 w-full cursor-pointer items-center"
 				on:click={edit}
 			>
-				<Pencil size="18" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+				<Pencil size="18" class="text-neutral-500 dark:text-neutral-300" />
 				<span class="ml-2"> Edit </span>
 			</button>
 			<button
 				class="flex flex-row p-2 w-full cursor-pointer items-center"
 				on:click={() => copiedContext.set(context)}
 			>
-				<Copy size="18" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+				<Copy size="18" class="text-neutral-500 dark:text-neutral-300" />
 				<span class="ml-2"> Copy </span>
 			</button>
 			<button
 				class="flex flex-row p-2 w-full cursor-pointer items-center"
 				on:click={clear}
 			>
-				<Trash size="18" color="#F66151" />
+				<Trash size="18" class="text-red-400" />
 				<span class="ml-2"> Delete </span>
 			</button>
 		{/if}

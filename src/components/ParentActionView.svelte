@@ -70,7 +70,7 @@
 				class="ml-auto mr-10"
 				on:click={() => removeInstance(index)}
 			>
-				<Trash size="32" color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"} />
+				<Trash size="32" class="text-neutral-500 dark:text-neutral-400" />
 			</button>
 		</div>
 	{/each}

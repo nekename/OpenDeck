@@ -34,7 +34,7 @@
 </script>
 
 <div class="flex flex-row items-center bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-900 rounded-md">
-	<MagnifyingGlass size="13" class="ml-2 mr-1" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+	<MagnifyingGlass size="13" class="ml-2 mr-1 text-neutral-500 dark:text-neutral-300" />
 	<input
 		bind:value={query}
 		class="w-full p-1 text-sm text-neutral-700 dark:text-neutral-300 outline-hidden"

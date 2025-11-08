@@ -184,24 +184,16 @@
 			>
 				<svelte:fragment slot="secondary">
 					{#if !plugin.registered}
-						<WarningCircle size="24" color="#E5A50A" />
+						<WarningCircle size="24" class="text-yellow-500" />
 					{:else if plugin.has_settings_interface}
-						<Gear size="24" color="#26A269" />
+						<Gear size="24" class="text-green-600" />
 					{/if}
 				</svelte:fragment>
 
 				{#if $settings?.developer}
-					<ArrowClockwise
-						size="24"
-						class="mt-2"
-						color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
-					/>
+					<ArrowClockwise size="24" class="mt-2 text-neutral-500 dark:text-neutral-400" />
 				{:else if !plugin.builtin}
-					<Trash
-						size="24"
-						class="mt-2"
-						color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
-					/>
+					<Trash size="24" class="mt-2 text-neutral-500 dark:text-neutral-400" />
 				{/if}
 			</ListedPlugin>
 		{/each}
@@ -218,7 +210,7 @@
 		</button>
 	</div>
 	<div class="flex flex-row items-center m-2 bg-neutral-200 dark:bg-neutral-700 rounded-md">
-		<MagnifyingGlass size="14" class="ml-3 mr-0.5" color={document.documentElement.classList.contains("dark") ? "#DEDDDA" : "#77767B"} />
+		<MagnifyingGlass size="14" class="ml-3 mr-0.5 text-neutral-500 dark:text-neutral-300" />
 		<input
 			bind:value={query}
 			class="w-full p-2 dark:text-neutral-300 outline-hidden"
@@ -254,10 +246,7 @@
 					hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
 					action={() => openDetailsView = id}
 				>
-					<ArrowSquareOut
-						size="24"
-						color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
-					/>
+					<ArrowSquareOut size="24" class="text-neutral-500 dark:text-neutral-400" />
 				</ListedPlugin>
 			{/each}
 		</div>
@@ -280,10 +269,7 @@
 						hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
 						action={() => installPluginElgato(plugin)}
 					>
-						<CloudArrowDown
-							size="24"
-							color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
-						/>
+						<CloudArrowDown size="24" class="text-neutral-500 dark:text-neutral-400" />
 					</ListedPlugin>
 				{/each}
 			</div>

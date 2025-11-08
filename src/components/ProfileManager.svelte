@@ -178,10 +178,7 @@
 							on:click={() => deleteProfile(profile)}
 							class="float-right"
 						>
-							<Trash
-								size="20"
-								color={document.documentElement.classList.contains("dark") ? "#C0BFBC" : "#77767B"}
-							/>
+							<Trash size="20" class="text-neutral-500 dark:text-neutral-400" />
 						</button>
 					{/if}
 				</div>
