@@ -49,6 +49,7 @@
 
 	function select(event: MouseEvent | KeyboardEvent) {
 		if (event instanceof MouseEvent && event.ctrlKey) return;
+		$openContextMenu = null;
 		if (!slot) return;
 		if (slot.action.uuid == "opendeck.multiaction" || slot.action.uuid == "opendeck.toggleaction") {
 			inspectedParentAction.set(context);
