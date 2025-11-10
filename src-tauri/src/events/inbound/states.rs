@@ -78,6 +78,9 @@ pub async fn set_state(event: ContextAndPayloadEvent<SetStatePayload>) -> Result
 	let mut locks = acquire_locks_mut().await;
 
 	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
+		if event.payload.state >= instance.states.len() as u16 {
+			return Ok(());
+		}
 		instance.current_state = event.payload.state;
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
