@@ -82,6 +82,14 @@ pub async fn move_instance(source: Context, destination: Context, retain: bool) 
 		return Ok(None);
 	}
 
+	{
+		let locks = crate::store::profiles::acquire_locks().await;
+		let dst = crate::store::profiles::get_slot(&destination, &locks).await?;
+		if dst.is_some() {
+			return Ok(None);
+		}
+	}
+
 	let mut locks = acquire_locks_mut().await;
 	let src = get_slot_mut(&source, &mut locks).await?;
 
@@ -118,9 +126,6 @@ pub async fn move_instance(source: Context, destination: Context, retain: bool) 
 	}
 
 	let dst = get_slot_mut(&destination, &mut locks).await?;
-	if dst.is_some() {
-		return Ok(None);
-	}
 	*dst = Some(new.clone());
 
 	if !retain {
