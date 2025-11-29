@@ -62,8 +62,14 @@
 	<div class="flex flex-row">
 		<div class="flex flex-col justify-center items-center">
 			<button
-				on:click={() => fileInput.click()}
-				on:dragover={(event) => event.preventDefault()}
+				on:click={(event) => {
+					if (event.ctrlKey) return;
+					fileInput.click();
+				}}
+				on:dragover={(event) => {
+					event.preventDefault();
+					if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+				}}
 				on:drop={handleDrop}
 				on:contextmenu={(event) => {
 					event.preventDefault();

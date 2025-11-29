@@ -63,7 +63,11 @@
 					role="group"
 					draggable="true"
 					title={$localisations?.[action.plugin]?.[action.uuid]?.Tooltip ?? action.tooltip}
-					on:dragstart={(event) => event.dataTransfer?.setData("action", JSON.stringify(action))}
+					on:dragstart={(event) => {
+						if (!event.dataTransfer) return;
+						event.dataTransfer.effectAllowed = "copy";
+						event.dataTransfer.setData("action", JSON.stringify(action));
+					}}
 				>
 					<img
 						src={!action.icon.startsWith("opendeck/") ? getWebserverUrl(action.icon) : action.icon.replace("opendeck", "")}

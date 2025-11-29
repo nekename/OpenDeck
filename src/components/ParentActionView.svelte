@@ -18,7 +18,7 @@
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
-		return true;
+		if (event.dataTransfer?.types.includes("action")) event.dataTransfer.dropEffect = "copy";
 	}
 
 	async function handleDrop({ dataTransfer }: DragEvent) {

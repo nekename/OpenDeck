@@ -16,13 +16,17 @@
 	export let selectedDevice: string;
 
 	function handleDragStart({ dataTransfer }: DragEvent, controller: string, position: number) {
-		dataTransfer?.setData("controller", controller);
-		dataTransfer?.setData("position", position.toString());
+		if (!dataTransfer) return;
+		dataTransfer.effectAllowed = "move";
+		dataTransfer.setData("controller", controller);
+		dataTransfer.setData("position", position.toString());
 	}
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
-		return true;
+		if (!event.dataTransfer) return;
+		if (event.dataTransfer.types.includes("action")) event.dataTransfer.dropEffect = "copy";
+		else if (event.dataTransfer.types.includes("controller")) event.dataTransfer.dropEffect = "move";
 	}
 
 	async function handleDrop({ dataTransfer }: DragEvent, controller: string, position: number) {
