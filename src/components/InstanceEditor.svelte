@@ -15,6 +15,25 @@
 	let fileInput: HTMLInputElement;
 	let colourInput: HTMLInputElement;
 
+	function handleDrop(event: DragEvent) {
+		event.preventDefault();
+
+		const file = event.dataTransfer?.files?.[0];
+		if (!file || !file.type.startsWith("image/")) return;
+		const reader = new FileReader();
+
+		reader.onload = async () => {
+			let result = reader.result?.toString();
+			if (result) {
+				let resized = await resizeImage(result);
+				if (resized) instance.states[state].image = resized;
+				else instance.states[state].image = result;
+			}
+		};
+
+		reader.readAsDataURL(file);
+	}
+
 	function update(instance: ActionInstance) {
 		bold = instance.states[state].style.includes("Bold");
 		italic = instance.states[state].style.includes("Italic");
@@ -44,6 +63,8 @@
 		<div class="flex flex-col justify-center items-center">
 			<button
 				on:click={() => fileInput.click()}
+				on:dragover={(event) => event.preventDefault()}
+				on:drop={handleDrop}
 				on:contextmenu={(event) => {
 					event.preventDefault();
 					instance.states[state].image = instance.action.states[state].image;
