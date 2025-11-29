@@ -105,15 +105,15 @@
 
 <div class="select-wrapper">
 	<select bind:value class="my-1 w-full">
-		{#each Object.entries(folders) as [id, profiles]}
+		{#each Object.entries(folders).sort() as [id, profiles]}
 			{#if id && profiles.length}
 				<optgroup label={id}>
-					{#each profiles as profile}
+					{#each profiles.sort() as profile}
 						<option value={profile}>{profile.split("/")[1]}</option>
 					{/each}
 				</optgroup>
 			{:else}
-				{#each profiles as profile}
+				{#each profiles.sort() as profile}
 					<option value={profile}>{profile}</option>
 				{/each}
 			{/if}
@@ -165,11 +165,11 @@
 	</div>
 
 	<div class="divide-y">
-		{#each Object.entries(folders) as [id, profiles]}
+		{#each Object.entries(folders).sort() as [id, profiles]}
 			{#if id && profiles.length}
 				<h4 class="py-2 font-bold text-lg dark:text-neutral-300">{id}</h4>
 			{/if}
-			{#each profiles as profile}
+			{#each profiles.sort() as profile}
 				<div class="py-2" class:ml-6={id} class:pl-2={id}>
 					<input type="radio" bind:group={value} value={profile} />
 					<span class="dark:text-neutral-400"> {id ? profile.split("/")[1] : profile} </span>
