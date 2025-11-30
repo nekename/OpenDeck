@@ -5,6 +5,7 @@ mod application_watcher;
 mod elgato;
 mod events;
 mod plugins;
+mod screen_lock_watcher;
 mod shared;
 mod store;
 mod zip_extract;
@@ -189,6 +190,7 @@ If you have already donated, thank you so much for your support!"#,
 			});
 			plugins::initialise_plugins();
 			application_watcher::init_application_watcher();
+			screen_lock_watcher::init_screen_lock_watcher();
 
 			let label = IconMenuItemBuilder::with_id("label", PRODUCT_NAME)
 				.icon(app.default_window_icon().unwrap().clone())

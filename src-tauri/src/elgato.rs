@@ -1,4 +1,5 @@
 use crate::events::outbound::{encoder, keypad};
+use crate::screen_lock_watcher::is_screen_locked;
 
 use std::collections::HashMap;
 
@@ -12,6 +13,34 @@ use once_cell::sync::Lazy;
 use tokio::sync::RwLock;
 
 static ELGATO_DEVICES: Lazy<RwLock<HashMap<String, AsyncStreamDeck>>> = Lazy::new(|| RwLock::new(HashMap::new()));
+
+/// Called when the screen is locked - blanks all devices.
+pub async fn on_screen_locked() {
+	log::info!("Screen locked - blanking Stream Deck devices");
+	for (_id, device) in ELGATO_DEVICES.read().await.iter() {
+		let _ = device.set_brightness(0).await;
+		let _ = device.clear_all_button_images().await;
+		if device.kind() == Kind::Plus
+			&& let Ok(img) = convert_image_with_format_async(device.kind().lcd_image_format().unwrap(), image::DynamicImage::new_rgb8(800, 100))
+		{
+			let _ = device.write_lcd_fill(&img).await;
+		}
+		let _ = device.flush().await;
+	}
+}
+
+/// Called when the screen is unlocked - restores device state.
+pub async fn on_screen_unlocked() {
+	log::info!("Screen unlocked - restoring Stream Deck devices");
+	// Restore brightness from settings
+	if let Ok(settings) = crate::store::get_settings() {
+		set_brightness(settings.value.brightness).await;
+	}
+	// Refresh the current profile to restore button images
+	for device in crate::shared::DEVICES.iter() {
+		let _ = crate::events::outbound::will_appear::refresh_profile(&device.id).await;
+	}
+}
 
 pub async fn update_image(context: &crate::shared::Context, image: Option<&str>) -> Result<(), anyhow::Error> {
 	if let Some(device) = ELGATO_DEVICES.read().await.get(&context.device) {
@@ -111,6 +140,12 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 			Ok(updates) => updates,
 			Err(_) => break,
 		};
+
+		// Skip processing button events when the screen is locked
+		if is_screen_locked() {
+			continue;
+		}
+
 		for update in updates {
 			match match update {
 				DeviceStateUpdate::ButtonDown(key) => keypad::key_down(&device_id, key).await,

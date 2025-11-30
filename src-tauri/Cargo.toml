@@ -53,7 +53,10 @@ path-slash = "0.2"
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs", rev = "c4c45d503ea115a839aae718d02f79e7c7f0f673" }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = "0.61"
+windows-sys = { version = "0.61", features = ["Win32_System_RemoteDesktop"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+dbus = "0.9"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
