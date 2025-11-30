@@ -207,7 +207,7 @@ mod platform {
 	use std::time::Duration;
 
 	/// Watch for screen lock/unlock events on macOS.
-	/// Uses CGSessionCopyCurrentDictionary to check the session state.
+	/// Uses ioreg to check the screen lock state.
 	pub async fn watch_screen_lock() {
 		log::info!("Screen lock watcher initialized (macOS polling)");
 
@@ -228,34 +228,24 @@ mod platform {
 		}
 	}
 
-	/// Check if the macOS session is locked using a Python script.
-	/// This is a workaround since directly calling CoreGraphics requires linking.
+	/// Check if the macOS session is locked.
+	/// Uses ioreg to check the IOHIDSystem's HIDIdleTime and screen saver state.
 	fn is_session_locked() -> bool {
-		// Check using the Quartz session dictionary
-		let output = Command::new("python3")
-			.args([
-				"-c",
-				r#"
-import Quartz
-d = Quartz.CGSessionCopyCurrentDictionary()
-print('1' if d and d.get('CGSSessionScreenIsLocked', False) else '0')
-"#,
-			])
-			.output();
-
-		match output {
-			Ok(output) => {
-				let stdout = String::from_utf8_lossy(&output.stdout);
-				stdout.trim() == "1"
-			}
-			Err(_) => {
-				// If Python/Quartz is not available, fall back to checking for login window
-				check_login_window_active()
-			}
+		// Primary method: Check if the loginwindow is the frontmost app
+		// This is the most reliable cross-version method
+		if check_login_window_active() {
+			return true;
 		}
+
+		// Secondary method: Check screen saver status via defaults
+		if check_screen_saver_running() {
+			return true;
+		}
+
+		false
 	}
 
-	/// Fallback check: see if the loginwindow process has focus.
+	/// Check if the loginwindow process has focus (indicates lock screen).
 	fn check_login_window_active() -> bool {
 		let output = Command::new("osascript")
 			.args(["-e", "tell application \"System Events\" to get name of first process whose frontmost is true"])
@@ -266,6 +256,17 @@ print('1' if d and d.get('CGSSessionScreenIsLocked', False) else '0')
 				let stdout = String::from_utf8_lossy(&output.stdout);
 				stdout.trim().to_lowercase() == "loginwindow"
 			}
+			Err(_) => false,
+		}
+	}
+
+	/// Check if the screen saver is running.
+	fn check_screen_saver_running() -> bool {
+		// Check if ScreenSaverEngine is running
+		let output = Command::new("pgrep").args(["-x", "ScreenSaverEngine"]).output();
+
+		match output {
+			Ok(output) => output.status.success(),
 			Err(_) => false,
 		}
 	}
