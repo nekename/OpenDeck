@@ -107,14 +107,18 @@ mod platform {
 		log::info!("Screen lock watcher using polling fallback");
 
 		loop {
-			if let Ok(conn) = Connection::new_system()
-				&& let Ok(session_path) = get_session_path(&conn)
-				&& let Ok(locked) = check_session_locked(&conn, &session_path)
-			{
+			if let Some(locked) = poll_lock_state_once() {
 				update_lock_state(locked);
 			}
 			std::thread::sleep(Duration::from_secs(2));
 		}
+	}
+
+	/// Poll the lock state once, returning None if any step fails.
+	fn poll_lock_state_once() -> Option<bool> {
+		let conn = Connection::new_system().ok()?;
+		let session_path = get_session_path(&conn).ok()?;
+		check_session_locked(&conn, &session_path).ok()
 	}
 
 	/// Update the global lock state and trigger device updates if state changed.

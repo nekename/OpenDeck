@@ -21,7 +21,8 @@ pub async fn on_screen_locked() {
 		let _ = device.set_brightness(0).await;
 		let _ = device.clear_all_button_images().await;
 		if device.kind() == Kind::Plus
-			&& let Ok(img) = convert_image_with_format_async(device.kind().lcd_image_format().unwrap(), image::DynamicImage::new_rgb8(800, 100))
+			&& let Some(format) = device.kind().lcd_image_format()
+			&& let Ok(img) = convert_image_with_format_async(format, image::DynamicImage::new_rgb8(800, 100))
 		{
 			let _ = device.write_lcd_fill(&img).await;
 		}
@@ -38,7 +39,9 @@ pub async fn on_screen_unlocked() {
 	}
 	// Refresh the current profile to restore button images
 	for device in crate::shared::DEVICES.iter() {
-		let _ = crate::events::outbound::will_appear::refresh_profile(&device.id).await;
+		if let Err(e) = crate::events::outbound::will_appear::refresh_profile(&device.id).await {
+			log::warn!("Failed to refresh profile for device {}: {e}", device.id);
+		}
 	}
 }
 

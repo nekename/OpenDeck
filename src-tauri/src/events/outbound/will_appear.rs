@@ -64,10 +64,14 @@ pub async fn refresh_profile(device_id: &str) -> Result<(), anyhow::Error> {
 
 	for instance in profile.keys.iter().flatten().chain(&mut profile.sliders.iter().flatten()) {
 		if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
-			let _ = will_appear(instance).await;
-		} else {
-			for child in instance.children.as_ref().unwrap() {
-				let _ = will_appear(child).await;
+			if let Err(e) = will_appear(instance).await {
+				log::trace!("Failed to refresh instance {}: {e}", instance.context);
+			}
+		} else if let Some(children) = instance.children.as_ref() {
+			for child in children {
+				if let Err(e) = will_appear(child).await {
+					log::trace!("Failed to refresh child instance {}: {e}", child.context);
+				}
 			}
 		}
 	}
