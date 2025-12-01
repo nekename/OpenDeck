@@ -56,7 +56,7 @@
 	}
 
 	async function handlePaste(source: Context, destination: Context) {
-		let response: ActionInstance = await invoke("move_instance", { source, destination, retain: true });
+		let response: ActionInstance = await invoke("copy_instance", { source, destination });
 		if (response) {
 			(destination.controller == "Encoder" ? profile.sliders : profile.keys)[destination.position] = response;
 			profile = profile;

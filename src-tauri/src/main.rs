@@ -72,6 +72,7 @@ async fn main() {
 			frontend::get_applications,
 			frontend::get_application_profiles,
 			frontend::set_application_profiles,
+			frontend::instances::copy_instance,
 			frontend::instances::create_instance,
 			frontend::instances::move_instance,
 			frontend::instances::remove_instance,
