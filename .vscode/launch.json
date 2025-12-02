@@ -1,13 +1,10 @@
 {
-	// Use IntelliSense to learn about possible attributes.
-	// Hover to view descriptions of existing attributes.
-	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 	"version": "0.2.0",
 	"configurations": [
 		{
 			"type": "lldb",
 			"request": "launch",
-			"name": "Tauri Development Debug",
+			"name": "Debug (debug)",
 			"cargo": {
 				"args": [
 					"build",
@@ -15,13 +12,12 @@
 					"--no-default-features"
 				]
 			},
-			// task for the `beforeDevCommand` if used, must be configured in `.vscode/tasks.json`
-			"preLaunchTask": "ui:dev"
+			"preLaunchTask": "frontend:dev"
 		},
 		{
 			"type": "lldb",
 			"request": "launch",
-			"name": "Tauri Production Debug",
+			"name": "Debug (release)",
 			"cargo": {
 				"args": [
 					"build",
@@ -29,8 +25,7 @@
 					"--manifest-path=./src-tauri/Cargo.toml"
 				]
 			},
-			// task for the `beforeBuildCommand` if used, must be configured in `.vscode/tasks.json`
-			"preLaunchTask": "ui:build"
+			"preLaunchTask": "frontend:build"
 		}
 	]
 }
