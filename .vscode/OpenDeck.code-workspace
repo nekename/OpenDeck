@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{ "path": ".." },
+		{ "path": "../plugins/com.amansprojects.starterpack.sdPlugin" }
+	],
+	"settings": {
+		"editor.insertSpaces": false,
+		"files.insertFinalNewline": true,
+		"files.trimTrailingWhitespace": true
+	}
+}
