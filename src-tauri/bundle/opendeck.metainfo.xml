@@ -49,6 +49,25 @@
 	</branding>
 
 	<releases>
+		<release version="2.7.1" date="2025-12-03">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.7.1</url>
+			<description>
+				<ul>
+					<li>Prevent setting the current state of an action out of the bounds of its possible states</li>
+					<li>Support dragging and dropping images onto the image input in the instance editor (#180)</li>
+					<li>Show the correct cursors when dragging and dropping actions and images</li>
+					<li>Sort folders and profiles in the profile manager for consistent display</li>
+					<li>Update elgato-streamdeck to support the Discord edition of the Stream Deck Mini</li>
+					<li>Update dependencies</li>
+					<li>Prevent copying or overwriting images when moving or copying an instance if an instance is already present at the destination</li>
+					<li>Add udev rules for the Discord edition of the Stream Deck Mini (#181)</li>
+					<li>Add Visual Studio Code debug configurations (#186)</li>
+					<li>Add Visual Studio Code workspace configuration</li>
+					<li>Update enigo to latest upstream to receive unreleased fixes</li>
+					<li>Collapse nested if-let statements as it was stabilised in Rust 1.88.0</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.7.0" date="2025-11-08">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.7.0</url>
 			<description>
