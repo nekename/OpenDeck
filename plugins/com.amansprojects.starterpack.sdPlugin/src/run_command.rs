@@ -65,11 +65,10 @@ async fn run_command(
 	let mut output = String::new();
 	reader.read_to_string(&mut output)?;
 
-	if let Some(path) = settings.get("file").map(|v| v.as_str().unwrap()) {
-		if !path.is_empty() {
+	if let Some(path) = settings.get("file").map(|v| v.as_str().unwrap())
+		&& !path.is_empty() {
 			tokio::fs::write(path, &output).await?;
 		}
-	}
 
 	if settings
 		.get("show")

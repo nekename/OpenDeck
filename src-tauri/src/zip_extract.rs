@@ -88,11 +88,10 @@ pub fn extract<S: Read + Seek>(source: S, target_dir: &Path) -> Result<(), ZipEx
 		if name.ends_with('/') {
 			fs::create_dir_all(&outpath)?;
 		} else {
-			if let Some(p) = outpath.parent() {
-				if !p.exists() {
+			if let Some(p) = outpath.parent()
+				&& !p.exists() {
 					fs::create_dir_all(p)?;
 				}
-			}
 			let mut outfile = fs::File::create(&outpath)?;
 			io::copy(&mut file, &mut outfile)?;
 		}

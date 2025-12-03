@@ -176,12 +176,11 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 			.visible(false)
 			.build()?;
 
-		if let Ok(store) = get_settings() {
-			if store.value.developer {
+		if let Ok(store) = get_settings()
+			&& store.value.developer {
 				let _ = window.show();
 				window.open_devtools();
 			}
-		}
 
 		let info = info_param::make_info(plugin_uuid.to_owned(), manifest.version, false).await;
 		window.eval(format!(
@@ -319,11 +318,10 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		}
 	}
 
-	if let Some(applications) = manifest.applications_to_monitor {
-		if let Some(applications) = applications.get(platform) {
+	if let Some(applications) = manifest.applications_to_monitor
+		&& let Some(applications) = applications.get(platform) {
 			crate::application_watcher::start_monitoring(plugin_uuid, applications).await;
 		}
-	}
 
 	Ok(())
 }
