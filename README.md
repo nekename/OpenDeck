@@ -92,6 +92,9 @@ To change other options, open Settings. From here, you can also view information
 
 ### Building from source / contributing
 
+> [!TIP]
+> The development guide for agents present in [AGENTS.md](AGENTS.md) also serves as a useful introduction to the codebase for humans.
+
 You'll need to ensure that all of the [prerequisites for building a Tauri application](https://tauri.app/start/prerequisites) are satisfied to build OpenDeck, as well as making sure that [Deno](https://deno.com/) is installed. On Linux, you'll also need `libudev` installed for your distribution. After running `deno install`, you can use `deno task tauri dev` and `deno task tauri build` to work with OpenDeck.
 
 Before each commit, please ensure that all of the following are completed:
