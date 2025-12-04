@@ -3282,6 +3282,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-log",
  "tauri-plugin-single-instance",
+ "tempfile",
  "tiny_http",
  "tokio",
  "tokio-tungstenite",

@@ -55,5 +55,8 @@ fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs", rev = "c
 [target.'cfg(windows)'.dependencies]
 windows-sys = "0.61"
 
+[dev-dependencies]
+tempfile = "3.15"
+
 [features]
 custom-protocol = ["tauri/custom-protocol"]
