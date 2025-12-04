@@ -133,10 +133,10 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 			InboundEventType::SendToPlugin(_) => Ok(()),
 			InboundEventType::SwitchProfile(event) => misc::switch_profile(event).await,
 			InboundEventType::DeviceBrightness(event) => misc::device_brightness(event).await,
+		} && !error.to_string().contains("closed connection")
+		{
+			warn!("Failed to process incoming event from plugin: {}", error);
 		}
-			&& !error.to_string().contains("closed connection") {
-				warn!("Failed to process incoming event from plugin: {}", error);
-			}
 	}
 }
 
@@ -154,10 +154,10 @@ pub async fn process_incoming_message_pi(data: Result<Message, Error>, uuid: &st
 			InboundEventType::GetGlobalSettings(event) => Some(event.context.clone()),
 			InboundEventType::SendToPlugin(event) => Some(event.context.to_string()),
 			_ => None,
+		} && context != uuid
+		{
+			return;
 		}
-			&& context != uuid {
-				return;
-			}
 
 		if let Err(error) = match decoded {
 			InboundEventType::SetSettings(event) => settings::set_settings(event, true).await,
@@ -168,9 +168,9 @@ pub async fn process_incoming_message_pi(data: Result<Message, Error>, uuid: &st
 			InboundEventType::LogMessage(event) => misc::log_message(None, event).await,
 			InboundEventType::SendToPlugin(event) => property_inspector::send_to_plugin(event).await,
 			_ => Ok(()),
+		} && !error.to_string().contains("closed connection")
+		{
+			warn!("Failed to process incoming event from property inspector: {}", error);
 		}
-			&& !error.to_string().contains("closed connection") {
-				warn!("Failed to process incoming event from property inspector: {}", error);
-			}
 	}
 }

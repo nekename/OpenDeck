@@ -22,9 +22,10 @@ pub struct LogMessageEvent {
 
 pub async fn log_message(uuid: Option<&str>, mut event: PayloadEvent<LogMessageEvent>) -> Result<(), anyhow::Error> {
 	if let Some(uuid) = uuid
-		&& let Ok(manifest) = crate::plugins::manifest::read_manifest(&crate::shared::config_dir().join("plugins").join(uuid)) {
-			event.payload.message = format!("[{}] {}", manifest.name, event.payload.message);
-		}
+		&& let Ok(manifest) = crate::plugins::manifest::read_manifest(&crate::shared::config_dir().join("plugins").join(uuid))
+	{
+		event.payload.message = format!("[{}] {}", manifest.name, event.payload.message);
+	}
 	log::info!("{}", event.payload.message.trim());
 	Ok(())
 }

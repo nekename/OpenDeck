@@ -80,9 +80,10 @@ pub fn read_manifest(base_path: &std::path::Path) -> Result<PluginManifest, anyh
 
 	let platform_overrides_path = base_path.join(format!("manifest.{}.json", std::env::consts::OS));
 	if platform_overrides_path.exists()
-		&& let Ok(Ok(platform_overrides)) = std::fs::read(platform_overrides_path).map(|v| serde_json::from_slice(&v)) {
-			json_patch::merge(&mut manifest, &platform_overrides);
-		}
+		&& let Ok(Ok(platform_overrides)) = std::fs::read(platform_overrides_path).map(|v| serde_json::from_slice(&v))
+	{
+		json_patch::merge(&mut manifest, &platform_overrides);
+	}
 
 	serde_json::from_value(manifest).context("failed to parse manifest")
 }
