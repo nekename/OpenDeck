@@ -84,6 +84,63 @@ impl ProfileStores {
 		let _ = fs::remove_dir_all(images_path);
 	}
 
+	pub async fn rename_profile(&mut self, device: &DeviceInfo, old_id: &str, new_id: &str) -> Result<(), anyhow::Error> {
+		// Remove from the store but don't delete the file
+		self.remove_profile(&device.id, old_id);
+
+		let config_dir = config_dir();
+
+		// Construct old and new paths (handling Windows path separators)
+		#[cfg(target_os = "windows")]
+		let old_path_id = old_id.replace('/', "\\");
+		#[cfg(not(target_os = "windows"))]
+		let old_path_id = old_id;
+
+		#[cfg(target_os = "windows")]
+		let new_path_id = new_id.replace('/', "\\");
+		#[cfg(not(target_os = "windows"))]
+		let new_path_id = new_id;
+
+		let old_path = config_dir.join("profiles").join(&device.id).join(format!("{}.json", old_path_id));
+		let new_path = config_dir.join("profiles").join(&device.id).join(format!("{}.json", new_path_id));
+
+		// Create parent directory for new path if it doesn't exist
+		if let Some(parent) = new_path.parent() {
+			fs::create_dir_all(parent)?;
+		}
+
+		// Rename the profile file
+		fs::rename(&old_path, &new_path)?;
+
+		// Clean up empty old directory if profile was in a folder
+		if let Some(parent) = old_path.parent() {
+			// This is safe as `remove_dir` errors if the directory is not empty.
+			let _ = fs::remove_dir(parent);
+		}
+
+		// Rename images directory if it exists
+		let old_images_path = config_dir.join("images").join(&device.id).join(old_path_id);
+		let new_images_path = config_dir.join("images").join(&device.id).join(new_path_id);
+
+		if old_images_path.exists() {
+			if let Some(parent) = new_images_path.parent() {
+				fs::create_dir_all(parent)?;
+			}
+			fs::rename(&old_images_path, &new_images_path)?;
+
+			// Clean up empty old images directory
+			if let Some(parent) = old_images_path.parent() {
+				// This is safe as `remove_dir` errors if the directory is not empty.
+				let _ = fs::remove_dir(parent);
+			}
+		}
+
+		// Reload the new profile
+		self.get_profile_store_mut(device, new_id).await?;
+
+		Ok(())
+	}
+
 	pub fn all_from_plugin(&self, plugin: &str) -> Vec<crate::shared::ActionContext> {
 		let mut all = vec![];
 		for store in self.stores.values() {

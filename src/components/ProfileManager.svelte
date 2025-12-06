@@ -3,11 +3,14 @@
 	import type { Profile } from "$lib/Profile";
 
 	import Browsers from "phosphor-svelte/lib/Browsers";
+	import FloppyDisk from "phosphor-svelte/lib/FloppyDisk";
+	import Pencil from "phosphor-svelte/lib/Pencil";
 	import Trash from "phosphor-svelte/lib/Trash";
 	import Popup from "./Popup.svelte";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
+	import { message } from "@tauri-apps/plugin-dialog";
 
 	let folders: { [name: string]: string[] } = {};
 	let value: string;
@@ -62,6 +65,59 @@
 		folders[folder].splice(folders[folder].indexOf(id), 1);
 		folders = folders;
 	}
+
+	let renamingProfile: string | null = null;
+	let renameInput: HTMLInputElement;
+	let newId: string = "";
+
+	async function saveRenamedProfile(oldId: string) {
+		if (!renameInput.checkValidity() || !newId) return;
+		if (newId == oldId) {
+			renamingProfile = null;
+			return;
+		}
+
+		// Check if a profile with the new ID already exists
+		const allProfiles = Object.values(folders).flat();
+		if (allProfiles.includes(newId)) {
+			message(`A profile with the ID "${newId}" already exists.`, { title: "Failed to rename profile" });
+			return;
+		}
+
+		try {
+			await invoke("rename_profile", { device: device.id, oldId, newId });
+		} catch (error: any) {
+			message(error, { title: "Failed to rename profile" });
+			console.error(error);
+		}
+
+		// Update application profile mappings
+		for (const devices of Object.values(applicationProfiles)) {
+			if (devices[device.id] == oldId) devices[device.id] = newId;
+		}
+		applicationProfiles = applicationProfiles;
+
+		// Update folders structure
+		const oldFolder = oldId.includes("/") ? oldId.split("/")[0] : "";
+		const newFolder = newId.includes("/") ? newId.split("/")[0] : "";
+
+		// Remove from old folder
+		if (folders[oldFolder]) {
+			const index = folders[oldFolder].indexOf(oldId);
+			if (index != -1) {
+				folders[oldFolder].splice(index, 1);
+				if (folders[oldFolder].length == 0 && oldFolder != "") delete folders[oldFolder];
+			}
+		}
+
+		// Add to new folder
+		if (folders[newFolder]) folders[newFolder].push(newId);
+		else folders[newFolder] = [newId];
+
+		folders = folders;
+		renamingProfile = null;
+	}
+	$: if (renameInput) renameInput.focus();
 
 	let oldValue: string;
 	$: {
@@ -126,6 +182,7 @@
 	on:keydown={(event) => {
 		if (event.key == "Escape") {
 			if (showApplicationManager) showApplicationManager = false;
+			else if (renamingProfile) renamingProfile = null;
 			else showPopup = false;
 		}
 	}}
@@ -139,8 +196,8 @@
 		<input
 			bind:this={nameInput}
 			pattern="[a-zA-Z0-9_ ]+(\/[a-zA-Z0-9_ ]+)?"
-			class="grow p-2 dark:text-neutral-300 invalid:text-red-400 dark:bg-neutral-700 rounded-l-md outline-hidden"
-			placeholder='Profile ID (e.g. "folder/profile")'
+			class="grow p-2 dark:text-neutral-300 invalid:text-red-400 bg-neutral-200 dark:bg-neutral-700 rounded-l-md outline-hidden"
+			placeholder='Profile name or "folder/name"'
 		/>
 
 		<button
@@ -151,13 +208,13 @@
 				nameInput.value = "";
 				showPopup = false;
 			}}
-			class="px-4 dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-900 rounded-r-md"
+			class="px-4 dark:text-neutral-300 bg-neutral-300 dark:bg-neutral-900 rounded-r-md"
 		>
 			Create
 		</button>
 
 		<button
-			class="ml-2 px-4 flex items-center dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-900 rounded-md outline-hidden"
+			class="ml-2 px-4 flex items-center dark:text-neutral-300 bg-neutral-300 dark:bg-neutral-900 rounded-md outline-hidden"
 			on:click={() => showApplicationManager = true}
 		>
 			<Browsers size={24} />
@@ -170,16 +227,35 @@
 				<h4 class="py-2 font-bold text-lg dark:text-neutral-300">{id}</h4>
 			{/if}
 			{#each profiles.sort() as profile}
-				<div class="py-2" class:ml-6={id} class:pl-2={id}>
-					<input type="radio" bind:group={value} value={profile} />
-					<span class="dark:text-neutral-400"> {id ? profile.split("/")[1] : profile} </span>
-					{#if profile != value}
-						<button
-							on:click={() => deleteProfile(profile)}
-							class="float-right"
-						>
-							<Trash size="20" class="text-neutral-500 dark:text-neutral-400" />
+				<div class="flex flex-row items-center py-2 space-x-2" class:ml-6={id} class:pl-2={id}>
+					<input type="radio" bind:group={value} value={profile} disabled={renamingProfile == profile} />
+					{#if profile == renamingProfile}
+						<input
+							bind:this={renameInput}
+							bind:value={newId}
+							pattern="[a-zA-Z0-9_ ]+(\/[a-zA-Z0-9_ ]+)?"
+							class="grow px-2 py-1 dark:text-neutral-300 invalid:text-red-400 bg-neutral-200 dark:bg-neutral-700 rounded outline-hidden"
+							placeholder='Profile name or "folder/name"'
+							on:keydown={(e) => {
+								if (e.key === "Enter") saveRenamedProfile(profile);
+							}}
+						/>
+						<button on:click={() => saveRenamedProfile(profile)} title="Save">
+							<FloppyDisk size="20" class="text-green-600 dark:text-green-500" />
 						</button>
+					{:else}
+						<span class="grow dark:text-neutral-400">{id ? profile.split("/")[1] : profile}</span>
+						{#if profile != value}
+							<button
+								on:click={() => renamingProfile = newId = profile}
+								title="Rename"
+							>
+								<Pencil size="20" class="text-neutral-500 dark:text-neutral-400" />
+							</button>
+							<button on:click={() => deleteProfile(profile)} title="Delete">
+								<Trash size="20" class="text-neutral-500 dark:text-neutral-400" />
+							</button>
+						{/if}
 					{/if}
 				</div>
 			{/each}

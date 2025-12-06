@@ -72,6 +72,18 @@ pub async fn delete_profile(device: String, profile: String) {
 	profile_stores.delete_profile(&device, &profile);
 }
 
+#[command]
+pub async fn rename_profile(device: String, old_id: String, new_id: String) -> Result<(), Error> {
+	let mut locks = acquire_locks_mut().await;
+	if !DEVICES.contains_key(&device) {
+		return Err(Error::new(format!("device {device} not found")));
+	}
+
+	locks.profile_stores.rename_profile(&DEVICES.get(&device).unwrap(), &old_id, &new_id).await?;
+
+	Ok(())
+}
+
 pub async fn rerender_images(app: &AppHandle) -> Result<(), anyhow::Error> {
 	let window = app.get_webview_window("main").unwrap();
 	window.emit("rerender_images", ())?;

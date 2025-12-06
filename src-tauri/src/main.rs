@@ -81,6 +81,7 @@ async fn main() {
 			frontend::profiles::get_selected_profile,
 			frontend::profiles::set_selected_profile,
 			frontend::profiles::delete_profile,
+			frontend::profiles::rename_profile,
 			frontend::property_inspector::make_info,
 			frontend::property_inspector::switch_property_inspector,
 			frontend::property_inspector::open_url,
