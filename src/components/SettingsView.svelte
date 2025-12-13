@@ -92,13 +92,25 @@
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="dark:text-neutral-400"> Run in background: </span>
 			<input type="checkbox" bind:checked={$settings.background} />
-			<Tooltip> If this option is enabled, {PRODUCT_NAME} will minimise to the tray and run in the background. </Tooltip>
+			<Tooltip>
+				If this option is enabled, {PRODUCT_NAME} will minimise to the tray and run in the background.
+				{#if buildInfo?.includes("linux")}
+					<br />
+					If you used Flatpak to install {PRODUCT_NAME}, this option may not function as intended.
+				{/if}
+			</Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="dark:text-neutral-400"> Start at login: </span>
 			<input type="checkbox" bind:checked={$settings.autolaunch} />
-			<Tooltip> If this option is enabled, {PRODUCT_NAME} will automatically start at login. </Tooltip>
+			<Tooltip>
+				If this option is enabled, {PRODUCT_NAME} will automatically start at login.
+				{#if buildInfo?.includes("linux")}
+					<br />
+					If you used Flatpak to install {PRODUCT_NAME}, this option may not function as intended.
+				{/if}
+			</Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
