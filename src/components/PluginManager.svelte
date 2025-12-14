@@ -128,11 +128,48 @@
 		}
 	}
 
+	async function isUpdateAvailable(plugin: any): Promise<string | false> {
+		const id = plugin.id.endsWith(".sdPlugin") ? plugin.id.slice(0, -9) : plugin.id;
+		const cataloguePlugin = plugins[id];
+		if (!cataloguePlugin || cataloguePlugin.download_url) return false;
+
+		try {
+			const endpoint = new URL(cataloguePlugin.repository);
+			endpoint.hostname = "api." + endpoint.hostname;
+			endpoint.pathname = "/repos" + endpoint.pathname + "/releases/latest";
+
+			const res = await fetch(endpoint);
+			if (!res.ok) return false;
+			const release = await res.json();
+
+			if (release.tag_name.replace(/^v/, "") != plugin.version.replace(/^v/, "")) {
+				return release.tag_name.replace(/^v/, "");
+			} else {
+				return false;
+			}
+		} catch (error) {
+			console.warn("Failed to check for plugin update:", error);
+			return false;
+		}
+	}
+
 	let installed: any[] = [];
 	(async () => installed = await invoke("list_plugins"))();
 
 	let plugins: { [id: string]: GitHubPlugin };
 	(async () => plugins = await (await fetch("https://openactionapi.github.io/plugins/catalogue.json")).json())();
+
+	let availableUpdates: { [id: string]: string | false } = {};
+	let checkedPlugins = new Set<string>();
+	$: if (showPopup) {
+		for (const plugin of installed) {
+			if (!checkedPlugins.has(plugin.id)) {
+				checkedPlugins.add(plugin.id);
+				isUpdateAvailable(plugin)
+					.then((version) => availableUpdates = { ...availableUpdates, [plugin.id]: version });
+			}
+		}
+	}
 
 	let query: string = "";
 
@@ -182,6 +219,20 @@
 					else if (plugin.has_settings_interface) invoke("show_settings_interface", { plugin: plugin.id });
 				}}
 			>
+				<svelte:fragment slot="subtitle">
+					{plugin.version}
+					{#if availableUpdates[plugin.id]}
+						(<span class="text-yellow-600 dark:text-yellow-400">
+							available:
+							<button
+								class="font-semibold hover:underline outline-hidden"
+								on:click={() => openDetailsView = plugin.id.endsWith(".sdPlugin") ? plugin.id.slice(0, -9) : plugin.id}
+							>
+								{availableUpdates[plugin.id]}
+							</button></span>)
+					{/if}
+				</svelte:fragment>
+
 				<svelte:fragment slot="secondary">
 					{#if !plugin.registered}
 						<WarningCircle size="24" class="text-yellow-500" />
