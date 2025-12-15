@@ -290,7 +290,7 @@ If you have already donated, thank you so much for your support!"#,
 					&& path.next() == Some("message")
 					&& let Some(plugin_id) = path.next()
 				{
-					let plugin_id = plugin_id.to_owned();
+					let plugin_id = if url.scheme() == "streamdeck" { format!("{plugin_id}.sdPlugin") } else { plugin_id.to_owned() };
 					tauri::async_runtime::spawn(async move {
 						if let Err(error) = events::outbound::deep_link::did_receive_deep_link(&plugin_id, args[pos].clone()).await {
 							log::error!("Failed to process deep link for plugin {plugin_id}: {error}");
