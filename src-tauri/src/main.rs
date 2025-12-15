@@ -278,7 +278,7 @@ If you have already donated, thank you so much for your support!"#,
 		)
 		.plugin(tauri_plugin_cors_fetch::init())
 		.plugin(tauri_plugin_single_instance::init(|app, args, _| {
-			if let Some(pos) = args.iter().position(|x| x.starts_with("opendeck://") || x.starts_with("streamdeck://"))
+			if let Some(pos) = args.iter().position(|x| x.starts_with("openaction://") || x.starts_with("streamdeck://"))
 				&& let Ok(url) = reqwest::Url::parse(&args[pos])
 				&& let Some(mut path) = url.path_segments()
 			{
