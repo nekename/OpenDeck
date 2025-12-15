@@ -290,9 +290,11 @@ If you have already donated, thank you so much for your support!"#,
 					&& path.next() == Some("message")
 					&& let Some(plugin_id) = path.next()
 				{
-					let plugin_id = plugin_id.to_string();
+					let plugin_id = plugin_id.to_owned();
 					tauri::async_runtime::spawn(async move {
-						events::outbound::deep_link::did_receive_deep_link(&plugin_id, args[pos].clone()).await.unwrap();
+						if let Err(error) = events::outbound::deep_link::did_receive_deep_link(&plugin_id, args[pos].clone()).await {
+							log::error!("Failed to process deep link for plugin {plugin_id}: {error}");
+						}
 					});
 				}
 			} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--reload-plugin") {
