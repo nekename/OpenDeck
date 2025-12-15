@@ -1,4 +1,5 @@
 pub mod applications;
+pub mod deep_link;
 pub mod devices;
 pub mod encoder;
 pub mod keypad;
