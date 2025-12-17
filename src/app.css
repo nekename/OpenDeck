@@ -6,6 +6,16 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+html {
+	overflow: hidden;
+	height: 100%;
+}
+
+body {
+	overflow: auto;
+	height: 100%;
+}
+
 *, ::after, ::before, ::backdrop, ::file-selector-button {
 	border-color: var(--color-gray-200, currentColor);
 }
