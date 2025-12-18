@@ -4,11 +4,11 @@
 mod application_watcher;
 mod elgato;
 mod events;
+mod iconpacks;
 mod plugins;
 mod shared;
 mod store;
 mod zip_extract;
-mod iconpacks;
 
 mod built_info {
 	include!(concat!(env!("OUT_DIR"), "/built.rs"));
@@ -103,6 +103,11 @@ async fn main() {
 		])
 		.setup(|app| {
 			APP_HANDLE.set(app.handle().clone()).unwrap();
+
+			let iconpacks = iconpacks::manager::IconPackManager::new();
+			iconpacks.refresh().unwrap_or(());
+
+			app.manage(iconpacks);
 
 			#[cfg(windows)]
 			if !std::env::args().any(|v| v == "--hide") {

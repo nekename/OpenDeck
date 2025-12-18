@@ -103,9 +103,7 @@
 					{pack}
 					installed={pack.installed_path !== null}
 					onRemove={async () => {
-						await invoke("uninstall_iconpack", {
-							path: pack.installed_path,
-						});
+						await invoke("uninstall_iconpack", { id: pack.id });
 						await iconPacks.dropById(pack.id);
 					}}
 				/>

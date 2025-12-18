@@ -1,5 +1,7 @@
+pub mod manager;
+
 use anyhow::{Error, bail};
-use std::{fs, path::Path, io::Read};
+use std::{fs, path::Path, io::Read, env};
 use zip::ZipArchive;
 use crate::shared::{IconPack, Icon, config_dir};
 use serde::{Deserialize};
@@ -43,6 +45,19 @@ fn check_path_is_sd_iconpack(path: &Path) -> Result<bool, Error> {
     Ok(true)
 }
 
+fn find_sd_iconpack_folder_in_archive(archive: &mut ZipArchive<fs::File>) -> Result<String, Error> {
+    let ext = format!(".{SD_ICON_PACK_EXTENSION}");
+    for i in 0..archive.len() {
+        let file = archive.by_index(i)?;
+        let name = file.name();
+        if name.ends_with('/') && name.trim_end_matches('/').ends_with(&ext) {
+            return Ok(name.to_string());
+        }
+    }
+
+    bail!("No folder ending with {} found in archive", ext);
+}
+
 pub async fn read_sd_iconpack_metadata(path: &Path) -> Result<IconPack, Error> {
     // path should lead to a file that ends with .streamDeckIconPack
     check_path_is_sd_iconpack(path)?;
@@ -53,27 +68,11 @@ pub async fn read_sd_iconpack_metadata(path: &Path) -> Result<IconPack, Error> {
 
     // inside of the archive, we expect one of the folders to end with .sdIconPack
     // go through the contents and find the name of that folder:
-    let mut iconpack_folder = None;
-    for i in 0..archive.len() {
-        let file = archive.by_index(i)?;
-        let name = file.name();
-        let ext = format!(".{SD_ICON_PACK_EXTENSION}");
-        if name.ends_with('/') && name.trim_end_matches('/').ends_with(&ext) {
-            iconpack_folder = Some(name.to_string());
-            break;
-        }
-    }
-
-    let iconpack_folder = iconpack_folder.ok_or_else(|| {
-        anyhow::anyhow!("No folder ending with .sdIconPack found in archive")
-    })?;
+    let iconpack_folder = find_sd_iconpack_folder_in_archive(&mut archive)?;
 
     let manifest = {
         let manifest_path = format!("{}manifest.json", iconpack_folder);
-        // let mut metadata_contents = String::new();
-        let mut metadata_file = archive.by_name(&manifest_path)?;
-        // metadata_file.read_to_string(&mut metadata_contents)?;
-        // let manifest: SDIconPackManifest = serde_json::from_str(&metadata_contents)?;
+        let metadata_file = archive.by_name(&manifest_path)?;
         let manifest: SDIconPackManifest = serde_json::from_reader(metadata_file)?;
         manifest
     };
@@ -114,19 +113,29 @@ pub async fn read_sd_iconpack_metadata(path: &Path) -> Result<IconPack, Error> {
     Ok(icon_pack)
 }
 
-pub async fn install_sd_iconpack(path: &Path) -> Result<(), Error> {
+pub async fn install_sd_iconpack(path: &Path) -> Result<String, Error> {
     check_path_is_sd_iconpack(path)?;
 
     // ensure the icon packs directory exists
     let icon_packs_dir = config_dir().join(ICON_PACK_FOLDER);
     tokio::fs::create_dir_all(&icon_packs_dir).await?;
 
-    // unpack the .streamDeckIconPack file into the icon packs directory
     let file = fs::File::open(path)?;
     let mut archive = ZipArchive::new(file)?;
-    archive.extract(&icon_packs_dir)?;
+    let iconpack_folder = find_sd_iconpack_folder_in_archive(&mut archive)?;
 
-    Ok(())
+    // TODO: use tempfile crate to create a temp directory
+    // unpack the .streamDeckIconPack file into the temporary directory
+    let temp_dir = env::temp_dir();
+    archive.extract(&temp_dir)?;
+
+    // move the unpacked pack folder to the icon packs directory
+    // this is for the case, when iconpack archive contains more than just the .sdIconPack folder
+    let source_path = temp_dir.join(&iconpack_folder);
+    let dest_path = icon_packs_dir.join(&iconpack_folder);
+    tokio::fs::rename(&source_path, &dest_path).await?;
+
+    Ok(dest_path.display().to_string())
 }
 
 pub async fn uninstall_iconpack(path: &Path) -> Result<(), Error> {
@@ -145,7 +154,7 @@ pub async fn uninstall_iconpack(path: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-pub async fn list_installed_iconpacks() -> Result<Vec<IconPack>, Error> {
+pub fn list_installed_iconpacks() -> Result<Vec<IconPack>, Error> {
     let icon_packs_dir = config_dir().join(ICON_PACK_FOLDER);
     let mut icon_packs = Vec::new();
 
@@ -153,9 +162,9 @@ pub async fn list_installed_iconpacks() -> Result<Vec<IconPack>, Error> {
         return Ok(icon_packs);
     }
 
-    let mut dir_entries = tokio::fs::read_dir(&icon_packs_dir).await?;
-    while let Some(entry) = dir_entries.next_entry().await? {
-        let path = entry.path();
+    let mut dir_entries = fs::read_dir(&icon_packs_dir)?;
+    while let Some(entry) = dir_entries.next() {
+        let path = entry?.path();
 
         // parsing only those that end with .sdIconPack
         if path.extension().is_some_and(|ext| ext == SD_ICON_PACK_EXTENSION) {
