@@ -282,14 +282,14 @@ If you have already donated, thank you so much for your support!"#,
 				&& let Ok(url) = reqwest::Url::parse(&args[pos])
 				&& let Some(mut path) = url.path_segments()
 			{
-				if !url.query_pairs().any(|(k, v)| k == url.scheme() && v == "hidden") {
-					let _ = show_window(app);
-				}
-
 				if url.host_str() == Some("plugins")
 					&& path.next() == Some("message")
 					&& let Some(plugin_id) = path.next()
 				{
+					if !url.query_pairs().any(|(k, v)| k == url.scheme() && v == "hidden") {
+						let _ = show_window(app);
+					}
+
 					let plugin_id = if url.scheme() == "streamdeck" { format!("{plugin_id}.sdPlugin") } else { plugin_id.to_owned() };
 					tauri::async_runtime::spawn(async move {
 						if let Err(error) = events::outbound::deep_link::did_receive_deep_link(&plugin_id, args[pos].clone()).await {
