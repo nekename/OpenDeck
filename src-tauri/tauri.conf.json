@@ -46,7 +46,7 @@
 	"plugins": {
 		"deep-link": {
 			"desktop": {
-				"schemes": ["opendeck"]
+				"schemes": ["opendeck", "openaction", "streamdeck"]
 			}
 		}
 	},

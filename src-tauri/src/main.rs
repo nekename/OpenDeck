@@ -278,7 +278,26 @@ If you have already donated, thank you so much for your support!"#,
 		)
 		.plugin(tauri_plugin_cors_fetch::init())
 		.plugin(tauri_plugin_single_instance::init(|app, args, _| {
-			if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--reload-plugin") {
+			if let Some(pos) = args.iter().position(|x| x.starts_with("openaction://") || x.starts_with("streamdeck://"))
+				&& let Ok(url) = reqwest::Url::parse(&args[pos])
+				&& let Some(mut path) = url.path_segments()
+			{
+				if url.host_str() == Some("plugins")
+					&& path.next() == Some("message")
+					&& let Some(plugin_id) = path.next()
+				{
+					if !url.query_pairs().any(|(k, v)| k == url.scheme() && v == "hidden") {
+						let _ = show_window(app);
+					}
+
+					let plugin_id = if url.scheme() == "streamdeck" { format!("{plugin_id}.sdPlugin") } else { plugin_id.to_owned() };
+					tauri::async_runtime::spawn(async move {
+						if let Err(error) = events::outbound::deep_link::did_receive_deep_link(&plugin_id, args[pos].clone()).await {
+							log::error!("Failed to process deep link for plugin {plugin_id}: {error}");
+						}
+					});
+				}
+			} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--reload-plugin") {
 				if args.len() > pos + 1 {
 					tauri::async_runtime::spawn(frontend::plugins::reload_plugin(app.clone(), args[pos + 1].clone()));
 				}
