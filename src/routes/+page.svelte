@@ -12,6 +12,7 @@
 	import NoDevicesDetected from "../components/NoDevicesDetected.svelte";
 	import ParentActionView from "../components/ParentActionView.svelte";
 	import PluginManager from "../components/PluginManager.svelte";
+	import IconPackManager from "../components/IconPacks/IconPackManager.svelte";
 	import ProfileManager from "../components/ProfileManager.svelte";
 	import PropertyInspectorView from "../components/PropertyInspectorView.svelte";
 	import SettingsView from "../components/SettingsView.svelte";
@@ -48,6 +49,7 @@
 <div class="flex flex-col p-2 w-[18rem] h-full border-l dark:border-neutral-700">
 	<div class="flex flex-row space-x-2">
 		<PluginManager />
+		<IconPackManager />
 		<SettingsView />
 	</div>
 	<hr class="my-2 border dark:border-neutral-700" />

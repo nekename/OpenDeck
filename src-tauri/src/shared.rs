@@ -335,3 +335,27 @@ pub static CATEGORIES: Lazy<RwLock<HashMap<String, Category>>> = Lazy::new(|| {
 	);
 	RwLock::new(hashmap)
 });
+
+
+
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum Icon {
+	#[serde(rename = "fs")]
+	FsPath { path: String },
+
+	#[serde(rename = "dataurl")]
+	DataUrl { url: String },
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct IconPack {
+	pub id: String,
+	pub name: String,
+	pub author: String,
+	pub version: String,
+	pub icon: Icon,
+	pub installed_path: Option<String>,
+}
+

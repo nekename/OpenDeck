@@ -8,6 +8,7 @@ mod plugins;
 mod shared;
 mod store;
 mod zip_extract;
+mod iconpacks;
 
 mod built_info {
 	include!(concat!(env!("OUT_DIR"), "/built.rs"));
@@ -90,6 +91,10 @@ async fn main() {
 			frontend::plugins::remove_plugin,
 			frontend::plugins::reload_plugin,
 			frontend::plugins::show_settings_interface,
+			frontend::iconpacks::preview_sd_iconpack,
+			frontend::iconpacks::install_sd_iconpack,
+			frontend::iconpacks::list_installed_iconpacks,
+			frontend::iconpacks::uninstall_iconpack,
 			frontend::settings::get_settings,
 			frontend::settings::set_settings,
 			frontend::settings::open_config_directory,
