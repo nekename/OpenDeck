@@ -10,6 +10,7 @@
 	import InstallPreviewModal from "./InstallPreviewModal.svelte";
 	import type { PreviewPackInfo } from "./types";
 	import IconPackPreview from "./IconPackPreview.svelte";
+	import IconPicker from "./IconPicker.svelte";
 
 	let showPopup: boolean = false;
 
@@ -156,6 +157,8 @@
 		{/each}
 		-->
 	</div>
+
+	<IconPicker />
 </Popup>
 
 <InstallPreviewModal

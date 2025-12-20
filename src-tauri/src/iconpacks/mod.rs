@@ -1,12 +1,17 @@
 pub mod manager;
+pub mod index;
+pub mod types;
+pub mod protocol;
+mod interner;
 
 use anyhow::{Error, bail};
 use std::{fs, path::Path, io::Read, env};
 use zip::ZipArchive;
-use crate::shared::{IconPack, Icon, config_dir};
 use serde::{Deserialize};
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 
+use crate::shared::{config_dir};
+use types::{Icon, IconPack, IconType};
 
 #[derive(Deserialize)]
 struct SDIconPackManifest {
@@ -24,6 +29,14 @@ struct SDIconPackManifest {
 
     #[serde(rename = "Icon")]
     icon: String,
+}
+
+
+#[derive(Deserialize)]
+struct SDIconPackIcon {
+    path: String,
+    name: String,
+    tags: Vec<String>,
 }
 
 static ICON_PACK_FOLDER: &str = "icon_packs";
@@ -106,7 +119,7 @@ pub async fn read_sd_iconpack_metadata(path: &Path) -> Result<IconPack, Error> {
         name: manifest.name,
         author: manifest.author,
         version: manifest.version,
-        icon: Icon::DataUrl { url: icon_dataurl },
+        icon: IconType::DataUrl { url: icon_dataurl },
         installed_path: None,
     };
 
@@ -178,7 +191,7 @@ pub fn list_installed_iconpacks() -> Result<Vec<IconPack>, Error> {
                     name: manifest.name,
                     author: manifest.author,
                     version: manifest.version,
-                    icon: Icon::FsPath { path: path.join(manifest.icon).display().to_string() },
+                    icon: IconType::FsPath { path: path.join(manifest.icon).display().to_string() },
                     installed_path: Some(path_str),
                 })
             };
@@ -193,4 +206,22 @@ pub fn list_installed_iconpacks() -> Result<Vec<IconPack>, Error> {
     }
 
     Ok(icon_packs)
+}
+
+pub fn list_iconpack_icons(pack: &IconPack) -> Result<Vec<Icon>, Error> {
+    let mut icons: Vec<Icon> = Vec::new();
+
+    if let Some(installed_path_str) = &pack.installed_path {
+        let installed_path = Path::new(installed_path_str);
+        let icons_index_file = installed_path.join("icons.json");
+        if icons_index_file.exists() && icons_index_file.is_file() {
+            let reader = fs::File::open(&icons_index_file)?;
+            let sd_icons: Vec<SDIconPackIcon> = serde_json::from_reader(reader)?;
+            for sd_icon in sd_icons {
+                icons.push(Icon::new(&sd_icon.name, &sd_icon.path));
+            }
+        }
+    }
+
+    Ok(icons)
 }

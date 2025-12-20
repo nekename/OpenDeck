@@ -24,6 +24,7 @@ use tauri::{
 	tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_plugin_log::{Target, TargetKind};
+use tauri::http;
 
 static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
 
@@ -95,12 +96,59 @@ async fn main() {
 			frontend::iconpacks::install_sd_iconpack,
 			frontend::iconpacks::list_installed_iconpacks,
 			frontend::iconpacks::uninstall_iconpack,
+			frontend::iconpacks::search_icons,
 			frontend::settings::get_settings,
 			frontend::settings::set_settings,
 			frontend::settings::open_config_directory,
 			frontend::settings::open_log_directory,
 			frontend::settings::get_build_info
 		])
+		.register_asynchronous_uri_scheme_protocol("icon", |ctx, request, responder| {
+			let icon_packs = ctx.app_handle().path().app_config_dir().unwrap().join("icon_packs");
+
+			std::thread::spawn(move || {
+				let path = request.uri().path().trim_start_matches('/');
+				let bytes_ext = match path.split_once('/') {
+					Some((pack_id, file_name)) => {
+						let path = icon_packs
+							.join(pack_id.to_owned() + ".sdIconPack")
+							.join("icons")
+							.join(file_name);
+
+						if path.is_file() {
+							let ext = path.extension().unwrap().display().to_string();
+							std::fs::read(&path)
+							.map_or(None, |data| {
+								println!("Requesting icon: {} from {}", file_name, &path.display());
+								Some((data, ext))
+							})
+						} else {
+							None
+						}
+					}
+					None => None
+				};
+
+				responder.respond(
+				match bytes_ext {
+					None => {
+						http::Response::builder()
+							.status(http::StatusCode::BAD_REQUEST)
+							.header(http::header::CONTENT_TYPE, "text/plain")
+							.body("invalid icon path".as_bytes().to_vec())
+							.unwrap()
+					}
+					Some((bytes, _)) => {
+						http::Response::builder()
+							// This is CRUCIAL for SVG!
+							.header(http::header::CONTENT_TYPE, "image/svg+xml")
+							.body(bytes)
+							.unwrap()
+					}
+				}
+			)
+			});
+		})
 		.setup(|app| {
 			APP_HANDLE.set(app.handle().clone()).unwrap();
 

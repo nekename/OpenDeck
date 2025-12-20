@@ -4,20 +4,50 @@ use std::sync::RwLock;
 
 use anyhow::Error;
 
-use crate::shared::{IconPack, Icon};
 use crate::iconpacks::{
     install_sd_iconpack,
     list_installed_iconpacks,
+    list_iconpack_icons,
     uninstall_iconpack,
+    index::IconIndex,
+    types::{IconPack, PackIcon},
 };
 
 pub struct IconPackManager {
     installed_packs: RwLock<HashMap<String, IconPack>>,
+    index: IconIndex,
 }
 
 impl IconPackManager {
     pub fn new() -> Self {
-        Self { installed_packs: RwLock::new(Vec::new()) }
+        Self {
+            installed_packs: RwLock::new(HashMap::new()),
+            index: IconIndex::new(),
+        }
+    }
+
+    fn rebuild_index(&self) -> Result<(), Error> {
+        self.index.clear();
+
+        let installed_packs = self.installed_packs.read().unwrap();
+        for (_id, pack) in installed_packs.iter() {
+            let icons = list_iconpack_icons(pack)
+                .or_else(|e| {
+                    log::error!("Failed to list icons for icon pack ({}): {}", pack.id, e);
+                    Err(e)
+                })?;
+
+            println!("Adding {} icons from pack '{}' to index...", icons.len(), pack.id);
+            icons
+                .into_iter()
+                .for_each(|icon| {
+                    self.index.add_icon(&pack.id, icon);
+                });
+        }
+
+        println!("Updating icon index...");
+        self.index.update_index()?;
+        Ok(())
     }
 
     pub fn refresh(&self) -> Result<(), Error> {
@@ -36,6 +66,8 @@ impl IconPackManager {
                 installed_packs.insert(pack.id.clone(), pack);
             }
         }
+
+        self.rebuild_index()?;
 
         Ok(())
     }
@@ -80,5 +112,9 @@ impl IconPackManager {
     pub fn get_installed_packs(&self) -> Vec<IconPack> {
         let installed_packs = self.installed_packs.read().unwrap();
         installed_packs.values().cloned().collect()
+    }
+
+    pub fn search_icons(&self, query: &str) -> Result<Vec<PackIcon>, Error> {
+        self.index.search(query)
     }
 }

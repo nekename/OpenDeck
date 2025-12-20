@@ -1,12 +1,10 @@
 use super::Error;
-use crate::iconpacks::{
-    read_sd_iconpack_metadata as read_sd,
-    manager::IconPackManager
-};
-use crate::shared::{IconPack};
-
-
 use tauri::{command, State};
+use crate::iconpacks::{
+    manager::IconPackManager, read_sd_iconpack_metadata as read_sd, types::{Icon, IconPack}
+};
+
+use serde::{Serialize, Deserialize};
 
 #[command]
 pub async fn preview_sd_iconpack(path: &str) -> Result<Option<IconPack>, Error> {
@@ -40,4 +38,23 @@ pub async fn uninstall_iconpack(id: &str, manager: State<'_, IconPackManager>) -
             log::error!("Failed to uninstall icon pack ({}): {}", id, e);
             Err(Error { description: "Failed to uninstall icon pack".into() })
         })
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub struct IconSearchResult {
+    pub pack: String,
+    pub name: String,
+    pub file_name: String,
+}
+
+#[command]
+pub async fn search_icons(query: &str, manager: State<'_, IconPackManager>) -> Result<Vec<IconSearchResult>, Error> {
+    manager.search_icons(query)?.into_iter()
+        .map(|icon| Ok(IconSearchResult {
+            pack: icon.pack_id,
+            name: icon.icon.name,
+            file_name: icon.icon.file_name,
+        }))
+        .collect()
 }
