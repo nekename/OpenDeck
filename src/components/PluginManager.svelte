@@ -14,7 +14,7 @@
 
 	import { getWebserverUrl } from "$lib/ports";
 	import { localisations, settings } from "$lib/settings";
-	import { actionList, deviceSelector } from "$lib/singletons";
+	import { actionList, deviceSelector, PRODUCT_NAME } from "$lib/singletons";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
@@ -260,6 +260,14 @@
 			<span class="ml-1">Install from file</span>
 		</button>
 	</div>
+
+	<div class="flex flex-row items-center mx-2 my-4 p-3 space-x-2 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 rounded">
+		<WarningCircle size="20" class="mt-0.5 text-yellow-500" />
+		<div class="text-sm text-yellow-800 dark:text-yellow-200">
+			If you are experiencing issues with a plugin, please reach out on one of the {PRODUCT_NAME} support channels before attempting to contact the plugin developer.
+		</div>
+	</div>
+
 	<div class="flex flex-row items-center m-2 bg-neutral-200 dark:bg-neutral-700 rounded-md">
 		<MagnifyingGlass size="14" class="ml-3 mr-0.5 text-neutral-500 dark:text-neutral-300" />
 		<input
