@@ -40,12 +40,10 @@ pub async fn uninstall_iconpack(id: &str, manager: State<'_, IconPackManager>) -
         })
 }
 
-
 #[derive(Serialize, Deserialize)]
 pub struct IconSearchResult {
     pub pack: String,
     pub name: String,
-    pub file_name: String,
 }
 
 #[command]
@@ -54,7 +52,13 @@ pub async fn search_icons(query: &str, manager: State<'_, IconPackManager>) -> R
         .map(|icon| Ok(IconSearchResult {
             pack: icon.pack_id,
             name: icon.icon.name,
-            file_name: icon.icon.file_name,
         }))
         .collect()
+}
+
+#[command]
+pub async fn get_icon_path(icon: IconSearchResult, manager: State<'_, IconPackManager>) -> Result<String, Error> {
+    manager.get_icon_path(&icon.pack, &icon.name)
+        .map(|path| path.display().to_string())
+        .ok_or_else(|| Error { description: "Icon path not found".into() })
 }

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 
 use anyhow::Error;
@@ -14,13 +14,16 @@ use crate::iconpacks::{
 };
 
 pub struct IconPackManager {
+    icon_packs_dir: Box<Path>,
+
     installed_packs: RwLock<HashMap<String, IconPack>>,
     index: IconIndex,
 }
 
 impl IconPackManager {
-    pub fn new() -> Self {
+    pub fn new(icon_packs_dir: &Path) -> Self {
         Self {
+            icon_packs_dir: icon_packs_dir.into(),
             installed_packs: RwLock::new(HashMap::new()),
             index: IconIndex::new(),
         }
@@ -116,5 +119,21 @@ impl IconPackManager {
 
     pub fn search_icons(&self, query: &str) -> Result<Vec<PackIcon>, Error> {
         self.index.search(query)
+    }
+
+    pub fn get_icon_path(&self, pack_id: &str, icon_name: &str) -> Option<PathBuf> {
+        let installed_packs = self.installed_packs.read().unwrap();
+        let pack = installed_packs.get(pack_id)?;
+
+        let path = {
+            let pack_icons_path = pack.installed_path.as_ref().map(|s| Path::new(s).join("icons"))?;
+
+            self.index
+                .get_icon(&pack.id, icon_name)
+                .map(|icon| pack_icons_path.join(&icon.icon.file_name))
+                .take_if(|p| p.is_file())
+        };
+
+        path
     }
 }

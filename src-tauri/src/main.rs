@@ -18,13 +18,13 @@ use events::frontend;
 use shared::PRODUCT_NAME;
 
 use once_cell::sync::OnceCell;
+use tauri::http;
 use tauri::{
 	AppHandle, Builder, Manager, WindowEvent,
 	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
 	tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_plugin_log::{Target, TargetKind};
-use tauri::http;
 
 static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
 
@@ -97,6 +97,7 @@ async fn main() {
 			frontend::iconpacks::list_installed_iconpacks,
 			frontend::iconpacks::uninstall_iconpack,
 			frontend::iconpacks::search_icons,
+			frontend::iconpacks::get_icon_path,
 			frontend::settings::get_settings,
 			frontend::settings::set_settings,
 			frontend::settings::open_config_directory,
@@ -104,55 +105,23 @@ async fn main() {
 			frontend::settings::get_build_info
 		])
 		.register_asynchronous_uri_scheme_protocol("icon", |ctx, request, responder| {
-			let icon_packs = ctx.app_handle().path().app_config_dir().unwrap().join("icon_packs");
-
-			std::thread::spawn(move || {
-				let path = request.uri().path().trim_start_matches('/');
-				let bytes_ext = match path.split_once('/') {
-					Some((pack_id, file_name)) => {
-						let path = icon_packs
-							.join(pack_id.to_owned() + ".sdIconPack")
-							.join("icons")
-							.join(file_name);
-
-						if path.is_file() {
-							let ext = path.extension().unwrap().display().to_string();
-							std::fs::read(&path)
-							.map_or(None, |data| {
-								println!("Requesting icon: {} from {}", file_name, &path.display());
-								Some((data, ext))
-							})
-						} else {
-							None
-						}
-					}
-					None => None
-				};
-
-				responder.respond(
-				match bytes_ext {
-					None => {
-						http::Response::builder()
-							.status(http::StatusCode::BAD_REQUEST)
-							.header(http::header::CONTENT_TYPE, "text/plain")
-							.body("invalid icon path".as_bytes().to_vec())
-							.unwrap()
-					}
-					Some((bytes, _)) => {
-						http::Response::builder()
-							// This is CRUCIAL for SVG!
-							.header(http::header::CONTENT_TYPE, "image/svg+xml")
-							.body(bytes)
-							.unwrap()
-					}
+			match iconpacks::protocol::iconpack_access_protocol(ctx.app_handle().clone(), request) {
+				Ok(response) => responder.respond(response),
+				Err(err) => {
+					println!("Error serving iconpack icon: {}", err);
+					let response = http::Response::builder()
+						.status(http::status::StatusCode::INTERNAL_SERVER_ERROR)
+						.body("".as_bytes().to_vec())
+						.unwrap();
+					responder.respond(response);
 				}
-			)
-			});
+			}
 		})
 		.setup(|app| {
 			APP_HANDLE.set(app.handle().clone()).unwrap();
 
-			let iconpacks = iconpacks::manager::IconPackManager::new();
+			let icon_packs_dir = app.path().app_config_dir().unwrap().join("icon_packs");
+			let iconpacks = iconpacks::manager::IconPackManager::new(&icon_packs_dir);
 			iconpacks.refresh().unwrap_or(());
 
 			app.manage(iconpacks);

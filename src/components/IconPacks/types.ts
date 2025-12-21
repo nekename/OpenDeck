@@ -4,3 +4,8 @@ export type PreviewPackInfo = {
     path: string;
     meta: IconPack;
 };
+
+export type IconResult = {
+    pack: string;
+    name: string;
+};

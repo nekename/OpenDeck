@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 pub enum IconType {
 	#[serde(rename = "fs")]
@@ -10,7 +10,7 @@ pub enum IconType {
 	DataUrl { url: String },
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct IconPack {
 	pub id: String,
 	pub name: String,
@@ -21,7 +21,7 @@ pub struct IconPack {
 }
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Icon {
     pub name: String,
     pub file_name: String,
@@ -37,7 +37,7 @@ impl Icon {
 }
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PackIcon {
     pub pack_id: String,
     pub icon: Icon,

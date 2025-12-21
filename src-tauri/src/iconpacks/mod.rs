@@ -16,7 +16,7 @@ use types::{Icon, IconPack, IconType};
 #[derive(Deserialize)]
 struct SDIconPackManifest {
     #[serde(rename = "StreamdeckID")]
-    id: String,
+    id: Option<String>,
 
     #[serde(rename = "Name")]
     name: String,
@@ -36,7 +36,7 @@ struct SDIconPackManifest {
 struct SDIconPackIcon {
     path: String,
     name: String,
-    tags: Vec<String>,
+    _tags: Option<Vec<String>>,
 }
 
 static ICON_PACK_FOLDER: &str = "icon_packs";
@@ -64,7 +64,7 @@ fn find_sd_iconpack_folder_in_archive(archive: &mut ZipArchive<fs::File>) -> Res
         let file = archive.by_index(i)?;
         let name = file.name();
         if name.ends_with('/') && name.trim_end_matches('/').ends_with(&ext) {
-            return Ok(name.to_string());
+            return Ok(name.trim_end_matches('/').to_string());
         }
     }
 
@@ -84,7 +84,7 @@ pub async fn read_sd_iconpack_metadata(path: &Path) -> Result<IconPack, Error> {
     let iconpack_folder = find_sd_iconpack_folder_in_archive(&mut archive)?;
 
     let manifest = {
-        let manifest_path = format!("{}manifest.json", iconpack_folder);
+        let manifest_path = format!("{}/manifest.json", iconpack_folder);
         let metadata_file = archive.by_name(&manifest_path)?;
         let manifest: SDIconPackManifest = serde_json::from_reader(metadata_file)?;
         manifest
@@ -92,7 +92,7 @@ pub async fn read_sd_iconpack_metadata(path: &Path) -> Result<IconPack, Error> {
 
     // also, read the Icon file and convert it to DataUrl
     let icon_dataurl = {
-        let icon_path = format!("{}{}", iconpack_folder, manifest.icon);
+        let icon_path = format!("{}/{}", iconpack_folder, manifest.icon);
         let mut icon_file = archive.by_name(&icon_path)?;
         let mut icon_data = Vec::new();
         icon_file.read_to_end(&mut icon_data)?;
@@ -115,7 +115,7 @@ pub async fn read_sd_iconpack_metadata(path: &Path) -> Result<IconPack, Error> {
 
     // create IconPack struct
     let icon_pack = IconPack {
-        id: manifest.id,
+        id: manifest.id.or_else(|| Some(iconpack_folder.clone())).unwrap(),
         name: manifest.name,
         author: manifest.author,
         version: manifest.version,
@@ -187,7 +187,7 @@ pub fn list_installed_iconpacks() -> Result<Vec<IconPack>, Error> {
                 let path_str: String = path.to_str().unwrap().to_string();
 
                 Ok::<IconPack, Error>(IconPack {
-                    id: manifest.id,
+                    id: manifest.id.or_else(|| Some(path.file_name().unwrap().display().to_string())).unwrap(),
                     name: manifest.name,
                     author: manifest.author,
                     version: manifest.version,

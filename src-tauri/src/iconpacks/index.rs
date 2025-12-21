@@ -121,7 +121,6 @@ impl IconIndex {
                 bail!("Icon index is empty");
             }
 
-            println!("Searching for icons matching query: {} in index that is {}b big", query, buf.len());
             Map::new(buf)?
         };
 
@@ -145,5 +144,11 @@ impl IconIndex {
         };
 
         Ok(results)
+    }
+
+    pub fn get_icon(&self, pack: &str, name: &str) -> Option<PackIcon> {
+        let icon_id = IconId::new(pack, name, &self.interner);
+        let icons = self.icons.read().unwrap();
+        icons.get(&icon_id).cloned()
     }
 }

@@ -1,14 +1,12 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
-
-    type IconResult = {
-        pack: string;
-        name: string;
-        file_name: string;
-    };
+    import type { IconResult } from "./types";
 
     let searchQuery: string = "";
     let searchResults: Array<IconResult> = [];
+    let onSelect: ((icon: IconResult) => void) | undefined = undefined;
+
+    export { onSelect };
 
     function handleSearch() {
         if (searchQuery.trim() === "") {
@@ -21,10 +19,10 @@
         }
 
         // Call the backend to search for icons
-        invoke("search_icons", { query: `.*${searchQuery}.*` })
+        invoke("search_icons", { query: `(?i).*${searchQuery}.*` })
             .then((results) => {
                 // top 10 results
-                searchResults = (results as IconResult[]).slice(0, 10);
+                searchResults = (results as IconResult[]).slice(0, 100);
             })
             .catch((error) => {
                 console.error("Error searching icons:", error);
@@ -36,29 +34,32 @@
 <div class="flex flex-col gap-4">
     <input
         type="text"
-        placeholder="Search icons..."
+        placeholder="Search icons... (min. 3 characters)"
         spellcheck="false"
         class="p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 outline-hidden"
         bind:value={searchQuery}
         on:input={handleSearch}
     />
     {#if searchResults.length > 0}
-        <div class="flex gap-4">
-            {#each searchResults as result}
-                {@const url = `icon://localhost/${result.pack}/${result.file_name}`}
+        <div class="flex flex-wrap gap-4">
+            {#each searchResults as result, i}
+                {@const url = `icon://localhost/${result.pack}/${result.name}`}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div
                     class="flex h-12 w-12 items-center justify-center border border-neutral-300 dark:border-neutral-600 rounded-lg cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                    role="button"
+                    tabindex="{i + 1}"
+                    on:click={() => onSelect && onSelect(result)}
                 >
                     <img
                         src={url}
-                        srcset={url}
                         alt={result.name}
                         class="max-w-full max-h-full"
                     />
                 </div>
             {/each}
         </div>
-    {:else if searchQuery.trim() !== ""}
+    {:else if searchQuery.trim() !== "" && searchQuery.length >= 3}
         <p class="text-sm text-neutral-500">
             No icons found for "{searchQuery}"
         </p>

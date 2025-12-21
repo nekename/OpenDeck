@@ -5,6 +5,10 @@
 
 	import { invoke } from "@tauri-apps/api/core";
 
+	import { getWebserverUrl } from "$lib/ports";
+	import IconPickerModal from "./IconPacks/IconPickerModal.svelte";
+	import type { IconResult } from "./IconPacks/types.ts";
+
 	export let instance: ActionInstance;
 	export let showEditor: boolean;
 
@@ -38,6 +42,64 @@
 		bold = instance.states[state].style.includes("Bold");
 		italic = instance.states[state].style.includes("Italic");
 	}
+
+	let showIconPicker: boolean = false;
+
+	const onIconSelectClick = () => {
+		// fileInput.click();
+		showIconPicker = true;
+	};
+
+	const onIconSelected = async (icon: IconResult) => {
+		await invoke("get_icon_path", { icon })
+			.then((path) => {
+				const url = getWebserverUrl(path as string);
+				return fetch(url).then((res) => {
+					if (!res.ok) throw new Error("Failed to fetch icon");
+					return res.blob();
+				});
+			})
+			.then((blob) => {
+				const reader = new FileReader();
+
+				reader.onload = async () => {
+					let result = reader.result?.toString();
+					if (result) {
+						let resized = await resizeImage(result);
+						if (resized) instance.states[state].image = resized;
+						else instance.states[state].image = result;
+					}
+				};
+
+				reader.readAsDataURL(blob);
+			})
+			.finally(() => {
+				showIconPicker = false;
+			});
+
+		return;
+		// const image = document.createElement("img");
+		// image.crossOrigin = "anonymous";
+		// image.src = 'icon://localhost/' + icon.pack + '/' + icon.name;
+		// await new Promise((resolve) => image.onload = resolve)
+			// .then(async () => {
+			// 	// paint on canvas to get data URL
+			// 	const canvas = document.createElement("canvas");
+			// 	canvas.width = image.width;
+			// 	canvas.height = image.height;
+			// 	const context = canvas.getContext("2d");
+			// 	if (!context) return;
+			// 	context.drawImage(image, 0, 0);
+			// 	const blob = canvas.toDataURL("image/png");
+
+			// 	let resized = await resizeImage(blob);
+			// 	if (resized) instance.states[state].image = resized;
+			// 	else instance.states[state].image = blob;
+			// }).finally(() => {
+			// 	showIconPicker = false;
+			// });
+	};
+
 	$: update(instance);
 	$: invoke("set_state", { instance, state });
 </script>
@@ -47,6 +109,8 @@
 		if (event.key == "Escape") showEditor = false;
 	}}
 />
+
+<IconPickerModal bind:open={showIconPicker} onSelect={onIconSelected} />
 
 <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg z-10">
 	<div class="flex flex-row">
@@ -64,7 +128,7 @@
 			<button
 				on:click={(event) => {
 					if (event.ctrlKey) return;
-					fileInput.click();
+					onIconSelectClick();
 				}}
 				on:dragover={(event) => {
 					event.preventDefault();
