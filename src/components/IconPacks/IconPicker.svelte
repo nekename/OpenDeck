@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Asterisk } from "phosphor-svelte";
     import { invoke } from "@tauri-apps/api/core";
     import type { IconResult } from "./types";
 
@@ -29,17 +30,39 @@
                 searchResults = [];
             });
     }
+
+    const showAll = () => {
+        searchQuery = "";
+        invoke("search_icons", { query: `(?i).*${searchQuery}.*` }).then((results) => {
+            // top 10 results
+            searchResults = results as IconResult[];
+        })
+        .catch((error) => {
+            console.error("Error searching icons:", error);
+            searchResults = [];
+        });
+    }
 </script>
 
 <div class="flex flex-col gap-4">
-    <input
-        type="text"
-        placeholder="Search icons... (min. 3 characters)"
-        spellcheck="false"
-        class="p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 outline-hidden"
-        bind:value={searchQuery}
-        on:input={handleSearch}
-    />
+    <div class="flex space-between gap-4">
+        <input
+            type="text"
+            placeholder="Search icons... (min. 3 characters)"
+            spellcheck="false"
+            class="grow p-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 outline-hidden"
+            bind:value={searchQuery}
+            on:input={handleSearch}
+        />
+
+        <button
+            class="flex-none p-1 px-3 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg outline-hidden"
+            on:click={showAll}
+        >
+            <Asterisk />
+        </button>
+    </div>
+
     {#if searchResults.length > 0}
         <div class="flex flex-wrap gap-4">
             {#each searchResults as result, i}

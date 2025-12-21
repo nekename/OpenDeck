@@ -46,7 +46,6 @@
 	let showIconPicker: boolean = false;
 
 	const onIconSelectClick = () => {
-		// fileInput.click();
 		showIconPicker = true;
 	};
 
@@ -76,28 +75,6 @@
 			.finally(() => {
 				showIconPicker = false;
 			});
-
-		return;
-		// const image = document.createElement("img");
-		// image.crossOrigin = "anonymous";
-		// image.src = 'icon://localhost/' + icon.pack + '/' + icon.name;
-		// await new Promise((resolve) => image.onload = resolve)
-			// .then(async () => {
-			// 	// paint on canvas to get data URL
-			// 	const canvas = document.createElement("canvas");
-			// 	canvas.width = image.width;
-			// 	canvas.height = image.height;
-			// 	const context = canvas.getContext("2d");
-			// 	if (!context) return;
-			// 	context.drawImage(image, 0, 0);
-			// 	const blob = canvas.toDataURL("image/png");
-
-			// 	let resized = await resizeImage(blob);
-			// 	if (resized) instance.states[state].image = resized;
-			// 	else instance.states[state].image = blob;
-			// }).finally(() => {
-			// 	showIconPicker = false;
-			// });
 	};
 
 	$: update(instance);
@@ -128,7 +105,10 @@
 			<button
 				on:click={(event) => {
 					if (event.ctrlKey) return;
-					onIconSelectClick();
+					if (event.altKey) { onIconSelectClick(); }
+					else {
+						fileInput.click();
+					}
 				}}
 				on:dragover={(event) => {
 					event.preventDefault();
