@@ -242,8 +242,22 @@ install_wine_if_needed() {
     fi
 }
 
-PKG_FAMILY="$(detect_family)"
-msg_info "Detected ${PKG_FAMILY} package family"
+if [ -n "${OPENDECK_PKG_FAMILY:-}" ]; then
+    PKG_FAMILY="$OPENDECK_PKG_FAMILY"
+    case "$PKG_FAMILY" in
+    debian | rpm | arch | ublue)
+        msg_info "Using package family '${PKG_FAMILY}' from the OPENDECK_PKG_FAMILY environment variable"
+        ;;
+    *)
+        msg_error "Invalid OPENDECK_PKG_FAMILY value '${PKG_FAMILY}'"
+        msg_error "Supported values: debian, rpm, arch, ublue"
+        exit 1
+        ;;
+    esac
+else
+    PKG_FAMILY="$(detect_family)"
+    msg_info "Detected '${PKG_FAMILY}' package family (set the OPENDECK_PKG_FAMILY environment variable to debian, rpm, arch, or ublue to override)"
+fi
 
 case "$PKG_FAMILY" in
 debian)
