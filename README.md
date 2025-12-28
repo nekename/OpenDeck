@@ -72,7 +72,7 @@ To change other options, open Settings. From here, you can also view information
 ### Troubleshooting
 
 - Ensure you are running the latest version of OpenDeck, as well as recent versions of related software (e.g. Spotify or OBS, or your operating system and Wine).
-- Check the pinned [GitHub Issues](https://github.com/nekename/OpenDeck/issues) to see if there's a fix for your problem already.
+- Check the [FAQ](https://github.com/nekename/OpenDeck/wiki/0.-FAQ) and [GitHub Issues](https://github.com/nekename/OpenDeck/issues) to see if there's a fix for your problem already.
 - Check the OpenDeck log file for any important messages. This file should be included with any support request.
 	- You can also run OpenDeck from the terminal to see the logs directly if it's easier than finding the log file or if the log file is empty or missing details.
 	- For issues with plugins, you can also check the plugin's logs (in the same folder, sometimes as well as a file named `plugin.log` or similar in the plugin's own folder).
