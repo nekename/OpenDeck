@@ -43,7 +43,7 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 - If you intend to use plugins that are not compiled for Linux (which are the majority of plugins), you will need to have [Wine](https://www.winehq.org/) installed on your system. Some plugins may also depend on Wine Mono (which is sometimes, but not always included, in your distro's packaging of Wine).
 
 > [!NOTE]
-> If Flatpak is your only option, OpenDeck is [available from Flathub](https://flathub.org/apps/me.amankhanna.opendeck). Please note that you still need to install the udev subsystem rules as described above. To use Windows plugins, you should have Wine installed natively (the Wine Flatpak is not supported).
+> If Flatpak is your only option, OpenDeck is [available from Flathub](https://flathub.org/apps/me.amankhanna.opendeck). Please note that you still need to install the udev subsystem rules as described above. To use Windows and Node.js plugins, you should have Wine or Node.js, respectively, installed natively (the Wine and Node.js Flatpaks are not supported).
 
 ### Windows
 
