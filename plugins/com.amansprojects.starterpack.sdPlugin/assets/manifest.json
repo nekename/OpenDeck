@@ -3,9 +3,16 @@
 	"Description": "OpenDeck starter pack plugin",
 	"Author": "Aman Khanna (nekename)",
 	"Version": "2.7.1",
-	"CodePathWin": "windows/bin/opendeck-starterpack.exe",
-	"CodePathMac": "darwin/bin/opendeck-starterpack",
-	"CodePathLin": "linux/bin/opendeck-starterpack",
+	"CodePaths": {
+		"x86_64-pc-windows-msvc": "x86_64-pc-windows-msvc/bin/opendeck-starterpack.exe",
+		"x86_64-apple-darwin": "x86_64-apple-darwin/bin/opendeck-starterpack",
+		"aarch64-apple-darwin": "aarch64-apple-darwin/bin/opendeck-starterpack",
+		"x86_64-unknown-linux-gnu": "x86_64-unknown-linux-gnu/bin/opendeck-starterpack",
+		"aarch64-unknown-linux-gnu": "aarch64-unknown-linux-gnu/bin/opendeck-starterpack"
+	},
+	"CodePathWin": "x86_64-pc-windows-msvc/bin/opendeck-starterpack.exe",
+	"CodePathMac": "x86_64-apple-darwin/bin/opendeck-starterpack",
+	"CodePathLin": "x86_64-unknown-linux-gnu/bin/opendeck-starterpack",
 	"Icon": "icons/plugin",
 	"Category": "OpenDeck",
 	"OS": [
