@@ -294,7 +294,7 @@
 	{:else}
 		<div class="flex flex-row items-center ml-2 mt-6 mb-2 space-x-2">
 			<h2 class="font-semibold text-md dark:text-neutral-400">Open-source plugins</h2>
-			<Tooltip> Open-source plugins downloaded from the author's releases. </Tooltip>
+			<Tooltip>Open-source plugins downloaded from the author's releases</Tooltip>
 		</div>
 		<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			{#each Object.entries(plugins) as [id, plugin]}
@@ -316,7 +316,7 @@
 	{:then archiveRes}
 		<div class="flex flex-row items-center mt-6 mb-2">
 			<h2 class="mx-2 font-semibold text-md dark:text-neutral-400">Elgato App Store archive</h2>
-			<Tooltip> Plugins archived from the Elgato App Store (now replaced by the Elgato Marketplace). </Tooltip>
+			<Tooltip>Plugins archived from the Elgato App Store (now replaced by the Elgato Marketplace)</Tooltip>
 		</div>
 		{#await archiveRes.json() then entries}
 			<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -334,6 +334,34 @@
 			</div>
 		{/await}
 	{/await}
+
+	{#if "Tacto Connect".toLowerCase().includes(query.toLowerCase())}
+		<div class="flex flex-row items-center mt-6 mb-2">
+			<h2 class="mx-2 font-semibold text-md dark:text-neutral-400">Tacto</h2>
+			<Tooltip>Turn your phone or keyboard into a control centre for your computer</Tooltip>
+		</div>
+		<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+			<ListedPlugin
+				icon="https://tacto.rivul.us/icon-192.png"
+				name="Tacto Connect"
+				subtitle="Rivulus"
+				action={() =>
+					installPluginGitHub("us.rivul.tacto", {
+						name: "Tacto Connect",
+						author: "Rivulus",
+						repository: "https://github.com/RivulusLive/tacto-desktop",
+						download_url: undefined,
+					})}
+				secondaryAction={() => window.open("https://tacto.rivul.us")}
+			>
+				<svelte:fragment slot="secondary">
+					<ArrowSquareOut size="24" class="text-neutral-500 dark:text-neutral-400" />
+				</svelte:fragment>
+
+				<CloudArrowDown size="24" class="mt-2 text-neutral-500 dark:text-neutral-400" />
+			</ListedPlugin>
+		</div>
+	{/if}
 </Popup>
 
 {#if openDetailsView}
