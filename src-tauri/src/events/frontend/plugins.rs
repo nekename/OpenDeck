@@ -3,7 +3,7 @@ use super::Error;
 use crate::shared::{config_dir, log_dir};
 use crate::store::profiles::{acquire_locks, get_instance};
 
-use tauri::{AppHandle, Manager, command};
+use tauri::{AppHandle, Emitter, Manager, command};
 use tokio::fs;
 
 #[derive(serde::Serialize)]
@@ -162,6 +162,10 @@ pub async fn reload_plugin(app: AppHandle, id: String) {
 		if let Ok(Some(instance)) = get_instance(&context, &locks).await {
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		}
+	}
+
+	if let Some(window) = app.get_webview_window("main") {
+		let _ = window.emit("plugin_reloaded", &id);
 	}
 }
 

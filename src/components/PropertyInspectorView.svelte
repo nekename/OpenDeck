@@ -7,6 +7,7 @@
 	import { inspectedInstance } from "$lib/propertyInspector";
 
 	import { invoke } from "@tauri-apps/api/core";
+	import { listen } from "@tauri-apps/api/event";
 
 	let iframes: { [context: string]: HTMLIFrameElement } = {};
 	let iframeContainer: HTMLDivElement;
@@ -153,6 +154,14 @@
 		.keys.filter(nonNull)
 		.reduce((prev, current) => prev.concat(current.children ? [current, ...current.children] : current), [] as ActionInstance[])
 		.concat(profile.sliders.filter(nonNull));
+
+	listen("plugin_reloaded", ({ payload }: { payload: string }) => {
+		for (const instance of instances) {
+			if (instance.action.plugin == payload && iframes[instance.context]) {
+				iframes[instance.context].src += "";
+			}
+		}
+	});
 </script>
 
 <svelte:window
