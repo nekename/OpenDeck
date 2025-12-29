@@ -291,23 +291,29 @@ If you have already donated, thank you so much for your support!"#,
 					}
 
 					let plugin_id = if url.scheme() == "streamdeck" { format!("{plugin_id}.sdPlugin") } else { plugin_id.to_owned() };
-					tauri::async_runtime::spawn(async move {
-						if let Err(error) = events::outbound::deep_link::did_receive_deep_link(&plugin_id, args[pos].clone()).await {
-							log::error!("Failed to process deep link for plugin {plugin_id}: {error}");
-						}
+					let url = args[pos].clone();
+					std::thread::spawn(move || {
+						tauri::async_runtime::block_on(async move {
+							if let Err(error) = events::outbound::deep_link::did_receive_deep_link(&plugin_id, url).await {
+								log::error!("Failed to process deep link for plugin {plugin_id}: {error}");
+							}
+						});
 					});
 				}
 			} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--reload-plugin") {
 				if args.len() > pos + 1 {
-					tauri::async_runtime::spawn(frontend::plugins::reload_plugin(app.clone(), args[pos + 1].clone()));
+					let app = app.clone();
+					let plugin_id = args[pos + 1].clone();
+					std::thread::spawn(move || {
+						tauri::async_runtime::block_on(frontend::plugins::reload_plugin(app, plugin_id));
+					});
 				}
 			} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--process-message") {
 				if args.len() > pos + 1 {
-					tauri::async_runtime::spawn(events::inbound::process_incoming_message(
-						Ok(tokio_tungstenite::tungstenite::Message::Text(args[pos + 1].clone().into())),
-						"",
-						true,
-					));
+					let message = args[pos + 1].clone();
+					std::thread::spawn(move || {
+						tauri::async_runtime::block_on(events::inbound::process_incoming_message(Ok(tokio_tungstenite::tungstenite::Message::Text(message.into())), "", true));
+					});
 				}
 			} else {
 				let _ = show_window(app);
