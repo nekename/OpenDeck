@@ -1,36 +1,39 @@
+//! Non-spec OpenDeck-specific protocols are used in this file.
+
 use openaction::*;
 
-// Non-spec OpenDeck-specific protocols are used in this file.
+use serde::{Deserialize, Serialize};
 
-#[derive(serde::Serialize)]
+#[derive(Serialize)]
 struct SwitchProfileEvent {
 	event: &'static str,
 	device: String,
 	profile: String,
 }
 
-pub async fn key_up(event: KeyEvent, outbound: &mut OutboundEventManager) -> EventHandlerResult {
-	outbound
-		.send_event(SwitchProfileEvent {
-			event: "switchProfile",
-			device: event
-				.payload
-				.settings
-				.as_object()
-				.and_then(|x| x.get("device"))
-				.and_then(|x| x.as_str())
-				.unwrap_or(&event.device)
-				.to_owned(),
-			profile: event
-				.payload
-				.settings
-				.as_object()
-				.and_then(|x| x.get("profile"))
-				.and_then(|x| x.as_str())
-				.unwrap_or("Default")
-				.to_owned(),
-		})
-		.await?;
+#[derive(Serialize, Deserialize, Default, Clone)]
+#[serde(default)]
+pub struct SwitchProfileSettings {
+	device: Option<String>,
+	profile: Option<String>,
+}
 
-	Ok(())
+pub struct SwitchProfileAction;
+#[async_trait]
+impl Action for SwitchProfileAction {
+	const UUID: &'static str = "com.amansprojects.starterpack.switchprofile";
+	type Settings = SwitchProfileSettings;
+
+	async fn key_up(&self, instance: &Instance, settings: &Self::Settings) -> OpenActionResult<()> {
+		send_arbitrary_json(SwitchProfileEvent {
+			event: "switchProfile",
+			device: settings
+				.device
+				.as_deref()
+				.unwrap_or(&instance.device_id)
+				.to_owned(),
+			profile: settings.profile.as_deref().unwrap_or("Default").to_owned(),
+		})
+		.await
+	}
 }
