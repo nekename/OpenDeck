@@ -171,6 +171,16 @@
 		}
 	}
 
+	let pluginVersions: { [id: string]: string } = {};
+	$: for (const plugin of installed) {
+		if (pluginVersions[plugin.id] != plugin.version) {
+			checkedPlugins.delete(plugin.id);
+			delete availableUpdates[plugin.id];
+			availableUpdates = availableUpdates;
+			pluginVersions[plugin.id] = plugin.version;
+		}
+	}
+
 	let query: string = "";
 
 	onOpenUrl((urls: string[]) => {
