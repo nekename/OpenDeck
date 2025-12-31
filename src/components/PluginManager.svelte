@@ -142,7 +142,8 @@
 			if (!res.ok) return false;
 			const release = await res.json();
 
-			if (release.tag_name.replace(/^v/, "") != plugin.version.replace(/^v/, "")) {
+			const normalizeVersion = (v: string) => v.replace(/^v/, "").replace(/^(\d+\.\d+\.\d+)\.\d+$/, "$1");
+			if (normalizeVersion(release.tag_name) != normalizeVersion(plugin.version)) {
 				return release.tag_name.replace(/^v/, "");
 			} else {
 				return false;
