@@ -160,6 +160,9 @@
 	let plugins: { [id: string]: GitHubPlugin };
 	(async () => plugins = await (await fetch("https://openactionapi.github.io/plugins/catalogue.json")).json())();
 
+	let showArchive: boolean = false;
+	let archivePlugins: any[] | null = null;
+
 	let availableUpdates: { [id: string]: string | false } = {};
 	let checkedPlugins = new Set<string>();
 	$: if (showPopup) {
@@ -319,29 +322,37 @@
 		</div>
 	{/if}
 
-	{#await fetch("https://plugins.amankhanna.me/catalogue.json")}
-		<h2 class="mx-2 mt-6 mb-2 text-md dark:text-neutral-400">Loading Elgato App Store archive plugin list...</h2>
-	{:then archiveRes}
-		<div class="flex flex-row items-center mt-6 mb-2">
-			<h2 class="mx-2 font-semibold text-md dark:text-neutral-400">Elgato App Store archive</h2>
-			<Tooltip>Plugins archived from the Elgato App Store (now replaced by the Elgato Marketplace)</Tooltip>
+	<div class="flex flex-row items-center mt-6 mb-2">
+		<h2 class="mx-2 font-semibold text-md dark:text-neutral-400">Elgato App Store archive</h2>
+		<Tooltip>Plugins archived from the Elgato App Store (now replaced by the Elgato Marketplace)</Tooltip>
+	</div>
+	{#if !showArchive}
+		<button
+			class="ml-2 mt-2 mb-2 px-2 py-1 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg"
+			on:click={async () => {
+				showArchive = true;
+				archivePlugins = await (await fetch("https://plugins.amankhanna.me/catalogue.json")).json();
+			}}
+		>
+			Load Elgato App Store archive
+		</button>
+	{:else if !archivePlugins}
+		<h2 class="mx-2 mt-4 mb-2 text-md dark:text-neutral-400">Loading Elgato App Store archive plugin list...</h2>
+	{:else}
+		<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+			{#each archivePlugins as plugin}
+				<ListedPlugin
+					icon="https://plugins.amankhanna.me/icons/{plugin.id}.png"
+					name={plugin.name}
+					subtitle={plugin.author}
+					hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
+					action={() => installPluginElgato(plugin)}
+				>
+					<CloudArrowDown size="24" class="text-neutral-500 dark:text-neutral-400" />
+				</ListedPlugin>
+			{/each}
 		</div>
-		{#await archiveRes.json() then entries}
-			<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-				{#each entries as plugin}
-					<ListedPlugin
-						icon="https://plugins.amankhanna.me/icons/{plugin.id}.png"
-						name={plugin.name}
-						subtitle={plugin.author}
-						hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
-						action={() => installPluginElgato(plugin)}
-					>
-						<CloudArrowDown size="24" class="text-neutral-500 dark:text-neutral-400" />
-					</ListedPlugin>
-				{/each}
-			</div>
-		{/await}
-	{/await}
+	{/if}
 
 	{#if "Tacto Connect".toLowerCase().includes(query.toLowerCase())}
 		<div class="flex flex-row items-center mt-6 mb-2">
