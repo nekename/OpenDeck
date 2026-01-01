@@ -215,7 +215,14 @@
 
 	<h2 class="mx-2 mt-6 mb-2 text-lg dark:text-neutral-400">Installed plugins</h2>
 	<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-		{#each installed.sort((a, b) => (a.builtin && !b.builtin) ? -1 : (b.builtin && !a.builtin) ? 1 : a.id.localeCompare(b.id)) as plugin}
+		<!-- deno-fmt-ignore -->
+		{#each installed.sort((a, b) =>
+			(a.builtin && !b.builtin) ? -1 :
+			(b.builtin && !a.builtin) ? 1 :
+			(a.has_settings_interface && !b.has_settings_interface) ? -1 :
+			(b.has_settings_interface && !a.has_settings_interface) ? 1 :
+			a.id.localeCompare(b.id)
+		) as plugin}
 			<ListedPlugin
 				icon={getWebserverUrl(plugin.icon)}
 				name={($localisations && $localisations[plugin.id] && $localisations[plugin.id].Name) ? $localisations[plugin.id].Name : plugin.name}
