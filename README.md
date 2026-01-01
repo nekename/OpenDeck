@@ -34,7 +34,7 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 
 - Download the latest release from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
 	- You should avoid AppImage releases of OpenDeck as they tend to have problems (you should also just avoid AppImages in general).
-	- For users of Arch-based distributions, there is the `opendeck` AUR package for the latest release, as well as the `opendeck-git` AUR package for the latest commit on the `main` branch of this repository.
+	- For users of Arch-based distributions, there are the `opendeck` and `opendeck-bin` AUR packages for the latest release, as well as the `opendeck-git` AUR package for the latest commit on the `main` branch of this repository.
 - Install OpenDeck using your package manager of choice.
 - Install the appropriate udev subsystem rules from [here](https://raw.githubusercontent.com/OpenActionAPI/rust-elgato-streamdeck/main/40-streamdeck.rules):
 	- If you're using a `.deb` or `.rpm` release artifact, this file should be installed automatically.
