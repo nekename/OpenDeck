@@ -16,21 +16,11 @@ static ELGATO_DEVICES: Lazy<RwLock<HashMap<String, AsyncStreamDeck>>> = Lazy::ne
 
 /// Extract the average colour from an image.
 fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
-	let (mut r_sum, mut g_sum, mut b_sum) = (0u64, 0u64, 0u64);
-	let mut count = 0u64;
-
-	for (_x, _y, pixel) in img.pixels() {
-		r_sum += pixel[0] as u64;
-		g_sum += pixel[1] as u64;
-		b_sum += pixel[2] as u64;
-		count += 1;
-	}
-
-	if count == 0 {
-		(0, 0, 0)
-	} else {
-		((r_sum / count) as u8, (g_sum / count) as u8, (b_sum / count) as u8)
-	}
+	let (r_sum, g_sum, b_sum) = img
+		.pixels()
+		.fold((0u64, 0u64, 0u64), |(r, g, b), (_, _, pixel)| (r + pixel[0] as u64, g + pixel[1] as u64, b + pixel[2] as u64));
+	let count = (img.width() * img.height()).min(1) as u64;
+	((r_sum / count) as u8, (g_sum / count) as u8, (b_sum / count) as u8)
 }
 
 pub async fn update_image(context: &crate::shared::Context, image: Option<&str>) -> Result<(), anyhow::Error> {
