@@ -2,12 +2,15 @@ use crate::events::outbound::{encoder, keypad};
 
 use std::collections::HashMap;
 
+use ab_glyph::{FontRef, PxScale};
 use base64::Engine as _;
 use elgato_streamdeck::{
 	AsyncStreamDeck, DeviceStateUpdate,
 	images::{ImageRect, convert_image_with_format_async},
 	info::Kind,
 };
+use image::{GenericImageView, Rgb, RgbImage};
+use imageproc::drawing::draw_text_mut;
 use once_cell::sync::Lazy;
 use tokio::sync::RwLock;
 
@@ -15,6 +18,9 @@ static ELGATO_DEVICES: Lazy<RwLock<HashMap<String, AsyncStreamDeck>>> = Lazy::ne
 
 pub async fn update_image(context: &crate::shared::Context, image: Option<&str>) -> Result<(), anyhow::Error> {
 	if let Some(device) = ELGATO_DEVICES.read().await.get(&context.device) {
+		let key_count = device.kind().key_count();
+		let is_touchpoint = context.controller == "Keypad" && context.position >= key_count;
+
 		if let Some(image) = image {
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
@@ -26,6 +32,12 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 						&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
 					)
 					.await?;
+			} else if is_touchpoint {
+				// Touch points have LEDs instead of LCD screens - extract color from image
+				let img = image::load_from_memory(&bytes)?;
+				let (r, g, b) = extract_average_color(&img);
+				let touchpoint_index = context.position - key_count;
+				device.set_touchpoint_color(touchpoint_index, r, g, b).await?;
 			} else {
 				device.set_button_image(context.position, image::load_from_memory(&bytes)?).await?;
 			}
@@ -33,6 +45,10 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			device
 				.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
 				.await?;
+		} else if is_touchpoint {
+			// Clear touch point LED by setting it to black
+			let touchpoint_index = context.position - key_count;
+			device.set_touchpoint_color(touchpoint_index, 0, 0, 0).await?;
 		} else {
 			device.clear_button_image(context.position).await?;
 		}
@@ -49,6 +65,7 @@ pub async fn clear_screen(id: &str) -> Result<(), anyhow::Error> {
 				.write_lcd_fill(&convert_image_with_format_async(device.kind().lcd_image_format().unwrap(), image::DynamicImage::new_rgb8(800, 100))?)
 				.await?;
 		}
+		clear_all_touchpoint_colors(device).await;
 		device.flush().await?;
 	}
 	Ok(())
@@ -63,6 +80,7 @@ pub async fn set_brightness(brightness: u8) {
 
 pub async fn reset_devices() {
 	for (_id, device) in ELGATO_DEVICES.read().await.iter() {
+		clear_all_touchpoint_colors(device).await;
 		let _ = device.reset().await;
 		let _ = device.flush().await;
 	}
@@ -83,6 +101,16 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 		Kind::Neo => 9,
 	};
 	let _ = device.clear_all_button_images().await;
+	clear_all_touchpoint_colors(&device).await;
+	// Display logo on Neo's LCD strip (for now until we have something better)
+	if kind == Kind::Neo
+		&& let Some(lcd_format) = kind.lcd_image_format()
+	{
+		let img = render_neo_branding();
+		if let Ok(lcd_data) = convert_image_with_format_async(lcd_format, img) {
+			let _ = device.write_lcd_fill(&lcd_data).await;
+		}
+	}
 	if let Ok(settings) = crate::store::get_settings() {
 		let _ = device.set_brightness(settings.value.brightness).await;
 	}
@@ -97,6 +125,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				rows: kind.row_count(),
 				columns: kind.column_count(),
 				encoders: kind.encoder_count(),
+				touchpoints: kind.touchpoint_count(),
 				r#type: device_type,
 			},
 		},
@@ -115,6 +144,8 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 			match match update {
 				DeviceStateUpdate::ButtonDown(key) => keypad::key_down(&device_id, key).await,
 				DeviceStateUpdate::ButtonUp(key) => keypad::key_up(&device_id, key).await,
+				DeviceStateUpdate::TouchPointDown(point) => keypad::key_down(&device_id, kind.key_count() + point).await,
+				DeviceStateUpdate::TouchPointUp(point) => keypad::key_up(&device_id, kind.key_count() + point).await,
 				DeviceStateUpdate::EncoderTwist(dial, ticks) => encoder::dial_rotate(&device_id, dial, ticks.into()).await,
 				DeviceStateUpdate::EncoderDown(dial) => encoder::dial_press(&device_id, "dialDown", dial).await,
 				DeviceStateUpdate::EncoderUp(dial) => encoder::dial_press(&device_id, "dialUp", dial).await,
@@ -164,4 +195,52 @@ pub async fn initialise_devices() {
 		}
 		Err(error) => log::warn!("Failed to initialise hidapi: {error}"),
 	}
+}
+
+/// Render "OpenDeck" branding image for Neo. Temporary until we have something user configurable.
+fn render_neo_branding() -> image::DynamicImage {
+	let (width, height) = (248u32, 58u32);
+	let mut img = RgbImage::from_pixel(width, height, Rgb([0u8, 0u8, 0u8]));
+
+	// Load FiraSans font
+	let font_data = include_bytes!("../../static/fonts/FiraSans-Bold.ttf");
+	if let Ok(font) = FontRef::try_from_slice(font_data) {
+		let scale = PxScale::from(32.0);
+		let text = "OpenDeck";
+
+		// Approximate text width for centering (roughly 0.5 * scale * chars for this font)
+		let text_width = (text.len() as f32 * scale.x * 0.55) as i32;
+		let x = ((width as i32) - text_width) / 2;
+		let y = ((height as f32) - scale.y) / 2.0;
+
+		draw_text_mut(&mut img, Rgb([180u8, 180u8, 180u8]), x, y as i32, scale, &font, text);
+	}
+
+	image::DynamicImage::ImageRgb8(img)
+}
+
+/// Clear all touchpoint LEDs on a device by setting them to black.
+async fn clear_all_touchpoint_colors(device: &AsyncStreamDeck) {
+	for i in 0..device.kind().touchpoint_count() {
+		let _ = device.set_touchpoint_color(i, 0, 0, 0).await;
+	}
+}
+
+/// Extract the average color from an image.
+fn extract_average_color(img: &image::DynamicImage) -> (u8, u8, u8) {
+	let (mut r_sum, mut g_sum, mut b_sum) = (0u64, 0u64, 0u64);
+	let mut count = 0u64;
+
+	for (_x, _y, pixel) in img.pixels() {
+		r_sum += pixel[0] as u64;
+		g_sum += pixel[1] as u64;
+		b_sum += pixel[2] as u64;
+		count += 1;
+	}
+
+	if count == 0 {
+		return (0, 0, 0);
+	}
+
+	((r_sum / count) as u8, (g_sum / count) as u8, (b_sum / count) as u8)
 }

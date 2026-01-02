@@ -28,6 +28,7 @@
 
 	export let active: boolean = true;
 	export let scale: number = 1;
+	export let isTouchpoint: boolean = false;
 	let pressed: boolean = false;
 
 	let state: ActionState | undefined;
@@ -105,13 +106,24 @@
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
+
+	function renderEmptySlot(ctx: CanvasRenderingContext2D) {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		if (isTouchpoint) {
+			ctx.strokeStyle = "#525252";
+			ctx.lineWidth = 4;
+			ctx.beginPath();
+			ctx.moveTo(canvas.width * 0.25, canvas.height / 2);
+			ctx.lineTo(canvas.width * 0.75, canvas.height / 2);
+			ctx.stroke();
+		}
+	}
+
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
-			if (canvas) {
-				let context = canvas.getContext("2d");
-				if (context) context.clearRect(0, 0, canvas.width, canvas.height);
-			}
+			const ctx = canvas?.getContext("2d");
+			if (ctx) renderEmptySlot(ctx);
 		} else {
 			const unlock = await lock.lock();
 			try {

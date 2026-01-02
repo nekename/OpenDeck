@@ -31,7 +31,17 @@ impl ProfileStores {
 	pub async fn get_profile_store_mut(&mut self, device: &DeviceInfo, id: &str) -> Result<&mut Store<Profile>, anyhow::Error> {
 		let canonical_id = Self::canonical_id(&device.id, id);
 		if self.stores.contains_key(&canonical_id) {
-			Ok(self.stores.get_mut(&canonical_id).unwrap())
+			let store = self.stores.get_mut(&canonical_id).unwrap();
+			// Ensure arrays are large enough (handles upgrades when new slot types like touchpoints are added)
+			let required_keys = (device.rows * device.columns + device.touchpoints) as usize;
+			let required_sliders = device.encoders as usize;
+			if store.value.keys.len() < required_keys {
+				store.value.keys.resize(required_keys, None);
+			}
+			if store.value.sliders.len() < required_sliders {
+				store.value.sliders.resize(required_sliders, None);
+			}
+			Ok(store)
 		} else {
 			let default = Profile {
 				id: id.to_owned(),
@@ -40,7 +50,7 @@ impl ProfileStores {
 			};
 
 			let mut store = Store::new(&canonical_id, &config_dir().join("profiles"), default).context(format!("Failed to create store for profile {}", canonical_id))?;
-			store.value.keys.resize((device.rows * device.columns) as usize, None);
+			store.value.keys.resize((device.rows * device.columns + device.touchpoints) as usize, None);
 			store.value.sliders.resize(device.encoders as usize, None);
 
 			let categories = crate::shared::CATEGORIES.read().await;

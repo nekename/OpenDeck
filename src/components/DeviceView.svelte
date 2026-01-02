@@ -103,5 +103,20 @@
 				/>
 			{/each}
 		</div>
+
+		<div class="flex flex-row">
+			{#each { length: device.touchpoints } as _, i}
+				<Key
+					context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (device.rows * device.columns) + i }}
+					bind:inslot={profile.keys[(device.rows * device.columns) + i]}
+					on:dragover={handleDragOver}
+					on:drop={(event) => handleDrop(event, "Keypad", (device.rows * device.columns) + i)}
+					on:dragstart={(event) => handleDragStart(event, "Keypad", (device.rows * device.columns) + i)}
+					{handlePaste}
+					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+					isTouchpoint={true}
+				/>
+			{/each}
+		</div>
 	</div>
 {/key}
