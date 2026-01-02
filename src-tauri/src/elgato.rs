@@ -14,10 +14,29 @@ use tokio::sync::RwLock;
 
 static ELGATO_DEVICES: Lazy<RwLock<HashMap<String, AsyncStreamDeck>>> = Lazy::new(|| RwLock::new(HashMap::new()));
 
+/// Extract the average colour from an image.
+fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
+	let (mut r_sum, mut g_sum, mut b_sum) = (0u64, 0u64, 0u64);
+	let mut count = 0u64;
+
+	for (_x, _y, pixel) in img.pixels() {
+		r_sum += pixel[0] as u64;
+		g_sum += pixel[1] as u64;
+		b_sum += pixel[2] as u64;
+		count += 1;
+	}
+
+	if count == 0 {
+		(0, 0, 0)
+	} else {
+		((r_sum / count) as u8, (g_sum / count) as u8, (b_sum / count) as u8)
+	}
+}
+
 pub async fn update_image(context: &crate::shared::Context, image: Option<&str>) -> Result<(), anyhow::Error> {
 	if let Some(device) = ELGATO_DEVICES.read().await.get(&context.device) {
 		let key_count = device.kind().key_count();
-		let is_touchpoint = context.controller == "Keypad" && context.position >= key_count;
+		let is_touch_point = context.controller == "Keypad" && context.position >= key_count;
 
 		if let Some(image) = image {
 			let data = image.split_once(',').unwrap().1;
@@ -30,12 +49,9 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 						&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
 					)
 					.await?;
-			} else if is_touchpoint {
-				// Touch points have LEDs instead of LCD screens - extract color from image
-				let img = image::load_from_memory(&bytes)?;
-				let (r, g, b) = extract_average_color(&img);
-				let touchpoint_index = context.position - key_count;
-				device.set_touchpoint_color(touchpoint_index, r, g, b).await?;
+			} else if is_touch_point {
+				let (r, g, b) = extract_average_colour(&image::load_from_memory(&bytes)?);
+				device.set_touchpoint_color(context.position - key_count, r, g, b).await?;
 			} else {
 				device.set_button_image(context.position, image::load_from_memory(&bytes)?).await?;
 			}
@@ -43,16 +59,21 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			device
 				.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
 				.await?;
-		} else if is_touchpoint {
-			// Clear touch point LED by setting it to black
-			let touchpoint_index = context.position - key_count;
-			device.set_touchpoint_color(touchpoint_index, 0, 0, 0).await?;
+		} else if is_touch_point {
+			device.set_touchpoint_color(context.position - key_count, 0, 0, 0).await?;
 		} else {
 			device.clear_button_image(context.position).await?;
 		}
 		device.flush().await?;
 	}
 	Ok(())
+}
+
+/// Clear all touchpoint LEDs on a device by setting them to black.
+async fn clear_all_touchpoints(device: &AsyncStreamDeck) {
+	for i in 0..device.kind().touchpoint_count() {
+		let _ = device.set_touchpoint_color(i, 0, 0, 0).await;
+	}
 }
 
 pub async fn clear_screen(id: &str) -> Result<(), anyhow::Error> {
@@ -63,7 +84,7 @@ pub async fn clear_screen(id: &str) -> Result<(), anyhow::Error> {
 				.write_lcd_fill(&convert_image_with_format_async(device.kind().lcd_image_format().unwrap(), image::DynamicImage::new_rgb8(800, 100))?)
 				.await?;
 		}
-		clear_all_touchpoint_colors(device).await;
+		clear_all_touchpoints(device).await;
 		device.flush().await?;
 	}
 	Ok(())
@@ -78,7 +99,7 @@ pub async fn set_brightness(brightness: u8) {
 
 pub async fn reset_devices() {
 	for (_id, device) in ELGATO_DEVICES.read().await.iter() {
-		clear_all_touchpoint_colors(device).await;
+		clear_all_touchpoints(device).await;
 		let _ = device.reset().await;
 		let _ = device.flush().await;
 	}
@@ -99,7 +120,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 		Kind::Neo => 9,
 	};
 	let _ = device.clear_all_button_images().await;
-	clear_all_touchpoint_colors(&device).await;
+	clear_all_touchpoints(&device).await;
 	if let Ok(settings) = crate::store::get_settings() {
 		let _ = device.set_brightness(settings.value.brightness).await;
 	}
@@ -184,30 +205,4 @@ pub async fn initialise_devices() {
 		}
 		Err(error) => log::warn!("Failed to initialise hidapi: {error}"),
 	}
-}
-
-/// Clear all touchpoint LEDs on a device by setting them to black.
-async fn clear_all_touchpoint_colors(device: &AsyncStreamDeck) {
-	for i in 0..device.kind().touchpoint_count() {
-		let _ = device.set_touchpoint_color(i, 0, 0, 0).await;
-	}
-}
-
-/// Extract the average color from an image.
-fn extract_average_color(img: &image::DynamicImage) -> (u8, u8, u8) {
-	let (mut r_sum, mut g_sum, mut b_sum) = (0u64, 0u64, 0u64);
-	let mut count = 0u64;
-
-	for (_x, _y, pixel) in img.pixels() {
-		r_sum += pixel[0] as u64;
-		g_sum += pixel[1] as u64;
-		b_sum += pixel[2] as u64;
-		count += 1;
-	}
-
-	if count == 0 {
-		return (0, 0, 0);
-	}
-
-	((r_sum / count) as u8, (g_sum / count) as u8, (b_sum / count) as u8)
 }
