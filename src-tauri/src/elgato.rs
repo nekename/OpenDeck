@@ -2,15 +2,13 @@ use crate::events::outbound::{encoder, keypad};
 
 use std::collections::HashMap;
 
-use ab_glyph::{FontRef, PxScale};
 use base64::Engine as _;
 use elgato_streamdeck::{
 	AsyncStreamDeck, DeviceStateUpdate,
 	images::{ImageRect, convert_image_with_format_async},
 	info::Kind,
 };
-use image::{GenericImageView, Rgb, RgbImage};
-use imageproc::drawing::draw_text_mut;
+use image::GenericImageView as _;
 use once_cell::sync::Lazy;
 use tokio::sync::RwLock;
 
@@ -102,15 +100,6 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 	};
 	let _ = device.clear_all_button_images().await;
 	clear_all_touchpoint_colors(&device).await;
-	// Display logo on Neo's LCD strip (for now until we have something better)
-	if kind == Kind::Neo
-		&& let Some(lcd_format) = kind.lcd_image_format()
-	{
-		let img = render_neo_branding();
-		if let Ok(lcd_data) = convert_image_with_format_async(lcd_format, img) {
-			let _ = device.write_lcd_fill(&lcd_data).await;
-		}
-	}
 	if let Ok(settings) = crate::store::get_settings() {
 		let _ = device.set_brightness(settings.value.brightness).await;
 	}
@@ -195,28 +184,6 @@ pub async fn initialise_devices() {
 		}
 		Err(error) => log::warn!("Failed to initialise hidapi: {error}"),
 	}
-}
-
-/// Render "OpenDeck" branding image for Neo. Temporary until we have something user configurable.
-fn render_neo_branding() -> image::DynamicImage {
-	let (width, height) = (248u32, 58u32);
-	let mut img = RgbImage::from_pixel(width, height, Rgb([0u8, 0u8, 0u8]));
-
-	// Load FiraSans font
-	let font_data = include_bytes!("../../static/fonts/FiraSans-Bold.ttf");
-	if let Ok(font) = FontRef::try_from_slice(font_data) {
-		let scale = PxScale::from(32.0);
-		let text = "OpenDeck";
-
-		// Approximate text width for centering (roughly 0.5 * scale * chars for this font)
-		let text_width = (text.len() as f32 * scale.x * 0.55) as i32;
-		let x = ((width as i32) - text_width) / 2;
-		let y = ((height as f32) - scale.y) / 2.0;
-
-		draw_text_mut(&mut img, Rgb([180u8, 180u8, 180u8]), x, y as i32, scale, &font, text);
-	}
-
-	image::DynamicImage::ImageRgb8(img)
 }
 
 /// Clear all touchpoint LEDs on a device by setting them to black.
