@@ -106,24 +106,11 @@
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
-
-	function renderEmptySlot(context: CanvasRenderingContext2D) {
-		context.clearRect(0, 0, canvas.width, canvas.height);
-		if (isTouchPoint) {
-			context.strokeStyle = "#525252";
-			context.lineWidth = 4;
-			context.beginPath();
-			context.moveTo(canvas.width * 0.25, canvas.height / 2);
-			context.lineTo(canvas.width * 0.75, canvas.height / 2);
-			context.stroke();
-		}
-	}
-
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
 			const context = canvas?.getContext("2d");
-			if (context) renderEmptySlot(context);
+			if (context) context.clearRect(0, 0, canvas.width, canvas.height);
 		} else {
 			const unlock = await lock.lock();
 			try {
@@ -136,23 +123,30 @@
 	})();
 </script>
 
-<canvas
-	bind:this={canvas}
-	class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
-	class:outline-solid={slot && $inspectedInstance == slot.context}
-	class:-m-[2.06rem]={size == 192}
-	class:rounded-full!={context?.controller == "Encoder"}
-	width={size}
-	height={size}
+<div
+	class="relative"
 	style={`transform: scale(${(112 / size) * scale});`}
-	draggable={slot != null}
-	on:dragstart
-	on:dragover
-	on:drop
-	on:click|stopPropagation={select}
-	on:keyup|stopPropagation={select}
-	on:contextmenu={contextMenu}
-/>
+>
+	<canvas
+		bind:this={canvas}
+		class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
+		class:outline-solid={slot && $inspectedInstance == slot.context}
+		class:-m-[2.06rem]={size == 192}
+		class:rounded-full!={context?.controller == "Encoder"}
+		width={size}
+		height={size}
+		draggable={slot != null}
+		on:dragstart
+		on:dragover
+		on:drop
+		on:click|stopPropagation={select}
+		on:keyup|stopPropagation={select}
+		on:contextmenu={contextMenu}
+	/>
+	{#if isTouchPoint && !slot}
+		<div class="absolute left-1/4 top-1/2 w-1/2 border-t-4 dark:border-neutral-700 pointer-events-none"></div>
+	{/if}
+</div>
 
 {#if $openContextMenu && $openContextMenu?.context == context}
 	<div
