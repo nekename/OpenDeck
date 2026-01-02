@@ -114,7 +114,7 @@
 					on:dragstart={(event) => handleDragStart(event, "Keypad", (device.rows * device.columns) + i)}
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-					isTouchpoint={true}
+					isTouchPoint
 				/>
 			{/each}
 		</div>

@@ -28,7 +28,7 @@
 
 	export let active: boolean = true;
 	export let scale: number = 1;
-	export let isTouchpoint: boolean = false;
+	export let isTouchPoint: boolean = false;
 	let pressed: boolean = false;
 
 	let state: ActionState | undefined;
@@ -107,23 +107,23 @@
 	let lock = new CanvasLock();
 	export let size = 144;
 
-	function renderEmptySlot(ctx: CanvasRenderingContext2D) {
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		if (isTouchpoint) {
-			ctx.strokeStyle = "#525252";
-			ctx.lineWidth = 4;
-			ctx.beginPath();
-			ctx.moveTo(canvas.width * 0.25, canvas.height / 2);
-			ctx.lineTo(canvas.width * 0.75, canvas.height / 2);
-			ctx.stroke();
+	function renderEmptySlot(context: CanvasRenderingContext2D) {
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		if (isTouchPoint) {
+			context.strokeStyle = "#525252";
+			context.lineWidth = 4;
+			context.beginPath();
+			context.moveTo(canvas.width * 0.25, canvas.height / 2);
+			context.lineTo(canvas.width * 0.75, canvas.height / 2);
+			context.stroke();
 		}
 	}
 
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
-			const ctx = canvas?.getContext("2d");
-			if (ctx) renderEmptySlot(ctx);
+			const context = canvas?.getContext("2d");
+			if (context) renderEmptySlot(context);
 		} else {
 			const unlock = await lock.lock();
 			try {
