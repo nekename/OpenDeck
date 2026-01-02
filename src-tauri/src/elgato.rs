@@ -19,7 +19,7 @@ fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
 	let (r_sum, g_sum, b_sum) = img
 		.pixels()
 		.fold((0u64, 0u64, 0u64), |(r, g, b), (_, _, pixel)| (r + pixel[0] as u64, g + pixel[1] as u64, b + pixel[2] as u64));
-	let count = (img.width() * img.height()).min(1) as u64;
+	let count = (img.width() * img.height()).max(1) as u64;
 	((r_sum / count) as u8, (g_sum / count) as u8, (b_sum / count) as u8)
 }
 
