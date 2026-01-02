@@ -31,17 +31,7 @@ impl ProfileStores {
 	pub async fn get_profile_store_mut(&mut self, device: &DeviceInfo, id: &str) -> Result<&mut Store<Profile>, anyhow::Error> {
 		let canonical_id = Self::canonical_id(&device.id, id);
 		if self.stores.contains_key(&canonical_id) {
-			let store = self.stores.get_mut(&canonical_id).unwrap();
-			// Ensure arrays are large enough (handles upgrades when new slot types like touchpoints are added)
-			let required_keys = (device.rows * device.columns + device.touchpoints) as usize;
-			let required_sliders = device.encoders as usize;
-			if store.value.keys.len() < required_keys {
-				store.value.keys.resize(required_keys, None);
-			}
-			if store.value.sliders.len() < required_sliders {
-				store.value.sliders.resize(required_sliders, None);
-			}
-			Ok(store)
+			Ok(self.stores.get_mut(&canonical_id).unwrap())
 		} else {
 			let default = Profile {
 				id: id.to_owned(),
