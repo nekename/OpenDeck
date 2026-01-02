@@ -28,6 +28,7 @@
 
 	export let active: boolean = true;
 	export let scale: number = 1;
+	export let isTouchPoint: boolean = false;
 	let pressed: boolean = false;
 
 	let state: ActionState | undefined;
@@ -108,10 +109,8 @@
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
-			if (canvas) {
-				let context = canvas.getContext("2d");
-				if (context) context.clearRect(0, 0, canvas.width, canvas.height);
-			}
+			const context = canvas?.getContext("2d");
+			if (context) context.clearRect(0, 0, canvas.width, canvas.height);
 		} else {
 			const unlock = await lock.lock();
 			try {
@@ -124,23 +123,30 @@
 	})();
 </script>
 
-<canvas
-	bind:this={canvas}
-	class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
-	class:outline-solid={slot && $inspectedInstance == slot.context}
-	class:-m-[2.06rem]={size == 192}
-	class:rounded-full!={context?.controller == "Encoder"}
-	width={size}
-	height={size}
+<div
+	class="relative"
 	style={`transform: scale(${(112 / size) * scale});`}
-	draggable={slot != null}
-	on:dragstart
-	on:dragover
-	on:drop
-	on:click|stopPropagation={select}
-	on:keyup|stopPropagation={select}
-	on:contextmenu={contextMenu}
-/>
+>
+	<canvas
+		bind:this={canvas}
+		class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
+		class:outline-solid={slot && $inspectedInstance == slot.context}
+		class:-m-[2.06rem]={size == 192}
+		class:rounded-full!={context?.controller == "Encoder"}
+		width={size}
+		height={size}
+		draggable={slot != null}
+		on:dragstart
+		on:dragover
+		on:drop
+		on:click|stopPropagation={select}
+		on:keyup|stopPropagation={select}
+		on:contextmenu={contextMenu}
+	/>
+	{#if isTouchPoint && !slot}
+		<div class="absolute left-1/4 top-1/2 w-1/2 border-t-4 dark:border-neutral-700 pointer-events-none"></div>
+	{/if}
+</div>
 
 {#if $openContextMenu && $openContextMenu?.context == context}
 	<div

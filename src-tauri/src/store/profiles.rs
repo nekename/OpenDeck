@@ -40,7 +40,7 @@ impl ProfileStores {
 			};
 
 			let mut store = Store::new(&canonical_id, &config_dir().join("profiles"), default).context(format!("Failed to create store for profile {}", canonical_id))?;
-			store.value.keys.resize((device.rows * device.columns) as usize, None);
+			store.value.keys.resize((device.rows * device.columns + device.touchpoints) as usize, None);
 			store.value.sliders.resize(device.encoders as usize, None);
 
 			let categories = crate::shared::CATEGORIES.read().await;
