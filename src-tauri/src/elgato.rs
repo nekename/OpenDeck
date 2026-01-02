@@ -89,7 +89,6 @@ pub async fn set_brightness(brightness: u8) {
 
 pub async fn reset_devices() {
 	for (_id, device) in ELGATO_DEVICES.read().await.iter() {
-		clear_all_touchpoints(device).await;
 		let _ = device.reset().await;
 		let _ = device.flush().await;
 	}
