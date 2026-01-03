@@ -4,6 +4,7 @@
 mod application_watcher;
 mod elgato;
 mod events;
+mod iconpacks;
 mod plugins;
 mod shared;
 mod store;
@@ -17,6 +18,7 @@ use events::frontend;
 use shared::PRODUCT_NAME;
 
 use once_cell::sync::OnceCell;
+use tauri::http;
 use tauri::{
 	AppHandle, Builder, Manager, WindowEvent,
 	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
@@ -90,14 +92,39 @@ async fn main() {
 			frontend::plugins::remove_plugin,
 			frontend::plugins::reload_plugin,
 			frontend::plugins::show_settings_interface,
+			frontend::iconpacks::preview_sd_iconpack,
+			frontend::iconpacks::install_sd_iconpack,
+			frontend::iconpacks::list_installed_iconpacks,
+			frontend::iconpacks::uninstall_iconpack,
+			frontend::iconpacks::search_icons,
+			frontend::iconpacks::get_icon_path,
 			frontend::settings::get_settings,
 			frontend::settings::set_settings,
 			frontend::settings::open_config_directory,
 			frontend::settings::open_log_directory,
 			frontend::settings::get_build_info
 		])
+		.register_asynchronous_uri_scheme_protocol("icon", |ctx, request, responder| {
+			match iconpacks::protocol::iconpack_access_protocol(ctx.app_handle().clone(), request) {
+				Ok(response) => responder.respond(response),
+				Err(err) => {
+					println!("Error serving iconpack icon: {}", err);
+					let response = http::Response::builder()
+						.status(http::status::StatusCode::INTERNAL_SERVER_ERROR)
+						.body("".as_bytes().to_vec())
+						.unwrap();
+					responder.respond(response);
+				}
+			}
+		})
 		.setup(|app| {
 			APP_HANDLE.set(app.handle().clone()).unwrap();
+
+			let icon_packs_dir = app.path().app_config_dir().unwrap().join("icon_packs");
+			let iconpacks = iconpacks::manager::IconPackManager::new(&icon_packs_dir);
+			iconpacks.refresh().unwrap_or(());
+
+			app.manage(iconpacks);
 
 			#[cfg(windows)]
 			if !std::env::args().any(|v| v == "--hide") {
