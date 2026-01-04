@@ -31,15 +31,19 @@
 	<screenshots>
 		<screenshot type="default">
 			<image>https://github.com/nekename/OpenDeck/raw/release/.github/readme/mainmenu.png</image>
+			<caption>Main menu</caption>
 		</screenshot>
 		<screenshot>
 			<image>https://github.com/nekename/OpenDeck/raw/release/.github/readme/multiaction.png</image>
+			<caption>Multi action</caption>
 		</screenshot>
 		<screenshot>
 			<image>https://github.com/nekename/OpenDeck/raw/release/.github/readme/plugins.png</image>
+			<caption>Plugins</caption>
 		</screenshot>
 		<screenshot>
 			<image>https://github.com/nekename/OpenDeck/raw/release/.github/readme/profiles.png</image>
+			<caption>Profiles</caption>
 		</screenshot>
 	</screenshots>
 
@@ -49,6 +53,36 @@
 	</branding>
 
 	<releases>
+		<release version="2.8.0" date="2026-01-03">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.8.0</url>
+			<description>
+				<ul>
+					<li>chore: run rustfmt on code fixed automatically by clippy</li>
+					<li>docs: create OpenDeck development guide for agents (and humans)</li>
+					<li>feat: allow profiles to be renamed from the profile manager</li>
+					<li>docs: note poor upstream Flatpak support in the tooltips for the background and autolaunch settings</li>
+					<li>feat: display available plugin updates in the plugin manager</li>
+					<li>feat: implement the `didReceiveDeepLink` event (#196)</li>
+					<li>docs: direct users to reach out on OpenDeck support channels before attempting to contact plugin developers</li>
+					<li>fix: apply dark mode background colour to entire document body</li>
+					<li>docs: clarify non-Flatpak Node.js install requirement</li>
+					<li>docs: link to the FAQ in the troubleshooting section of the README</li>
+					<li>feat: support overriding the detected package family in the installation script</li>
+					<li>feat: update starter pack plugin to use code paths mapped by target triple</li>
+					<li>feat: support installing Tacto Connect from the plugin store</li>
+					<li>feat: reload property inspectors from the relevant plugin when reloading a plugin</li>
+					<li>fix: spawn new thread for CLI handlers to ensure their completion</li>
+					<li>feat: migrate starter pack to v2 of the openaction crate</li>
+					<li>fix: clear plugin update notification when the installed version changes</li>
+					<li>fix: ignore build numbers during comparison of plugin versions</li>
+					<li>fix: prioritise plugins with settings interfaces in installed plugins list</li>
+					<li>docs: mention the opendeck-bin AUR package in the installation section of the README</li>
+					<li>docs: remove link to Elgato Marketplace plugin installation instructions from the plugin manager</li>
+					<li>perf: don't load the Elgato App Store archive automatically</li>
+					<li>feat: implement support for the Stream Deck Neo's Touch Points (#208)</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.7.1" date="2025-12-03">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.7.1</url>
 			<description>
