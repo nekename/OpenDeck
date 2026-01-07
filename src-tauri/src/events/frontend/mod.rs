@@ -4,6 +4,8 @@ pub mod profiles;
 pub mod property_inspector;
 pub mod settings;
 
+use font_loader::system_fonts;
+
 use crate::shared::{CATEGORIES, Category, DEVICES, DeviceInfo};
 
 use std::collections::HashMap;
@@ -101,6 +103,11 @@ pub async fn get_applications() -> Vec<String> {
 #[command]
 pub async fn get_application_profiles() -> crate::application_watcher::ApplicationProfiles {
 	crate::application_watcher::APPLICATION_PROFILES.read().await.value.clone()
+}
+
+#[command]
+pub fn get_fonts() -> Vec<String> {
+	system_fonts::query_all()
 }
 
 #[command]

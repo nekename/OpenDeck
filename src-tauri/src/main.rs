@@ -66,6 +66,7 @@ async fn main() {
 		.invoke_handler(tauri::generate_handler![
 			frontend::restart,
 			frontend::get_devices,
+			frontend::get_fonts,
 			frontend::get_port_base,
 			frontend::get_categories,
 			frontend::get_localisations,

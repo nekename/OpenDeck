@@ -4,6 +4,7 @@
 	import { getImage, resizeImage } from "$lib/rendererHelper";
 
 	import { invoke } from "@tauri-apps/api/core";
+  import { onMount } from "svelte";
 
 	export let instance: ActionInstance;
 	export let showEditor: boolean;
@@ -11,6 +12,13 @@
 	let state: number = 0;
 	let bold: boolean;
 	let italic: boolean;
+
+  let fonts: string[] = [];
+
+  onMount(async () => {
+    fonts = await invoke("get_fonts");
+    console.log(fonts);
+  });
 
 	let fileInput: HTMLInputElement;
 	let colourInput: HTMLInputElement;
@@ -167,15 +175,9 @@
 					class="w-full px-1 dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 				/>
 				<datalist id="families">
-					<option value="Liberation Sans">Liberation Sans</option>
-					<option value="Archivo Black">Archivo Black</option>
-					<option value="Comic Neue">Comic Neue</option>
-					<option value="Courier Prime">Courier Prime</option>
-					<option value="Tinos">Tinos</option>
-					<option value="Anton">Anton</option>
-					<option value="Liberation Serif">Liberation Serif</option>
-					<option value="Open Sans">Open Sans</option>
-					<option value="Fira Sans">Fira Sans</option>
+          {#each fonts as font}
+            <option value={font}>{font}</option>
+          {/each}
 				</datalist>
 			</div>
 			<div class="flex flex-row">
