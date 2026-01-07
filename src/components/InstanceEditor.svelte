@@ -5,6 +5,10 @@
 
 	import { invoke } from "@tauri-apps/api/core";
 
+	import { getWebserverUrl } from "$lib/ports";
+	import IconPickerModal from "./IconPacks/IconPickerModal.svelte";
+	import type { IconResult } from "./IconPacks/types.ts";
+
 	export let instance: ActionInstance;
 	export let showEditor: boolean;
 
@@ -38,6 +42,41 @@
 		bold = instance.states[state].style.includes("Bold");
 		italic = instance.states[state].style.includes("Italic");
 	}
+
+	let showIconPicker: boolean = false;
+
+	const onIconSelectClick = () => {
+		showIconPicker = true;
+	};
+
+	const onIconSelected = async (icon: IconResult) => {
+		await invoke("get_icon_path", { icon })
+			.then((path) => {
+				const url = getWebserverUrl(path as string);
+				return fetch(url).then((res) => {
+					if (!res.ok) throw new Error("Failed to fetch icon");
+					return res.blob();
+				});
+			})
+			.then((blob) => {
+				const reader = new FileReader();
+
+				reader.onload = async () => {
+					let result = reader.result?.toString();
+					if (result) {
+						let resized = await resizeImage(result);
+						if (resized) instance.states[state].image = resized;
+						else instance.states[state].image = result;
+					}
+				};
+
+				reader.readAsDataURL(blob);
+			})
+			.finally(() => {
+				showIconPicker = false;
+			});
+	};
+
 	$: update(instance);
 	$: invoke("set_state", { instance, state });
 </script>
@@ -47,6 +86,8 @@
 		if (event.key == "Escape") showEditor = false;
 	}}
 />
+
+<IconPickerModal bind:open={showIconPicker} onSelect={onIconSelected} />
 
 <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg z-10">
 	<div class="flex flex-row">
@@ -64,7 +105,10 @@
 			<button
 				on:click={(event) => {
 					if (event.ctrlKey) return;
-					fileInput.click();
+					if (event.altKey) { onIconSelectClick(); }
+					else {
+						fileInput.click();
+					}
 				}}
 				on:dragover={(event) => {
 					event.preventDefault();
