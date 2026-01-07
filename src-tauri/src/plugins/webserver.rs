@@ -43,7 +43,7 @@ pub async fn init_webserver(prefix: PathBuf) {
 			Ok(store) => store.value.developer,
 			Err(_) => false,
 		};
-		if !developer && !Path::new(&url).starts_with(&prefix) {
+		if !developer && !Path::new(&url).canonicalize().is_ok_and(|p| p.starts_with(&prefix)) {
 			let _ = request.respond(Response::empty(403));
 			continue;
 		}
