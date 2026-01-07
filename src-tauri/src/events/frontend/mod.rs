@@ -4,12 +4,11 @@ pub mod profiles;
 pub mod property_inspector;
 pub mod settings;
 
-use font_loader::system_fonts;
-
 use crate::shared::{CATEGORIES, Category, DEVICES, DeviceInfo};
 
 use std::collections::HashMap;
 
+use font_loader::system_fonts;
 use tauri::{Emitter, Manager, command};
 
 #[derive(Debug, serde_with::SerializeDisplay, serde::Deserialize)]
@@ -106,13 +105,13 @@ pub async fn get_application_profiles() -> crate::application_watcher::Applicati
 }
 
 #[command]
-pub fn get_fonts() -> Vec<String> {
-	system_fonts::query_all()
-}
-
-#[command]
 pub async fn set_application_profiles(value: crate::application_watcher::ApplicationProfiles) -> Result<(), Error> {
 	let mut store = crate::application_watcher::APPLICATION_PROFILES.write().await;
 	store.value = value;
 	Ok(store.save()?)
+}
+
+#[command]
+pub fn get_fonts() -> Vec<String> {
+	system_fonts::query_all()
 }
