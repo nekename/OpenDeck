@@ -37,13 +37,19 @@ pub async fn init_webserver(prefix: PathBuf) {
 		}
 		#[cfg(target_os = "windows")]
 		let url = url[1..].replace('/', "\\");
+		let path = Path::new(url.trim_end_matches("|opendeck_property_inspector").trim_end_matches("|opendeck_property_inspector_child"));
+
+		if !matches!(tokio::fs::try_exists(path).await, Ok(true)) {
+			let _ = request.respond(Response::empty(404));
+			continue;
+		}
 
 		// Ensure the requested path is within the config directory to prevent unrestricted access to the filesystem.
 		let developer = match crate::store::Store::new("settings", &prefix, crate::store::Settings::default()) {
 			Ok(store) => store.value.developer,
 			Err(_) => false,
 		};
-		if !developer && !Path::new(&url).starts_with(&prefix) {
+		if !developer && !path.canonicalize().is_ok_and(|p| p.starts_with(&prefix)) {
 			let _ = request.respond(Response::empty(403));
 			continue;
 		}
@@ -65,10 +71,6 @@ pub async fn init_webserver(prefix: PathBuf) {
 
 		if url.ends_with("|opendeck_property_inspector") {
 			let path = &url[..url.len() - 28];
-			if !matches!(tokio::fs::try_exists(path).await, Ok(true)) {
-				let _ = request.respond(Response::empty(404).with_header(access_control_allow_origin));
-				continue;
-			}
 
 			let mut content = tokio::fs::read_to_string(path).await.unwrap_or_default();
 			content += r#"
@@ -143,10 +145,6 @@ pub async fn init_webserver(prefix: PathBuf) {
 			let _ = request.respond(response);
 		} else if url.ends_with("|opendeck_property_inspector_child") {
 			let path = &url[..url.len() - 34];
-			if !matches!(tokio::fs::try_exists(path).await, Ok(true)) {
-				let _ = request.respond(Response::empty(404).with_header(access_control_allow_origin));
-				continue;
-			}
 
 			let mut content = tokio::fs::read_to_string(path).await.unwrap_or_default();
 			content = format!("<script>window.opener ??= window.parent;</script>{content}");
@@ -159,11 +157,6 @@ pub async fn init_webserver(prefix: PathBuf) {
 			});
 			let _ = request.respond(response);
 		} else {
-			if !matches!(tokio::fs::try_exists(&url).await, Ok(true)) {
-				let _ = request.respond(Response::empty(404).with_header(access_control_allow_origin));
-				continue;
-			}
-
 			let mime_type = mime(&match Path::new(&url).extension() {
 				Some(extension) => extension.to_string_lossy().into_owned(),
 				None => "html".to_owned(),
