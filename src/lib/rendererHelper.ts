@@ -92,7 +92,7 @@ export async function renderImage(
 			`${size}px "${state.family}", sans-serif`;
 		context.fillStyle = state.colour;
 		context.strokeStyle = state.stroke_colour;
-		context.lineWidth = state.stroke_size;
+		context.lineWidth = state.stroke_size * scale;
 		context.textBaseline = "top";
 		const x = canvas.width / 2;
 		let y = canvas.height / 2 - (size * state.text.split("\n").length * 0.5);
