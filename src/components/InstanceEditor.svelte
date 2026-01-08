@@ -174,17 +174,17 @@
 					class="w-full px-1 dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 				/>
 				<datalist id="families">
+					<option value="Liberation Sans">Liberation Sans</option>
+					<option value="Archivo Black">Archivo Black</option>
+					<option value="Comic Neue">Comic Neue</option>
+					<option value="Courier Prime">Courier Prime</option>
+					<option value="Tinos">Tinos</option>
+					<option value="Anton">Anton</option>
+					<option value="Liberation Serif">Liberation Serif</option>
+					<option value="Open Sans">Open Sans</option>
+					<option value="Fira Sans">Fira Sans</option>
+					<option disabled>──────────</option>
 					{#each fonts as font}
-						<option value="Liberation Sans">Liberation Sans</option>
-						<option value="Archivo Black">Archivo Black</option>
-						<option value="Comic Neue">Comic Neue</option>
-						<option value="Courier Prime">Courier Prime</option>
-						<option value="Tinos">Tinos</option>
-						<option value="Anton">Anton</option>
-						<option value="Liberation Serif">Liberation Serif</option>
-						<option value="Open Sans">Open Sans</option>
-						<option value="Fira Sans">Fira Sans</option>
-						<option disabled>──────────</option>
 						<option value={font}>{font}</option>
 					{/each}
 				</datalist>
