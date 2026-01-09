@@ -91,8 +91,8 @@ export async function renderImage(
 		context.font = (state.style.includes("Bold") ? "bold " : "") + (state.style.includes("Italic") ? "italic " : "") +
 			`${size}px "${state.family}", sans-serif`;
 		context.fillStyle = state.colour;
-		context.strokeStyle = "black";
-		context.lineWidth = 3 * scale;
+		context.strokeStyle = state.stroke_colour;
+		context.lineWidth = state.stroke_size * scale;
 		context.textBaseline = "top";
 		const x = canvas.width / 2;
 		let y = canvas.height / 2 - (size * state.text.split("\n").length * 0.5);
