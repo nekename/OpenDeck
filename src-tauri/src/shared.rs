@@ -123,6 +123,7 @@ pub struct ActionState {
 	pub show: bool,
 	#[serde(alias = "TitleColor")]
 	pub colour: String,
+	// Note: this is not a real manifest property; it is only used internally.
 	#[serde(alias = "TitleStroke")]
 	pub stroke_colour: String,
 	#[serde(alias = "TitleAlignment")]
@@ -133,6 +134,7 @@ pub struct ActionState {
 	pub style: String,
 	#[serde(alias = "FontSize")]
 	pub size: FontSize,
+	// Note: this is not a real manifest property; it is only used internally.
 	#[serde(alias = "StrokeSize")]
 	pub stroke_size: FontSize,
 	#[serde(alias = "FontUnderline")]
