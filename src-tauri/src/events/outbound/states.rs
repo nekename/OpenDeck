@@ -37,6 +37,9 @@ struct TitleParametersDidChangeEvent {
 
 pub async fn title_parameters_did_change(instance: &ActionInstance, state: u16) -> Result<(), anyhow::Error> {
 	let instance = instance.clone();
+	if state as usize >= instance.states.len() {
+		return Err(anyhow::anyhow!("State index out of bounds: {} >= {}", state, instance.states.len()));
+	}
 	let state = instance.states[state as usize].clone();
 
 	send_to_plugin(
