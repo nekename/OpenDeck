@@ -27,6 +27,9 @@ pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result
 
 	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
 		if let Some(state) = event.payload.state {
+			if state as usize >= instance.states.len() {
+				return Err(anyhow::anyhow!("State index out of bounds ({} > {})", state, instance.states.len() - 1));
+			}
 			instance.states[state as usize].text = event.payload.title.unwrap_or(instance.action.states[state as usize].text.clone());
 		} else {
 			for (index, state) in instance.states.iter_mut().enumerate() {
@@ -61,6 +64,9 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 		}
 
 		if let Some(state) = event.payload.state {
+			if state as usize >= instance.states.len() {
+				return Err(anyhow::anyhow!("State index out of bounds ({} > {})", state, instance.states.len() - 1));
+			}
 			instance.states[state as usize].image = event.payload.image.unwrap_or(instance.action.states[state as usize].image.clone());
 		} else {
 			for (index, state) in instance.states.iter_mut().enumerate() {
