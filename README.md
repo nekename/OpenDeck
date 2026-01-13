@@ -49,6 +49,7 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 
 - Download the latest release (`.exe` or `.msi`) from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
 - Double-click the downloaded file to run the installer.
+- Alternatively, you can find opendeck-portable [here](https://github.com/AtmanActive/opendeck-portable/releases).
 
 ### macOS
 
