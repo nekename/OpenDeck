@@ -98,7 +98,7 @@ export async function renderImage(
 		let y = canvas.height / 2 - (size * state.text.split("\n").length * 0.5);
 		switch (state.alignment) {
 			case "top":
-				y = -(size * 0.2);
+				y = context.lineWidth;
 				break;
 			case "bottom":
 				y = canvas.height - (size * state.text.split("\n").length) - context.lineWidth;
