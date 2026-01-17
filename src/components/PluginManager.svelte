@@ -361,7 +361,7 @@
 		</div>
 		<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			<ListedPlugin
-				icon="https://tacto.rivul.us/icon-192.png"
+				icon="https://tacto.live/icon-192.png"
 				name="Tacto Connect"
 				subtitle="Rivulus"
 				action={() =>
@@ -371,7 +371,7 @@
 						repository: "https://github.com/RivulusLive/tacto-desktop",
 						download_url: undefined,
 					})}
-				secondaryAction={() => window.open("https://tacto.rivul.us")}
+				secondaryAction={() => window.open("https://tacto.live")}
 			>
 				<svelte:fragment slot="secondary">
 					<ArrowSquareOut size="24" class="text-neutral-500 dark:text-neutral-400" />
