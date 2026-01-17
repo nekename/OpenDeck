@@ -428,7 +428,7 @@ pub fn initialise_plugins() {
 	for entry in entries {
 		if let Ok(entry) = entry {
 			let path = match entry.metadata().unwrap().is_symlink() {
-				true => fs::read_link(entry.path()).unwrap(),
+				true => entry.path().parent().unwrap_or_else(|| path::Path::new(".")).join(fs::read_link(entry.path()).unwrap()),
 				false => entry.path(),
 			};
 			let metadata = fs::metadata(&path).unwrap();
