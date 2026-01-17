@@ -187,6 +187,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		window.eval(format!(
 			r#"const opendeckInit = () => {{
 				try {{
+					if (document.readyState !== "complete") throw new Error("not ready");
 					if (typeof connectOpenActionSocket === "function") connectOpenActionSocket({port}, "{uuid}", "{event}", `{info}`);
 					else connectElgatoStreamDeckSocket({port}, "{uuid}", "{event}", `{info}`);
 				}} catch (e) {{
