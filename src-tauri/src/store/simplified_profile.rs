@@ -92,7 +92,7 @@ impl From<ActionInstance> for DiskActionInstance {
 				state.image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==".to_owned();
 			}
 
-			if state.image.starts_with("data:") {
+			if state.image.starts_with("data:") && state.image.contains('/') && state.image.contains(',') {
 				let mut extension = state.image.split_once('/').unwrap().1.split_once(',').unwrap().0;
 				if extension.contains(';') {
 					extension = extension.split_once(';').unwrap().0;
