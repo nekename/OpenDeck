@@ -53,6 +53,21 @@
 	</branding>
 
 	<releases>
+		<release version="2.8.1" date="2026-01-17">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.8.1</url>
+			<description>
+				<ul>
+					<li>feat: load font list from system installed fonts</li>
+					<li>fix: ensure requested paths are within the OpenDeck config directory when containing dot segments</li>
+					<li>fix: add bounds checks for state index (#219)</li>
+					<li>fix: render text at correct Y position when text alignment is set to `top` (#221)</li>
+					<li>fix: add readiness check before calling connection code injected into web-based plugins</li>
+					<li>fix: ensure data URL state images contain `/` and `,` before attempting to read their contents</li>
+					<li>fix: correctly resolve relative-path symlinks to plugin directories</li>
+					<li>chore: update Tacto section of the plugin manager to use new domain name</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.8.0" date="2026-01-03">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.8.0</url>
 			<description>

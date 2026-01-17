@@ -2,7 +2,7 @@
 	"Name": "OpenDeck Starter Pack",
 	"Description": "OpenDeck starter pack plugin",
 	"Author": "Aman Khanna (nekename)",
-	"Version": "2.8.0",
+	"Version": "2.8.1",
 	"CodePaths": {
 		"x86_64-pc-windows-msvc": "x86_64-pc-windows-msvc/bin/opendeck-starterpack.exe",
 		"x86_64-apple-darwin": "x86_64-apple-darwin/bin/opendeck-starterpack",
