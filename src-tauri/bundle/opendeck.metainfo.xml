@@ -53,6 +53,14 @@
 	</branding>
 
 	<releases>
+		<release version="2.8.2" date="2026-01-18">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.8.2</url>
+			<description>
+				<ul>
+					<li>fix: ensure prefix is also canonicalised before matching in webserver request handler</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.8.1" date="2026-01-17">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.8.1</url>
 			<description>
