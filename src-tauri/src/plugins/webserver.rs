@@ -16,6 +16,7 @@ fn mime(extension: &str) -> String {
 
 /// Start a simple webserver to serve files of plugins that run in a browser environment.
 pub async fn init_webserver(prefix: PathBuf) {
+	let prefix = prefix.canonicalize().unwrap();
 	let server = {
 		let listener = std::net::TcpListener::bind(format!("0.0.0.0:{}", *super::PORT_BASE + 2)).unwrap();
 
