@@ -246,7 +246,7 @@
 						(<span class="text-yellow-600 dark:text-yellow-400">
 							available:
 							<button
-								class="font-semibold hover:underline outline-hidden"
+								class="font-semibold underline outline-hidden"
 								on:click={() => openDetailsView = plugin.id.endsWith(".sdPlugin") ? plugin.id.slice(0, -9) : plugin.id}
 							>
 								{availableUpdates[plugin.id]}
