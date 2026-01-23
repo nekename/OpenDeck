@@ -164,6 +164,20 @@
 					<option value="bottom">Bottom</option>
 				</select>
 			</div>
+			<div class="flex flex-row items-center">
+				<span class="mr-2"> Stroke </span>
+				<input
+					type="color"
+					bind:value={instance.states[state].stroke_colour}
+					class="mr-2 px-0.5 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
+				/>
+				<span class="mr-2"> Outline </span>
+				<input
+					type="number"
+					bind:value={instance.states[state].stroke_size}
+					class="px-0.5 w-14 dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
+				/>
+			</div>
 			<div class="flex flex-row">
 				<span class="mr-2"> Font </span>
 				<input

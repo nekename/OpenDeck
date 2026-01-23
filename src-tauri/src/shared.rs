@@ -123,6 +123,9 @@ pub struct ActionState {
 	pub show: bool,
 	#[serde(alias = "TitleColor")]
 	pub colour: String,
+	// Note: this is not a real manifest property; it is only used internally.
+	#[serde(alias = "TitleStroke")]
+	pub stroke_colour: String,
 	#[serde(alias = "TitleAlignment")]
 	pub alignment: String,
 	#[serde(alias = "FontFamily")]
@@ -131,6 +134,9 @@ pub struct ActionState {
 	pub style: String,
 	#[serde(alias = "FontSize")]
 	pub size: FontSize,
+	// Note: this is not a real manifest property; it is only used internally.
+	#[serde(alias = "StrokeSize")]
+	pub stroke_size: FontSize,
 	#[serde(alias = "FontUnderline")]
 	pub underline: bool,
 }
@@ -143,10 +149,12 @@ impl Default for ActionState {
 			text: String::new(),
 			show: true,
 			colour: "#FFFFFF".to_owned(),
+			stroke_colour: "#000000".to_owned(),
 			alignment: "middle".to_owned(),
 			family: "Liberation Sans".to_owned(),
 			style: "Regular".to_owned(),
 			size: FontSize(16),
+			stroke_size: FontSize(3),
 			underline: false,
 		}
 	}
