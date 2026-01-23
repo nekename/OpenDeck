@@ -154,7 +154,7 @@ impl Default for ActionState {
 			family: "Liberation Sans".to_owned(),
 			style: "Regular".to_owned(),
 			size: FontSize(16),
-			stroke_size: FontSize(2),
+			stroke_size: FontSize(3),
 			underline: false,
 		}
 	}
