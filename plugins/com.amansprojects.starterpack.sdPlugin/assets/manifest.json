@@ -41,7 +41,7 @@
 		},
 		{
 			"Icon": "icons/inputSimulation",
-			"Name": "Input Simulation",
+			"Name": "Simulate Input",
 			"States": [{ "Image": "actionDefaultImage" }],
 			"Controllers": ["Keypad", "Encoder"],
 			"SupportedInMultiActions": true,
