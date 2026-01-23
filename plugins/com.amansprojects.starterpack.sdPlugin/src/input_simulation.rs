@@ -7,6 +7,7 @@ use enigo::{
 	agent::{Agent, Token},
 };
 use serde::{Deserialize, Serialize};
+use serde_json::{Value::Null, json};
 use tokio::sync::Mutex;
 
 static ENIGO: LazyLock<Mutex<Option<Enigo>>> = LazyLock::new(|| Mutex::new(Option::None));
@@ -54,22 +55,32 @@ impl Action for InputSimulationAction {
 
 	async fn key_down(
 		&self,
-		_instance: &Instance,
+		instance: &Instance,
 		settings: &Self::Settings,
 	) -> OpenActionResult<()> {
 		if let Err(error) = execute_input(settings.down.clone()).await {
 			log::warn!("Failed to simulate input: {error}");
+			instance
+				.send_to_property_inspector(json!({ "error": error.to_string() }))
+				.await?;
+		} else if settings.down.as_ref().is_some_and(|x| !x.trim().is_empty()) {
+			instance
+				.send_to_property_inspector(json!({ "error": Null }))
+				.await?;
 		}
 		Ok(())
 	}
 
-	async fn key_up(
-		&self,
-		_instance: &Instance,
-		settings: &Self::Settings,
-	) -> OpenActionResult<()> {
+	async fn key_up(&self, instance: &Instance, settings: &Self::Settings) -> OpenActionResult<()> {
 		if let Err(error) = execute_input(settings.up.clone()).await {
 			log::warn!("Failed to simulate input: {error}");
+			instance
+				.send_to_property_inspector(json!({ "error": error.to_string() }))
+				.await?;
+		} else if settings.up.as_ref().is_some_and(|x| !x.trim().is_empty()) {
+			instance
+				.send_to_property_inspector(json!({ "error": Null }))
+				.await?;
 		}
 		Ok(())
 	}
@@ -92,20 +103,26 @@ impl Action for InputSimulationAction {
 
 	async fn dial_rotate(
 		&self,
-		_instance: &Instance,
+		instance: &Instance,
 		settings: &Self::Settings,
 		ticks: i16,
 		_pressed: bool,
 	) -> OpenActionResult<()> {
+		let input = if ticks < 0 {
+			&settings.anticlockwise
+		} else {
+			&settings.clockwise
+		};
 		for _ in 0..ticks.abs() {
-			if let Err(error) = execute_input(if ticks < 0 {
-				settings.anticlockwise.clone()
-			} else {
-				settings.clockwise.clone()
-			})
-			.await
-			{
+			if let Err(error) = execute_input(input.clone()).await {
 				log::warn!("Failed to simulate input: {error}");
+				instance
+					.send_to_property_inspector(json!({ "error": error.to_string() }))
+					.await?;
+			} else if input.as_ref().is_some_and(|x| !x.trim().is_empty()) {
+				instance
+					.send_to_property_inspector(json!({ "error": Null }))
+					.await?;
 			}
 		}
 		Ok(())

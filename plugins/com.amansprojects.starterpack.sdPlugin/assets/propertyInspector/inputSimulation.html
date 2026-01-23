@@ -43,11 +43,24 @@
 						},
 					}));
 				};
+
+				websocket.onmessage = (event) => {
+					const data = JSON.parse(event.data);
+					if (data.event == "sendToPropertyInspector") {
+						if (data.payload.error) {
+							document.getElementById("error").innerText = "Error: " + data.payload.error;
+							document.getElementById("error").style.display = "block";
+						} else {
+							document.getElementById("error").style.display = "none";
+						}
+					}
+				};
 			}
 		</script>
 		<link rel="stylesheet" href="sdpi.css" />
 	</head>
 	<body>
+		<div id="error" style="display: none; padding: 8px 18px 8px 12px; color: lightcoral"></div>
 		<div class="sdpi-item">
 			<div class="sdpi-item-label" id="down-label">Key down</div>
 			<input id="down" oninput="update();" class="sdpi-item-value" style="font-family: monospace" placeholder="Input to be executed on key down" />
