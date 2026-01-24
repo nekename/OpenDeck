@@ -6,7 +6,11 @@ use crate::store::profiles::{acquire_locks_mut, get_slot_mut, save_profile};
 
 use std::time::Duration;
 
+use dashmap::DashMap;
+use once_cell::sync::Lazy;
 use serde::Serialize;
+
+static KEY_DOWN_TARGETS: Lazy<DashMap<(String, u8), Context>> = Lazy::new(DashMap::new);
 
 #[derive(Serialize)]
 struct KeyEvent {
@@ -28,6 +32,7 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 	};
 
 	let _ = key_moved(crate::APP_HANDLE.get().unwrap(), context.clone(), true).await;
+	KEY_DOWN_TARGETS.insert((device.to_owned(), key), context.clone());
 
 	let Some(instance) = get_slot_mut(&context, &mut locks).await? else { return Ok(()) };
 	if instance.action.uuid == "opendeck.multiaction" {
@@ -116,6 +121,11 @@ pub async fn key_up(device: &str, key: u8) -> Result<(), anyhow::Error> {
 	};
 
 	let _ = key_moved(crate::APP_HANDLE.get().unwrap(), context.clone(), false).await;
+	if let Some((_, expected_context)) = KEY_DOWN_TARGETS.remove(&(device.to_owned(), key))
+		&& context != expected_context
+	{
+		return Ok(());
+	}
 
 	let slot = get_slot_mut(&context, &mut locks).await?;
 	let Some(instance) = slot else { return Ok(()) };
