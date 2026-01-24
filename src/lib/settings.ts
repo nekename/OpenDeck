@@ -2,6 +2,7 @@ export type Settings = {
 	version: string;
 	language: string;
 	brightness: number;
+	rotation: number;
 	darktheme: boolean;
 	background: boolean;
 	autolaunch: boolean;

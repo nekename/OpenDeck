@@ -11,6 +11,7 @@
 
 	import { copiedContext, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
 	import { CanvasLock, renderImage } from "$lib/rendererHelper";
+	import { settings } from "$lib/settings";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
@@ -115,12 +116,18 @@
 			const unlock = await lock.lock();
 			try {
 				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
-				if (state) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed);
+				if (state) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, $settings?.rotation);
 			} finally {
 				unlock();
 			}
 		}
 	})();
+	$: {
+		if ($settings?.rotation != undefined) {
+			canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+			slot = slot;
+		}
+	}
 </script>
 
 <div

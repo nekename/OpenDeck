@@ -49,6 +49,7 @@ export async function renderImage(
 	processImage: boolean,
 	active: boolean,
 	pressed: boolean,
+	rotation?: number,
 ) {
 	// Create canvas
 	let scale = 1;
@@ -62,6 +63,13 @@ export async function renderImage(
 
 	const context = canvas.getContext("2d");
 	if (!context) return;
+
+	context.save();
+	if (rotation) {
+		context.translate(canvas.width / 2, canvas.height / 2);
+		context.rotate(rotation * Math.PI / 180);
+		context.translate(-canvas.width / 2, -canvas.height / 2);
+	}
 
 	try {
 		// Load image
@@ -158,6 +166,8 @@ export async function renderImage(
 			context.drawImage(smallCanvas, 0, 0);
 		}
 	}
+
+	context.restore();
 
 	if (active && slotContext) setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") }), 10);
 }

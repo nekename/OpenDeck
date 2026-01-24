@@ -85,6 +85,11 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<span class="dark:text-neutral-400"> Image rotation: </span>
+			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} />
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="dark:text-neutral-400"> Enable dark theme: </span>
 			<input type="checkbox" bind:checked={$settings.darktheme} />
 		</div>
