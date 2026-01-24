@@ -67,7 +67,7 @@
 {#key device}
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div
-		class="flex flex-col"
+		class="flex flex-col items-center"
 		class:hidden={$inspectedParentAction || selectedDevice != device.id}
 		on:click={() => inspectedInstance.set(null)}
 		on:keyup={() => inspectedInstance.set(null)}
