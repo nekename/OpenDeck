@@ -89,9 +89,10 @@
 				/>
 			</button>
 			<button
-				on:click={() => colourInput.click()}
+				on:click={() => colourInput.click( )}
 				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 			>
+			
 				Solid colour
 			</button>
 		</div>
@@ -132,6 +133,7 @@
 				instance.states[state].image = canvas.toDataURL("image/png");
 			}}
 		/>
+		
 
 		<div class="flex flex-col pl-2 pr-1 pt-4 pb-2 space-y-2">
 			<div class="flex flex-row space-x-2">
@@ -154,6 +156,12 @@
 					type="checkbox"
 					bind:checked={instance.states[state].show}
 					class="mr-4 mt-1 scale-125"
+				/>
+				<span class="mr-2"> Bg-Colour </span>
+				<input
+					type="color"
+					bind:value={instance.states[state].bg_colour}
+					class="mr-2 px-0.5 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 				/>
 				<select
 					bind:value={instance.states[state].alignment}

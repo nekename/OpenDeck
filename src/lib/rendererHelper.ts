@@ -85,6 +85,8 @@ export async function renderImage(
 		// Draw image
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		context.imageSmoothingQuality = "high";
+		context.fillStyle = state.bg_colour; //set bg colour from state of button
+		context.fillRect(0, 0, canvas.width, canvas.height);
 		context.drawImage(image, 0, 0, canvas.width, canvas.height);
 	} catch (error: any) {
 		if (!(error instanceof Event)) console.error(error);
