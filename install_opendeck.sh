@@ -242,6 +242,42 @@ install_wine_if_needed() {
     fi
 }
 
+install_node_if_needed() {
+    if has_cmd node; then
+        msg_info "Node.js already installed"
+        return
+    fi
+
+    if confirm "Node.js is required for some plugins. If you're not sure if you need to install Node.js, you can run this script again later. Install Node.js now?"; then
+        msg_info "Installing Node.js"
+        case "$PKG_FAMILY" in
+        debian)
+            sudo apt-get update && sudo apt-get install nodejs npm
+            ;;
+        rpm | ublue)
+            if has_cmd rpm-ostree; then
+                sudo rpm-ostree install nodejs npm
+            elif has_cmd zypper; then
+                sudo zypper install nodejs npm
+            elif has_cmd dnf; then
+                sudo dnf install nodejs npm
+            else
+                msg_error "No supported package manager found to install Node.js; please install it manually"
+            fi
+            ;;
+        arch)
+            sudo pacman -Sy nodejs npm
+            ;;
+        *)
+            msg_error "No supported package manager found to install Node.js; please install it manually"
+            ;;
+        esac
+        msg_ok "Installed Node.js"
+    else
+        msg_warn "Not installing Node.js"
+    fi
+}
+
 if [ -n "${OPENDECK_PKG_FAMILY:-}" ]; then
     PKG_FAMILY="$OPENDECK_PKG_FAMILY"
     case "$PKG_FAMILY" in
@@ -290,6 +326,7 @@ unknown)
 esac
 
 install_wine_if_needed
+install_node_if_needed
 
 msg_ok "Installation complete!"
 echo -e "${YELLOW}If you enjoy OpenDeck, please consider starring the project on GitHub: ${BLUE}https://github.com/${GITHUB_REPO}${RESET}"
