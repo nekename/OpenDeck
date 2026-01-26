@@ -18,6 +18,15 @@
 				device.value = inActionInfo.payload.settings.device ?? inActionInfo.device;
 				const profile = document.getElementById("profile");
 				profile.value = inActionInfo.payload.settings.profile ?? "Default";
+				const anticlockwise = document.getElementById("anticlockwise");
+				anticlockwise.value = inActionInfo.payload.settings.anticlockwise ?? "Default";
+				const clockwise = document.getElementById("clockwise");
+				clockwise.value = inActionInfo.payload.settings.clockwise ?? "Default";
+
+				if (inActionInfo.payload.controller == "Encoder") {
+					document.getElementById("encoder").style.display = "block";
+					document.getElementById("up-label").innerText = "Dial press";
+				}
 
 				update = () => {
 					websocket.send(JSON.stringify({
@@ -26,6 +35,8 @@
 						payload: {
 							device: device.value ?? inActionInfo.device,
 							profile: profile.value,
+							anticlockwise: anticlockwise.value,
+							clockwise: clockwise.value,
 						},
 					}));
 				};
@@ -39,8 +50,18 @@
 			<input id="device" oninput="update();" class="sdpi-item-value" />
 		</div>
 		<div class="sdpi-item">
-			<div class="sdpi-item-label">Profile</div>
+			<div class="sdpi-item-label" id="up-label">Profile</div>
 			<input id="profile" oninput="update();" class="sdpi-item-value" />
+		</div>
+		<div id="encoder" style="display: none">
+			<div class="sdpi-item">
+				<div class="sdpi-item-label">Dial rotate anticlockwise</div>
+				<input id="anticlockwise" oninput="update();" class="sdpi-item-value" />
+			</div>
+			<div class="sdpi-item">
+				<div class="sdpi-item-label">Dial rotate clockwise</div>
+				<input id="clockwise" oninput="update();" class="sdpi-item-value" />
+			</div>
 		</div>
 	</body>
 </html>

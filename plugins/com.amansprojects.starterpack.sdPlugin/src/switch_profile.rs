@@ -16,6 +16,8 @@ struct SwitchProfileEvent {
 pub struct SwitchProfileSettings {
 	device: Option<String>,
 	profile: Option<String>,
+	anticlockwise: Option<String>,
+	clockwise: Option<String>,
 }
 
 pub struct SwitchProfileAction;
@@ -33,6 +35,38 @@ impl Action for SwitchProfileAction {
 				.unwrap_or(&instance.device_id)
 				.to_owned(),
 			profile: settings.profile.as_deref().unwrap_or("Default").to_owned(),
+		})
+		.await
+	}
+
+	async fn dial_up(
+		&self,
+		instance: &Instance,
+		settings: &Self::Settings,
+	) -> OpenActionResult<()> {
+		self.key_up(instance, settings).await
+	}
+
+	async fn dial_rotate(
+		&self,
+		instance: &Instance,
+		settings: &Self::Settings,
+		ticks: i16,
+		_pressed: bool,
+	) -> OpenActionResult<()> {
+		let profile = if ticks < 0 {
+			&settings.anticlockwise
+		} else {
+			&settings.clockwise
+		};
+		send_arbitrary_json(SwitchProfileEvent {
+			event: "switchProfile",
+			device: settings
+				.device
+				.as_deref()
+				.unwrap_or(&instance.device_id)
+				.to_owned(),
+			profile: profile.as_deref().unwrap_or("Default").to_owned(),
 		})
 		.await
 	}
