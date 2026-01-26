@@ -126,6 +126,8 @@ pub struct ActionState {
 	// Note: this is not a real manifest property; it is only used internally.
 	#[serde(alias = "TitleStroke")]
 	pub stroke_colour: String,
+	#[serde(alias = "TitleBgColour")]
+	pub bg_colour: String,
 	#[serde(alias = "TitleAlignment")]
 	pub alignment: String,
 	#[serde(alias = "FontFamily")]
@@ -150,6 +152,7 @@ impl Default for ActionState {
 			show: true,
 			colour: "#FFFFFF".to_owned(),
 			stroke_colour: "#000000".to_owned(),
+			bg_colour: "#00000000".to_owned(),
 			alignment: "middle".to_owned(),
 			family: "Liberation Sans".to_owned(),
 			style: "Regular".to_owned(),
