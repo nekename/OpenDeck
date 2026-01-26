@@ -212,7 +212,7 @@ install_wine_if_needed() {
         return
     fi
 
-    if confirm "Wine is required for many plugins. Install Wine now?"; then
+    if confirm "Wine is required for some plugins. If you're not sure if you need to install Wine, you can run this script again later. Install Wine now?"; then
         msg_info "Installing Wine"
         case "$PKG_FAMILY" in
         debian)
@@ -238,7 +238,7 @@ install_wine_if_needed() {
         esac
         msg_ok "Installed Wine"
     else
-        msg_warn "Not installing Wine; many plugins may not function"
+        msg_warn "Not installing Wine"
     fi
 }
 
