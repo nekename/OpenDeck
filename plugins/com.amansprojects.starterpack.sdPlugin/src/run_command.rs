@@ -13,6 +13,10 @@ fn is_flatpak() -> bool {
 			.map(|x| x.to_lowercase().trim() == "flatpak")
 			.unwrap_or(false)
 }
+#[cfg(unix)]
+fn is_distrobox() -> bool {
+	std::env::var("CONTAINER_ID").is_ok()
+}
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 #[serde(default)]
@@ -41,10 +45,18 @@ async fn run_command(
 	}
 
 	#[cfg(unix)]
-	let command = if is_flatpak() { "flatpak-spawn" } else { "sh" };
+	let command = if is_flatpak() {
+		"flatpak-spawn"
+	} else if is_distrobox() && !value.trim().starts_with("distrobox-host-exec") {
+		"distrobox-host-exec"
+	} else {
+		"sh"
+	};
 	#[cfg(unix)]
 	let extra_args = if is_flatpak() {
 		vec!["--host", "sh", "-c"]
+	} else if is_distrobox() && !value.trim().starts_with("distrobox-host-exec") {
+		vec!["sh", "-c"]
 	} else {
 		vec!["-c"]
 	};
