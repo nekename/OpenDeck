@@ -97,7 +97,7 @@
 				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 			>
 			
-				Solid
+				Solid colour
 			</button>
 			<div class="flex flex-row items-center">
 				<span class="mr-2"> Background </span>
