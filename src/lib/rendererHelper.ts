@@ -1,3 +1,4 @@
+import { image } from "@tauri-apps/api";
 import type { ActionState } from "./ActionState.ts";
 import type { Context } from "./Context.ts";
 
@@ -26,6 +27,84 @@ export function getImage(image: string | undefined, fallback: string | undefined
 	}
 	return image;
 }
+
+
+export async function getInstanceEditorPreview(state: ActionState, imageSrc: string | undefined, fallback: string | undefined): Promise<string> {
+    // 1. Find den korrekte kilde
+    const src = getImage(imageSrc, fallback);
+    if (!src) return "";
+	if (!state.bg_colour) return src;
+    // 2. Opret billede-objekt og vent på indlæsning (Asynkront)
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // Undgå "tainted canvas" fejl
+    
+    await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = src;
+    });
+
+    // 3. Setup canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = 144;
+    canvas.height = 144;
+    const context = canvas.getContext("2d");
+
+    if (!context) throw new Error("Kunne ikke hente canvas context");
+    // 4. Tegn indholdet
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.imageSmoothingQuality = "high";
+    
+    // Baggrundsfarve
+    context.fillStyle = state.bg_colour;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Tegn det nu indlæste billede
+    context.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+
+	//Draw text on preview
+	let scale = 1;
+	if (state.show) {
+		const size = state.size * 2 * scale;
+		context.textAlign = "center";
+		context.font = (state.style.includes("Bold") ? "bold " : "") + (state.style.includes("Italic") ? "italic " : "") +
+			`${size}px "${state.family}", sans-serif`;
+		context.fillStyle = state.colour;
+		context.strokeStyle = state.stroke_colour;
+		context.lineWidth = state.stroke_size * scale;
+		context.textBaseline = "top";
+		const x = canvas.width / 2;
+		let y = canvas.height / 2 - (size * state.text.split("\n").length * 0.5);
+		switch (state.alignment) {
+			case "top":
+				y = context.lineWidth;
+				break;
+			case "bottom":
+				y = canvas.height - (size * state.text.split("\n").length) - context.lineWidth;
+				break;
+		}
+		for (const [index, line] of Object.entries(state.text.split("\n"))) {
+			context.strokeText(line, x, y + (size * parseInt(index)));
+			context.fillText(line, x, y + (size * parseInt(index)));
+			if (state.underline) {
+				const width = context.measureText(line).width;
+				// Set to black for the outline, since it uses the same fill style info as the text colour.
+				context.fillStyle = "black";
+				context.fillRect(x - (width / 2) - 3, y + (size * parseInt(index)) + size, width + 6, 9);
+				// Reset to the user's choice of text colour.
+				context.fillStyle = state.colour;
+				context.fillRect(x - (width / 2), y + (size * parseInt(index)) + size + 4, width, 3);
+			}
+		}
+	}
+
+
+
+    // 5. Returner URI
+    return canvas.toDataURL('image/png'); 
+}
+
 
 export class CanvasLock {
 	currentLock = Promise.resolve();
@@ -85,8 +164,10 @@ export async function renderImage(
 		// Draw image
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		context.imageSmoothingQuality = "high";
-		context.fillStyle = state.bg_colour; //set bg colour from state of button
+		// add bg color to rendered icons
+		context.fillStyle = state.bg_colour;
 		context.fillRect(0, 0, canvas.width, canvas.height);
+		// done
 		context.drawImage(image, 0, 0, canvas.width, canvas.height);
 	} catch (error: any) {
 		if (!(error instanceof Event)) console.error(error);
