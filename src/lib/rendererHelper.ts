@@ -30,13 +30,11 @@ export function getImage(image: string | undefined, fallback: string | undefined
 
 
 export async function getInstanceEditorPreview(state: ActionState, imageSrc: string | undefined, fallback: string | undefined): Promise<string> {
-    // 1. Find den korrekte kilde
     const src = getImage(imageSrc, fallback);
     if (!src) return "";
 	if (!state.bg_colour) return src;
-    // 2. Opret billede-objekt og vent på indlæsning (Asynkront)
     const img = new Image();
-    img.crossOrigin = "anonymous"; // Undgå "tainted canvas" fejl
+    img.crossOrigin = "anonymous";
     
     await new Promise((resolve, reject) => {
         img.onload = resolve;
@@ -55,53 +53,15 @@ export async function getInstanceEditorPreview(state: ActionState, imageSrc: str
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.imageSmoothingQuality = "high";
     
-    // Baggrundsfarve
+    // background colour
     context.fillStyle = state.bg_colour;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Tegn det nu indlæste billede
+    // drawing the image to canvas before return
     context.drawImage(img, 0, 0, canvas.width, canvas.height);
 
 
-	//Draw text on preview
-	let scale = 1;
-	if (state.show) {
-		const size = state.size * 2 * scale;
-		context.textAlign = "center";
-		context.font = (state.style.includes("Bold") ? "bold " : "") + (state.style.includes("Italic") ? "italic " : "") +
-			`${size}px "${state.family}", sans-serif`;
-		context.fillStyle = state.colour;
-		context.strokeStyle = state.stroke_colour;
-		context.lineWidth = state.stroke_size * scale;
-		context.textBaseline = "top";
-		const x = canvas.width / 2;
-		let y = canvas.height / 2 - (size * state.text.split("\n").length * 0.5);
-		switch (state.alignment) {
-			case "top":
-				y = context.lineWidth;
-				break;
-			case "bottom":
-				y = canvas.height - (size * state.text.split("\n").length) - context.lineWidth;
-				break;
-		}
-		for (const [index, line] of Object.entries(state.text.split("\n"))) {
-			context.strokeText(line, x, y + (size * parseInt(index)));
-			context.fillText(line, x, y + (size * parseInt(index)));
-			if (state.underline) {
-				const width = context.measureText(line).width;
-				// Set to black for the outline, since it uses the same fill style info as the text colour.
-				context.fillStyle = "black";
-				context.fillRect(x - (width / 2) - 3, y + (size * parseInt(index)) + size, width + 6, 9);
-				// Reset to the user's choice of text colour.
-				context.fillStyle = state.colour;
-				context.fillRect(x - (width / 2), y + (size * parseInt(index)) + size + 4, width, 3);
-			}
-		}
-	}
-
-
-
-    // 5. Returner URI
+    // 5. return URI
     return canvas.toDataURL('image/png'); 
 }
 
