@@ -1,5 +1,6 @@
 mod device_brightness;
 mod input_simulation;
+mod open_url;
 mod run_command;
 mod switch_profile;
 
@@ -21,6 +22,7 @@ async fn main() -> OpenActionResult<()> {
 
 	register_action(device_brightness::DeviceBrightnessAction).await;
 	register_action(input_simulation::InputSimulationAction).await;
+	register_action(open_url::OpenUrlAction).await;
 	register_action(run_command::RunCommandAction).await;
 	register_action(switch_profile::SwitchProfileAction).await;
 

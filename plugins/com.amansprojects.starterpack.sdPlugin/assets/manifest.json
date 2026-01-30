@@ -40,6 +40,16 @@
 			"PropertyInspectorPath": "propertyInspector/runCommand.html"
 		},
 		{
+			"Icon": "icons/openUrl",
+			"Name": "Open URL",
+			"States": [{ "Image": "actionDefaultImage" }],
+			"Controllers": ["Keypad", "Encoder"],
+			"SupportedInMultiActions": true,
+			"Tooltip": "Open a URL",
+			"UUID": "com.amansprojects.starterpack.openurl",
+			"PropertyInspectorPath": "propertyInspector/openUrl.html"
+		},
+		{
 			"Icon": "icons/inputSimulation",
 			"Name": "Simulate Input",
 			"States": [{ "Image": "actionDefaultImage" }],
