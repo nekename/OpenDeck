@@ -146,7 +146,6 @@
 		/>
 
 		<div class="flex flex-col pl-2 pr-1 pt-4 pb-2 space-y-2">
-			<span style="font-size: 20px"> Text Settings</span>
 			<div class="flex flex-row space-x-2">
 				<span> Text </span>
 				<textarea
