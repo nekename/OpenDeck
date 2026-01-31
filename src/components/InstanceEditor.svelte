@@ -113,9 +113,8 @@
 				<input
 					bind:this={backgroundColourInput}
 					type="color"
+					bind:value={instance.states[state].background_colour}
 					class="absolute invisible w-0 h-0"
-					value="#FFFFFF"
-					on:change={() => instance.states[state].background_colour = backgroundColourInput.value}
 				/>
 			</button>
 			<button
