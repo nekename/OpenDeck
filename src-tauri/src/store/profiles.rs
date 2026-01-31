@@ -147,6 +147,12 @@ impl ProfileStores {
 			for instance in store.value.keys.iter().chain(&store.value.sliders).flatten() {
 				if instance.action.plugin == plugin {
 					all.push(instance.context.clone());
+				} else if let Some(children) = &instance.children {
+					for child in children {
+						if child.action.plugin == plugin {
+							all.push(child.context.clone());
+						}
+					}
 				}
 			}
 		}
