@@ -102,7 +102,7 @@
 				<span class="mr-2"> Background </span>
 				<input
 					type="color"
-					bind:value={instance.states[state].bg_colour}
+					bind:value={instance.states[state].background_colour}
 					class="mr-2 px-0.5 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 				/>
 			</div>

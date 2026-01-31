@@ -30,7 +30,7 @@ export function getImage(image: string | undefined, fallback: string | undefined
 export async function getInstanceEditorPreview(state: ActionState, imageSrc: string | undefined, fallback: string | undefined): Promise<string> {
 	const src = getImage(imageSrc, fallback);
 	if (!src) return "";
-	if (!state.bg_colour) return src;
+	if (!state.background_colour) return src;
 	const img = new Image();
 	img.crossOrigin = "anonymous";
 
@@ -52,7 +52,7 @@ export async function getInstanceEditorPreview(state: ActionState, imageSrc: str
 	context.imageSmoothingQuality = "high";
 
 	// background colour
-	context.fillStyle = state.bg_colour;
+	context.fillStyle = state.background_colour;
 	context.fillRect(0, 0, canvas.width, canvas.height);
 
 	// drawing the image to canvas before return
@@ -121,7 +121,7 @@ export async function renderImage(
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		context.imageSmoothingQuality = "high";
 		// add bg color to rendered icons
-		context.fillStyle = state.bg_colour;
+		context.fillStyle = state.background_colour;
 		context.fillRect(0, 0, canvas.width, canvas.height);
 		// done
 		context.drawImage(image, 0, 0, canvas.width, canvas.height);

@@ -115,6 +115,9 @@ impl<'de> Deserialize<'de> for FontSize {
 pub struct ActionState {
 	#[serde(alias = "Image")]
 	pub image: String,
+	// Note: this is not a real manifest property; it is only used internally.
+	#[serde(alias = "BackgroundColour")]
+	pub background_colour: String,
 	#[serde(alias = "Name")]
 	pub name: String,
 	#[serde(alias = "Title")]
@@ -126,8 +129,6 @@ pub struct ActionState {
 	// Note: this is not a real manifest property; it is only used internally.
 	#[serde(alias = "TitleStroke")]
 	pub stroke_colour: String,
-	#[serde(alias = "TitleBgColour")]
-	pub bg_colour: String,
 	#[serde(alias = "TitleAlignment")]
 	pub alignment: String,
 	#[serde(alias = "FontFamily")]
@@ -147,12 +148,12 @@ impl Default for ActionState {
 	fn default() -> Self {
 		Self {
 			image: "actionDefaultImage".to_owned(),
+			background_colour: "#00000000".to_owned(),
 			name: String::new(),
 			text: String::new(),
 			show: true,
 			colour: "#FFFFFF".to_owned(),
 			stroke_colour: "#000000".to_owned(),
-			bg_colour: "#00000000".to_owned(),
 			alignment: "middle".to_owned(),
 			family: "Liberation Sans".to_owned(),
 			style: "Regular".to_owned(),
