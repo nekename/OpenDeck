@@ -27,43 +27,40 @@ export function getImage(image: string | undefined, fallback: string | undefined
 	return image;
 }
 
-
 export async function getInstanceEditorPreview(state: ActionState, imageSrc: string | undefined, fallback: string | undefined): Promise<string> {
-    const src = getImage(imageSrc, fallback);
-    if (!src) return "";
+	const src = getImage(imageSrc, fallback);
+	if (!src) return "";
 	if (!state.bg_colour) return src;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    
-    await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = src;
-    });
+	const img = new Image();
+	img.crossOrigin = "anonymous";
 
-    // 3. Setup canvas
-    const canvas = document.createElement("canvas");
-    canvas.width = 144;
-    canvas.height = 144;
-    const context = canvas.getContext("2d");
+	await new Promise((resolve, reject) => {
+		img.onload = resolve;
+		img.onerror = reject;
+		img.src = src;
+	});
 
-    if (!context) throw new Error("Kunne ikke hente canvas context");
-    // 4. Tegn indholdet
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.imageSmoothingQuality = "high";
-    
-    // background colour
-    context.fillStyle = state.bg_colour;
-    context.fillRect(0, 0, canvas.width, canvas.height);
+	// 3. Setup canvas
+	const canvas = document.createElement("canvas");
+	canvas.width = 144;
+	canvas.height = 144;
+	const context = canvas.getContext("2d");
 
-    // drawing the image to canvas before return
-    context.drawImage(img, 0, 0, canvas.width, canvas.height);
+	if (!context) throw new Error("Kunne ikke hente canvas context");
+	// 4. Tegn indholdet
+	context.clearRect(0, 0, canvas.width, canvas.height);
+	context.imageSmoothingQuality = "high";
 
+	// background colour
+	context.fillStyle = state.bg_colour;
+	context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 5. return URI
-    return canvas.toDataURL('image/png'); 
+	// drawing the image to canvas before return
+	context.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+	// 5. return URI
+	return canvas.toDataURL("image/png");
 }
-
 
 export class CanvasLock {
 	currentLock = Promise.resolve();

@@ -83,29 +83,28 @@
 				}}
 			>
 				{#await getInstanceEditorPreview(instance.states[state], instance.states[state].image, instance.action.icon)}
-   					<div class="w-32 h-32 bg-gray-800 animate-pulse rounded-xl"></div>
+					<div class="w-32 h-32 bg-gray-800 animate-pulse rounded-xl"></div>
 				{:then resolvedSrc}
-    				<img
-        				src={resolvedSrc}
-        				class="my-auto p-1 w-32 h-min aspect-square rounded-xl cursor-pointer"
-        				alt="State {state}"
-    				/>
+					<img
+						src={resolvedSrc}
+						class="my-auto p-1 w-32 h-min aspect-square rounded-xl cursor-pointer"
+						alt="State {state}"
+					/>
 				{/await}
 			</button>
 			<button
 				on:click={() => colourInput.click()}
 				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 			>
-			
 				Solid colour
 			</button>
 			<div class="flex flex-row items-center">
 				<span class="mr-2"> Background </span>
-					<input
-						type="color"
-						bind:value={instance.states[state].bg_colour}
-						class="mr-2 px-0.5 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
-					/>
+				<input
+					type="color"
+					bind:value={instance.states[state].bg_colour}
+					class="mr-2 px-0.5 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
+				/>
 			</div>
 		</div>
 		<input
@@ -147,7 +146,7 @@
 		/>
 
 		<div class="flex flex-col pl-2 pr-1 pt-4 pb-2 space-y-2">
-			<span style="font-size: 20px;"> Text Settings</span>
+			<span style="font-size: 20px"> Text Settings</span>
 			<div class="flex flex-row space-x-2">
 				<span> Text </span>
 				<textarea
