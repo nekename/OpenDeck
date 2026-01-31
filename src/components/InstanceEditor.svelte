@@ -83,7 +83,7 @@
 				}}
 			>
 				{#await getInstanceEditorPreview(instance.states[state], instance.states[state].image, instance.action.icon)}
-					<div class="w-32 h-32 bg-gray-800 animate-pulse rounded-xl"></div>
+					<div class="w-32 h-32 bg-neutral-800 animate-pulse rounded-xl"></div>
 				{:then resolvedSrc}
 					<img
 						src={resolvedSrc}
