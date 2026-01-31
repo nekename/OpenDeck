@@ -19,7 +19,8 @@
 	});
 
 	let fileInput: HTMLInputElement;
-	let colourInput: HTMLInputElement;
+	let solidColourInput: HTMLInputElement;
+	let backgroundColourInput: HTMLInputElement;
 
 	function handleDrop(event: DragEvent) {
 		event.preventDefault();
@@ -93,19 +94,17 @@
 				{/await}
 			</button>
 			<button
-				on:click={() => colourInput.click()}
+				on:click={() => solidColourInput.click()}
 				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 			>
 				Solid colour
 			</button>
-			<div class="flex flex-row items-center">
-				<span class="mr-2"> Background </span>
-				<input
-					type="color"
-					bind:value={instance.states[state].background_colour}
-					class="mr-2 px-0.5 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
-				/>
-			</div>
+			<button
+				on:click={() => backgroundColourInput.click()}
+				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
+			>
+				Background
+			</button>
 		</div>
 		<input
 			bind:this={fileInput}
@@ -129,7 +128,7 @@
 			}}
 		/>
 		<input
-			bind:this={colourInput}
+			bind:this={solidColourInput}
 			type="color"
 			class="invisible w-0 h-0"
 			value="#FFFFFE"
@@ -139,10 +138,17 @@
 				canvas.height = 1;
 				const context = canvas.getContext("2d");
 				if (!context) return;
-				context.fillStyle = colourInput.value;
+				context.fillStyle = solidColourInput.value;
 				context.fillRect(0, 0, canvas.width, canvas.height);
 				instance.states[state].image = canvas.toDataURL("image/png");
 			}}
+		/>
+		<input
+			bind:this={backgroundColourInput}
+			type="color"
+			class="invisible w-0 h-0"
+			value="#FFFFFF"
+			on:change={() => instance.states[state].background_colour = backgroundColourInput.value}
 		/>
 
 		<div class="flex flex-col pl-2 pr-1 pt-4 pb-2 space-y-2">
