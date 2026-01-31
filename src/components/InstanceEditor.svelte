@@ -95,15 +95,62 @@
 			</button>
 			<button
 				on:click={() => backgroundColourInput.click()}
+				on:focus={() => {
+					if (navigator.userAgent.toLowerCase().includes("mac")) backgroundColourInput.className = "";
+				}}
+				on:mouseover={() => {
+					if (navigator.userAgent.toLowerCase().includes("mac")) backgroundColourInput.className = "";
+				}}
+				on:blur={() => {
+					if (navigator.userAgent.toLowerCase().includes("mac")) backgroundColourInput.className = "absolute invisible w-0 h-0";
+				}}
+				on:mouseleave={() => {
+					if (navigator.userAgent.toLowerCase().includes("mac")) backgroundColourInput.className = "absolute invisible w-0 h-0";
+				}}
 				class="my-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 			>
 				Set background
+				<input
+					bind:this={backgroundColourInput}
+					type="color"
+					class="absolute invisible w-0 h-0"
+					value="#FFFFFF"
+					on:change={() => instance.states[state].background_colour = backgroundColourInput.value}
+				/>
 			</button>
 			<button
 				on:click={() => solidColourInput.click()}
+				on:focus={() => {
+					if (navigator.userAgent.toLowerCase().includes("mac")) solidColourInput.className = "";
+				}}
+				on:mouseover={() => {
+					if (navigator.userAgent.toLowerCase().includes("mac")) solidColourInput.className = "";
+				}}
+				on:blur={() => {
+					if (navigator.userAgent.toLowerCase().includes("mac")) solidColourInput.className = "absolute invisible w-0 h-0";
+				}}
+				on:mouseleave={() => {
+					if (navigator.userAgent.toLowerCase().includes("mac")) solidColourInput.className = "absolute invisible w-0 h-0";
+				}}
 				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 			>
 				Use solid colour
+				<input
+					bind:this={solidColourInput}
+					type="color"
+					class="absolute invisible w-0 h-0"
+					value="#FFFFFE"
+					on:change={() => {
+						const canvas = document.createElement("canvas");
+						canvas.width = 1;
+						canvas.height = 1;
+						const context = canvas.getContext("2d");
+						if (!context) return;
+						context.fillStyle = solidColourInput.value;
+						context.fillRect(0, 0, canvas.width, canvas.height);
+						instance.states[state].image = canvas.toDataURL("image/png");
+					}}
+				/>
 			</button>
 		</div>
 		<input
@@ -125,29 +172,6 @@
 				};
 
 				reader.readAsDataURL(fileInput.files[0]);
-			}}
-		/>
-		<input
-			bind:this={backgroundColourInput}
-			type="color"
-			class="invisible w-0 h-0"
-			value="#FFFFFF"
-			on:change={() => instance.states[state].background_colour = backgroundColourInput.value}
-		/>
-		<input
-			bind:this={solidColourInput}
-			type="color"
-			class="invisible w-0 h-0"
-			value="#FFFFFE"
-			on:change={() => {
-				const canvas = document.createElement("canvas");
-				canvas.width = 1;
-				canvas.height = 1;
-				const context = canvas.getContext("2d");
-				if (!context) return;
-				context.fillStyle = solidColourInput.value;
-				context.fillRect(0, 0, canvas.width, canvas.height);
-				instance.states[state].image = canvas.toDataURL("image/png");
 			}}
 		/>
 
