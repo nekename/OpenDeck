@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ActionInstance } from "$lib/ActionInstance";
 
-	import { getInstanceEditorPreview, resizeImage } from "$lib/rendererHelper";
+	import { renderImage, resizeImage } from "$lib/rendererHelper";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { onMount } from "svelte";
@@ -83,7 +83,7 @@
 					instance.states[state].image = instance.action.states[state].image;
 				}}
 			>
-				{#await getInstanceEditorPreview(instance.states[state], instance.states[state].image, instance.action.icon)}
+				{#await renderImage(null, null, instance.states[state], instance.action.states[state].image, false, false, true, true, false, 0, true)}
 					<div class="w-32 h-32 bg-neutral-800 animate-pulse rounded-xl"></div>
 				{:then resolvedSrc}
 					<img
