@@ -29,37 +29,29 @@ export function getImage(image: string | undefined, fallback: string | undefined
 
 export async function getInstanceEditorPreview(state: ActionState, imageSrc: string | undefined, fallback: string | undefined): Promise<string> {
 	const src = getImage(imageSrc, fallback);
-	if (!src) return "";
-	if (!state.background_colour) return src;
-	const img = new Image();
-	img.crossOrigin = "anonymous";
 
-	await new Promise((resolve, reject) => {
-		img.onload = resolve;
-		img.onerror = reject;
-		img.src = src;
-	});
-
-	// 3. Setup canvas
 	const canvas = document.createElement("canvas");
 	canvas.width = 144;
 	canvas.height = 144;
+
 	const context = canvas.getContext("2d");
+	if (!context) return src;
 
-	if (!context) throw new Error("Kunne ikke hente canvas context");
-	// 4. Tegn indholdet
-	context.clearRect(0, 0, canvas.width, canvas.height);
-	context.imageSmoothingQuality = "high";
+	const image = document.createElement("img");
+	image.crossOrigin = "anonymous";
+	image.src = src;
+	await new Promise((resolve, reject) => {
+		image.onload = resolve;
+		image.onerror = reject;
+	});
 
-	// background colour
 	context.fillStyle = state.background_colour;
 	context.fillRect(0, 0, canvas.width, canvas.height);
 
-	// drawing the image to canvas before return
-	context.drawImage(img, 0, 0, canvas.width, canvas.height);
+	context.imageSmoothingQuality = "high";
+	context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-	// 5. return URI
-	return canvas.toDataURL("image/png");
+	return canvas.toDataURL();
 }
 
 export class CanvasLock {
@@ -117,13 +109,16 @@ export async function renderImage(
 			image.onerror = reject;
 		});
 
-		// Draw image
 		context.clearRect(0, 0, canvas.width, canvas.height);
+
+		// Draw background color
+		if (!state.background_colour.startsWith("#000000")) {
+			context.fillStyle = state.background_colour;
+			context.fillRect(0, 0, canvas.width, canvas.height);
+		}
+
+		// Draw image
 		context.imageSmoothingQuality = "high";
-		// add bg color to rendered icons
-		context.fillStyle = state.background_colour;
-		context.fillRect(0, 0, canvas.width, canvas.height);
-		// done
 		context.drawImage(image, 0, 0, canvas.width, canvas.height);
 	} catch (error: any) {
 		if (!(error instanceof Event)) console.error(error);
