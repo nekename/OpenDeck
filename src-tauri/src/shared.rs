@@ -148,7 +148,7 @@ impl Default for ActionState {
 	fn default() -> Self {
 		Self {
 			image: "actionDefaultImage".to_owned(),
-			background_colour: "#00000000".to_owned(),
+			background_colour: "#000000".to_owned(),
 			name: String::new(),
 			text: String::new(),
 			show: true,
