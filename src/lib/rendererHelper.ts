@@ -27,6 +27,33 @@ export function getImage(image: string | undefined, fallback: string | undefined
 	return image;
 }
 
+export async function getInstanceEditorPreview(state: ActionState, imageSrc: string | undefined, fallback: string | undefined): Promise<string> {
+	const src = getImage(imageSrc, fallback);
+
+	const canvas = document.createElement("canvas");
+	canvas.width = 144;
+	canvas.height = 144;
+
+	const context = canvas.getContext("2d");
+	if (!context) return src;
+
+	const image = document.createElement("img");
+	image.crossOrigin = "anonymous";
+	image.src = src;
+	await new Promise((resolve, reject) => {
+		image.onload = resolve;
+		image.onerror = reject;
+	});
+
+	context.fillStyle = state.background_colour;
+	context.fillRect(0, 0, canvas.width, canvas.height);
+
+	context.imageSmoothingQuality = "high";
+	context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+	return canvas.toDataURL();
+}
+
 export class CanvasLock {
 	currentLock = Promise.resolve();
 	async lock() {
@@ -82,8 +109,15 @@ export async function renderImage(
 			image.onerror = reject;
 		});
 
-		// Draw image
 		context.clearRect(0, 0, canvas.width, canvas.height);
+
+		// Draw background color
+		if (!state.background_colour.startsWith("#000000")) {
+			context.fillStyle = state.background_colour;
+			context.fillRect(0, 0, canvas.width, canvas.height);
+		}
+
+		// Draw image
 		context.imageSmoothingQuality = "high";
 		context.drawImage(image, 0, 0, canvas.width, canvas.height);
 	} catch (error: any) {

@@ -1,5 +1,6 @@
 export type ActionState = {
 	image: string;
+	background_colour: string;
 	name: string;
 	text: string;
 	show: boolean;
