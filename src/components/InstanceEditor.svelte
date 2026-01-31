@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ActionInstance } from "$lib/ActionInstance";
 
-	import { getImage, resizeImage } from "$lib/rendererHelper";
+	import { getInstanceEditorPreview, resizeImage } from "$lib/rendererHelper";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { onMount } from "svelte";
@@ -19,7 +19,8 @@
 	});
 
 	let fileInput: HTMLInputElement;
-	let colourInput: HTMLInputElement;
+	let solidColourInput: HTMLInputElement;
+	let backgroundColourInput: HTMLInputElement;
 
 	function handleDrop(event: DragEvent) {
 		event.preventDefault();
@@ -82,17 +83,27 @@
 					instance.states[state].image = instance.action.states[state].image;
 				}}
 			>
-				<img
-					src={getImage(instance.states[state].image, instance.action.states[state]?.image ?? instance.action.icon)}
-					class="my-auto p-1 w-32 h-min aspect-square rounded-xl cursor-pointer"
-					alt="State {state}"
-				/>
+				{#await getInstanceEditorPreview(instance.states[state], instance.states[state].image, instance.action.icon)}
+					<div class="w-32 h-32 bg-neutral-800 animate-pulse rounded-xl"></div>
+				{:then resolvedSrc}
+					<img
+						src={resolvedSrc}
+						class="my-auto p-1 w-32 h-min aspect-square rounded-xl cursor-pointer"
+						alt="State {state}"
+					/>
+				{/await}
 			</button>
 			<button
-				on:click={() => colourInput.click()}
+				on:click={() => solidColourInput.click()}
 				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
 			>
 				Solid colour
+			</button>
+			<button
+				on:click={() => backgroundColourInput.click()}
+				class="mt-0.5 px-0.5 text-sm text-neutral-700 dark:text-neutral-400 bg-neutral-200 dark:bg-neutral-600 rounded-md outline-hidden"
+			>
+				Background
 			</button>
 		</div>
 		<input
@@ -117,7 +128,7 @@
 			}}
 		/>
 		<input
-			bind:this={colourInput}
+			bind:this={solidColourInput}
 			type="color"
 			class="invisible w-0 h-0"
 			value="#FFFFFE"
@@ -127,10 +138,17 @@
 				canvas.height = 1;
 				const context = canvas.getContext("2d");
 				if (!context) return;
-				context.fillStyle = colourInput.value;
+				context.fillStyle = solidColourInput.value;
 				context.fillRect(0, 0, canvas.width, canvas.height);
 				instance.states[state].image = canvas.toDataURL("image/png");
 			}}
+		/>
+		<input
+			bind:this={backgroundColourInput}
+			type="color"
+			class="invisible w-0 h-0"
+			value="#FFFFFF"
+			on:change={() => instance.states[state].background_colour = backgroundColourInput.value}
 		/>
 
 		<div class="flex flex-col pl-2 pr-1 pt-4 pb-2 space-y-2">

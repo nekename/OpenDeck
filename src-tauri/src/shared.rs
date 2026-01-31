@@ -115,6 +115,9 @@ impl<'de> Deserialize<'de> for FontSize {
 pub struct ActionState {
 	#[serde(alias = "Image")]
 	pub image: String,
+	// Note: this is not a real manifest property; it is only used internally.
+	#[serde(alias = "BackgroundColour")]
+	pub background_colour: String,
 	#[serde(alias = "Name")]
 	pub name: String,
 	#[serde(alias = "Title")]
@@ -145,6 +148,7 @@ impl Default for ActionState {
 	fn default() -> Self {
 		Self {
 			image: "actionDefaultImage".to_owned(),
+			background_colour: "#00000000".to_owned(),
 			name: String::new(),
 			text: String::new(),
 			show: true,
