@@ -27,33 +27,6 @@ export function getImage(image: string | undefined, fallback: string | undefined
 	return image;
 }
 
-export async function getInstanceEditorPreview(state: ActionState, imageSrc: string | undefined, fallback: string | undefined): Promise<string> {
-	const src = getImage(imageSrc, fallback);
-
-	const canvas = document.createElement("canvas");
-	canvas.width = 144;
-	canvas.height = 144;
-
-	const context = canvas.getContext("2d");
-	if (!context) return src;
-
-	const image = document.createElement("img");
-	image.crossOrigin = "anonymous";
-	image.src = src;
-	await new Promise((resolve, reject) => {
-		image.onload = resolve;
-		image.onerror = reject;
-	});
-
-	context.fillStyle = state.background_colour;
-	context.fillRect(0, 0, canvas.width, canvas.height);
-
-	context.imageSmoothingQuality = "high";
-	context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-	return canvas.toDataURL();
-}
-
 export class CanvasLock {
 	currentLock = Promise.resolve();
 	async lock() {
@@ -67,7 +40,7 @@ export class CanvasLock {
 }
 
 export async function renderImage(
-	canvas: HTMLCanvasElement,
+	canvas: HTMLCanvasElement | null,
 	slotContext: Context | null,
 	state: ActionState,
 	fallback: string | undefined,
@@ -77,6 +50,7 @@ export async function renderImage(
 	active: boolean,
 	pressed: boolean,
 	rotation?: number,
+	preview?: boolean,
 ) {
 	// Create canvas
 	let scale = 1;
@@ -112,10 +86,8 @@ export async function renderImage(
 		context.clearRect(0, 0, canvas.width, canvas.height);
 
 		// Draw background color
-		if (!state.background_colour.startsWith("#000000")) {
-			context.fillStyle = state.background_colour;
-			context.fillRect(0, 0, canvas.width, canvas.height);
-		}
+		context.fillStyle = state.background_colour;
+		context.fillRect(0, 0, canvas.width, canvas.height);
 
 		// Draw image
 		context.imageSmoothingQuality = "high";
@@ -204,6 +176,7 @@ export async function renderImage(
 	context.restore();
 
 	if (active && slotContext) setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") }), 10);
+	else if (preview) return canvas.toDataURL();
 }
 
 export async function resizeImage(source: string): Promise<string | undefined> {
