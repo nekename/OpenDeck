@@ -278,48 +278,53 @@ If you have already donated, thank you so much for your support!"#,
 				.build(),
 		)
 		.plugin(tauri_plugin_cors_fetch::init())
-		.plugin(tauri_plugin_single_instance::init(|app, args, _| {
-			if let Some(pos) = args.iter().position(|x| x.starts_with("openaction://") || x.starts_with("streamdeck://"))
-				&& let Ok(url) = reqwest::Url::parse(&args[pos])
-				&& let Some(mut path) = url.path_segments()
-			{
-				if url.host_str() == Some("plugins")
-					&& path.next() == Some("message")
-					&& let Some(plugin_id) = path.next()
-				{
-					if !url.query_pairs().any(|(k, v)| k == url.scheme() && v == "hidden") {
+		.plugin(
+			tauri_plugin_single_instance::Builder::new()
+				.callback(|app, args, _| {
+					if let Some(pos) = args.iter().position(|x| x.starts_with("openaction://") || x.starts_with("streamdeck://"))
+						&& let Ok(url) = reqwest::Url::parse(&args[pos])
+						&& let Some(mut path) = url.path_segments()
+					{
+						if url.host_str() == Some("plugins")
+							&& path.next() == Some("message")
+							&& let Some(plugin_id) = path.next()
+						{
+							if !url.query_pairs().any(|(k, v)| k == url.scheme() && v == "hidden") {
+								let _ = show_window(app);
+							}
+
+							let plugin_id = if url.scheme() == "streamdeck" { format!("{plugin_id}.sdPlugin") } else { plugin_id.to_owned() };
+							let url = args[pos].clone();
+							std::thread::spawn(move || {
+								tauri::async_runtime::block_on(async move {
+									if let Err(error) = events::outbound::deep_link::did_receive_deep_link(&plugin_id, url).await {
+										log::error!("Failed to process deep link for plugin {plugin_id}: {error}");
+									}
+								});
+							});
+						}
+					} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--reload-plugin") {
+						if args.len() > pos + 1 {
+							let app = app.clone();
+							let plugin_id = args[pos + 1].clone();
+							std::thread::spawn(move || {
+								tauri::async_runtime::block_on(frontend::plugins::reload_plugin(app, plugin_id));
+							});
+						}
+					} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--process-message") {
+						if args.len() > pos + 1 {
+							let message = args[pos + 1].clone();
+							std::thread::spawn(move || {
+								tauri::async_runtime::block_on(events::inbound::process_incoming_message(Ok(tokio_tungstenite::tungstenite::Message::Text(message.into())), "", true));
+							});
+						}
+					} else {
 						let _ = show_window(app);
 					}
-
-					let plugin_id = if url.scheme() == "streamdeck" { format!("{plugin_id}.sdPlugin") } else { plugin_id.to_owned() };
-					let url = args[pos].clone();
-					std::thread::spawn(move || {
-						tauri::async_runtime::block_on(async move {
-							if let Err(error) = events::outbound::deep_link::did_receive_deep_link(&plugin_id, url).await {
-								log::error!("Failed to process deep link for plugin {plugin_id}: {error}");
-							}
-						});
-					});
-				}
-			} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--reload-plugin") {
-				if args.len() > pos + 1 {
-					let app = app.clone();
-					let plugin_id = args[pos + 1].clone();
-					std::thread::spawn(move || {
-						tauri::async_runtime::block_on(frontend::plugins::reload_plugin(app, plugin_id));
-					});
-				}
-			} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--process-message") {
-				if args.len() > pos + 1 {
-					let message = args[pos + 1].clone();
-					std::thread::spawn(move || {
-						tauri::async_runtime::block_on(events::inbound::process_incoming_message(Ok(tokio_tungstenite::tungstenite::Message::Text(message.into())), "", true));
-					});
-				}
-			} else {
-				let _ = show_window(app);
-			}
-		}))
+				})
+				.dbus_id("me.amankhanna.opendeck")
+				.build(),
+		)
 		.plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--hide"])))
 		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_deep_link::init())
