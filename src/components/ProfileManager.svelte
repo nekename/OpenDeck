@@ -8,6 +8,8 @@
 	import Trash from "phosphor-svelte/lib/Trash";
 	import Popup from "./Popup.svelte";
 
+	import { inspectedInstance } from "$lib/propertyInspector";
+
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { message } from "@tauri-apps/plugin-dialog";
@@ -45,6 +47,8 @@
 			if (!folders[folder].includes(id)) folders[folder].push(id);
 		} else folders[folder] = [id];
 		folders = folders;
+
+		$inspectedInstance = null;
 	}
 
 	listen("rerender_images", async () => {

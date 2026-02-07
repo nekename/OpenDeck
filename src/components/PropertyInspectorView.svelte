@@ -159,6 +159,9 @@
 		for (const instance of instances) {
 			if (instance.action.plugin == payload && iframes[instance.context]) {
 				iframes[instance.context].src += "";
+				if ($inspectedInstance == instance.context) {
+					invoke("switch_property_inspector", { new: instance.context });
+				}
 			}
 		}
 	});
