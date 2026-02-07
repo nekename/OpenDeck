@@ -70,4 +70,28 @@ impl Action for SwitchProfileAction {
 		})
 		.await
 	}
+
+	async fn property_inspector_did_appear(
+		&self,
+		instance: &Instance,
+		_settings: &Self::Settings,
+	) -> OpenActionResult<()> {
+		instance
+			.send_to_property_inspector(serde_json::json!({
+				"event": "updateDevices",
+				"devices": get_connected_devices().await.keys().collect::<Vec<_>>(),
+			}))
+			.await
+	}
+}
+
+pub(crate) async fn update_devices() -> OpenActionResult<()> {
+	let message = serde_json::json!({
+		"event": "updateDevices",
+		"devices": get_connected_devices().await.keys().collect::<Vec<_>>(),
+	});
+	for instance in visible_instances(SwitchProfileAction::UUID).await {
+		instance.send_to_property_inspector(message.clone()).await?;
+	}
+	Ok(())
 }

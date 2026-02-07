@@ -40,6 +40,19 @@
 						},
 					}));
 				};
+
+				websocket.onmessage = (event) => {
+					const data = JSON.parse(event.data);
+					if (data.event == "sendToPropertyInspector" && data.payload.event == "updateDevices") {
+						const datalist = document.getElementById("devices");
+						datalist.innerHTML = "";
+						for (const device of data.payload.devices) {
+							const option = document.createElement("option");
+							option.value = device;
+							datalist.appendChild(option);
+						}
+					}
+				};
 			}
 		</script>
 		<link rel="stylesheet" href="sdpi.css" />
@@ -47,7 +60,8 @@
 	<body>
 		<div class="sdpi-item">
 			<div class="sdpi-item-label">Device ID</div>
-			<input id="device" oninput="update();" class="sdpi-item-value" />
+			<input id="device" list="devices" type="text" oninput="update();" class="sdpi-item-value" />
+			<datalist id="devices"></datalist>
 		</div>
 		<div class="sdpi-item">
 			<div class="sdpi-item-label" id="up-label">Profile</div>

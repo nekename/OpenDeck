@@ -5,7 +5,7 @@ license = "GPL-3.0-or-later"
 edition = "2024"
 
 [dependencies]
-openaction = "2.5"
+openaction = "2.6"
 anyhow = "1.0"
 log = "0.4"
 simplelog = "0.12"

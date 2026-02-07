@@ -897,9 +897,9 @@ checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
 
 [[package]]
 name = "openaction"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b34cfbd782f8c393f630bdfe22229e409aab91210f90dd8f6abf7132b0e7e9c0"
+checksum = "14fef1b3f886c87c86633bf200062c4e56e48b12b8c49d35beab29ad0c49b66b"
 dependencies = [
  "async-trait",
  "dashmap",
