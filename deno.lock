@@ -15,6 +15,7 @@
     "npm:@tauri-apps/plugin-dialog@^2.6.0": "2.6.0",
     "npm:dompurify@^3.3.0": "3.3.1",
     "npm:lightningcss@^1.31.0": "1.31.1",
+    "npm:marked-alert@^2.1.2": "2.1.2_marked@17.0.1",
     "npm:marked-base-url@^1.1.0": "1.1.8_marked@17.0.1",
     "npm:marked@17": "17.0.1",
     "npm:phosphor-svelte@2": "2.0.1_svelte@4.2.20",
@@ -861,6 +862,12 @@
         "@jridgewell/sourcemap-codec"
       ]
     },
+    "marked-alert@2.1.2_marked@17.0.1": {
+      "integrity": "sha512-EFNRZ08d8L/iEIPLTlQMDjvwIsj03gxWCczYTht6DCiHJIZhMk4NK5gtPY9UqAYb09eV5VGT+jD4lp396E0I+w==",
+      "dependencies": [
+        "marked"
+      ]
+    },
     "marked-base-url@1.1.8_marked@17.0.1": {
       "integrity": "sha512-RA80m/VTq82jAnpusyK7B4M45TZ3LMB1ymrdAJI3oaSG4+8MzBc8FFlVKIAhkBrfRM7CxeTHTGUVVK59/eiQyA==",
       "dependencies": [
@@ -1060,6 +1067,7 @@
         "npm:@tauri-apps/plugin-dialog@^2.6.0",
         "npm:dompurify@^3.3.0",
         "npm:lightningcss@^1.31.0",
+        "npm:marked-alert@^2.1.2",
         "npm:marked-base-url@^1.1.0",
         "npm:marked@17",
         "npm:phosphor-svelte@2",

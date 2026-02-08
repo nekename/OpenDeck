@@ -61,3 +61,50 @@ select {
 .plugin-readme img {
 	@apply my-3;
 }
+
+.plugin-readme .octicon {
+	display: inline-block;
+	fill: currentColor;
+	vertical-align: text-bottom;
+}
+.plugin-readme .markdown-alert {
+	padding: 0 1em;
+	margin-bottom: 16px;
+	color: inherit;
+	border-left: 0.25em solid #444c56;
+}
+.plugin-readme .markdown-alert-title {
+	display: inline-flex;
+	align-items: center;
+	font-weight: 500;
+}
+.plugin-readme .markdown-alert-note {
+	border-left-color: #539bf5;
+}
+.plugin-readme .markdown-alert-tip {
+	border-left-color: #57ab5a;
+}
+.plugin-readme .markdown-alert-important {
+	border-left-color: #986ee2;
+}
+.plugin-readme .markdown-alert-warning {
+	border-left-color: #c69026;
+}
+.plugin-readme .markdown-alert-caution {
+	border-left-color: #e5534b;
+}
+.plugin-readme .markdown-alert-note > .markdown-alert-title {
+	color: #539bf5;
+}
+.plugin-readme .markdown-alert-tip > .markdown-alert-title {
+	color: #57ab5a;
+}
+.plugin-readme .markdown-alert-important > .markdown-alert-title {
+	color: #986ee2;
+}
+.plugin-readme .markdown-alert-warning > .markdown-alert-title {
+	color: #c69026;
+}
+.plugin-readme .markdown-alert-caution > .markdown-alert-title {
+	color: #e5534b;
+}

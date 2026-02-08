@@ -8,6 +8,7 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import DOMPurify from "dompurify";
 	import { marked } from "marked";
+	import markedAlert from "marked-alert";
 	import { baseUrl } from "marked-base-url";
 	import { onMount } from "svelte";
 
@@ -38,6 +39,7 @@
 		for (const url of urls) {
 			const response = await fetch(url);
 			if (response.ok) {
+				marked.use(markedAlert());
 				marked.use(baseUrl(url));
 				return await marked.parse(DOMPurify.sanitize(await response.text()).replace(/<a/g, '<a target="_blank" '));
 			}
