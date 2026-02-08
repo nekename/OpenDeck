@@ -176,9 +176,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 			.visible(false)
 			.build()?;
 
-		if let Ok(store) = get_settings()
-			&& store.value.developer
-		{
+		if fs::exists(path.join("debug")).unwrap_or(false) {
 			let _ = window.show();
 			window.open_devtools();
 		}
