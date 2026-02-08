@@ -26,7 +26,7 @@
 		const renderer = new marked.Renderer();
 		renderer.link = function (token) {
 			const rendered = marked.Renderer.prototype.link.call(this, token);
-			return rendered.replace("<a", `<a target="_blank" onclick="window.open('${token.href}')" `);
+			return rendered.replace("<a", `<a target="_blank" `);
 		};
 		marked.use({ renderer });
 		const urls = [
@@ -43,6 +43,14 @@
 			}
 		}
 		return await marked.parse("**Plugin README file not found**\n\n[View plugin on GitHub](https://github.com/" + repo + ")");
+	}
+
+	function handleReadmeClick(event: MouseEvent | KeyboardEvent) {
+		const link = (event.target as HTMLElement).closest("a");
+		if (link && link.href) {
+			event.preventDefault();
+			window.open(link.href);
+		}
 	}
 
 	onMount(async () => {
@@ -115,7 +123,13 @@
 		</div>
 	</div>
 
-	<div class="mt-4 p-6 plugin-readme text-neutral-700 dark:text-neutral-300 border-4 border-neutral-300 dark:border-neutral-600 rounded-xl">
+	<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+	<div
+		class="mt-4 p-6 plugin-readme text-neutral-700 dark:text-neutral-300 border-4 border-neutral-300 dark:border-neutral-600 rounded-xl"
+		on:click={handleReadmeClick}
+		on:keyup={handleReadmeClick}
+		role="region"
+	>
 		{@html readme}
 	</div>
 </Popup>
