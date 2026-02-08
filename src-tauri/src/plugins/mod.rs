@@ -9,6 +9,7 @@ use crate::store::get_settings;
 
 use std::collections::HashMap;
 use std::process::{Child, Command, Stdio};
+use std::sync::LazyLock;
 use std::{fs, path};
 
 use tauri::{AppHandle, Manager};
@@ -18,7 +19,6 @@ use tokio::net::{TcpListener, TcpStream};
 
 use anyhow::anyhow;
 use log::{error, warn};
-use once_cell::sync::Lazy;
 use tokio::sync::{Mutex, RwLock};
 
 enum PluginInstance {
@@ -28,10 +28,10 @@ enum PluginInstance {
 	Node(Child),
 }
 
-pub static DEVICE_NAMESPACES: Lazy<RwLock<HashMap<String, String>>> = Lazy::new(|| RwLock::new(HashMap::new()));
-static INSTANCES: Lazy<Mutex<HashMap<String, PluginInstance>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+pub static DEVICE_NAMESPACES: LazyLock<RwLock<HashMap<String, String>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
+static INSTANCES: LazyLock<Mutex<HashMap<String, PluginInstance>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
-pub static PORT_BASE: Lazy<u16> = Lazy::new(|| {
+pub static PORT_BASE: LazyLock<u16> = LazyLock::new(|| {
 	let mut base = 57116;
 	loop {
 		let websocket_result = std::net::TcpListener::bind(format!("0.0.0.0:{}", base));

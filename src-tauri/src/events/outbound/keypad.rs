@@ -4,13 +4,13 @@ use crate::events::frontend::instances::{key_moved, update_state};
 use crate::shared::{ActionContext, Context};
 use crate::store::profiles::{acquire_locks_mut, get_slot_mut, save_profile};
 
+use std::sync::LazyLock;
 use std::time::Duration;
 
 use dashmap::DashMap;
-use once_cell::sync::Lazy;
 use serde::Serialize;
 
-static KEY_DOWN_TARGETS: Lazy<DashMap<(String, u8), Context>> = Lazy::new(DashMap::new);
+static KEY_DOWN_TARGETS: LazyLock<DashMap<(String, u8), Context>> = LazyLock::new(DashMap::new);
 
 #[derive(Serialize)]
 struct KeyEvent {

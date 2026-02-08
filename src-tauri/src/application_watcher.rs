@@ -1,9 +1,9 @@
 use crate::store::{NotProfile, Store};
 
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use active_win_pos_rs::get_active_window;
-use once_cell::sync::Lazy;
 use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System};
 use tauri::{Emitter, Manager};
 use tokio::sync::RwLock;
@@ -12,10 +12,10 @@ pub type ApplicationProfiles = HashMap<String, HashMap<String, String>>;
 impl NotProfile for ApplicationProfiles {}
 
 pub static APPLICATIONS: RwLock<Vec<String>> = RwLock::const_new(Vec::new());
-pub static APPLICATION_PROFILES: Lazy<RwLock<Store<ApplicationProfiles>>> = Lazy::new(|| RwLock::new(Store::new("applications", &crate::shared::config_dir(), HashMap::new()).unwrap()));
+pub static APPLICATION_PROFILES: LazyLock<RwLock<Store<ApplicationProfiles>>> = LazyLock::new(|| RwLock::new(Store::new("applications", &crate::shared::config_dir(), HashMap::new()).unwrap()));
 
-pub static APPLICATION_PROCESSES: Lazy<RwLock<HashMap<String, Vec<u32>>>> = Lazy::new(|| RwLock::new(HashMap::new()));
-pub static APPLICATION_PLUGINS: Lazy<RwLock<HashMap<String, Vec<String>>>> = Lazy::new(|| RwLock::new(HashMap::new()));
+pub static APPLICATION_PROCESSES: LazyLock<RwLock<HashMap<String, Vec<u32>>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
+pub static APPLICATION_PLUGINS: LazyLock<RwLock<HashMap<String, Vec<String>>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
 
 #[derive(Clone, serde::Serialize)]
 pub struct SwitchProfileEvent {

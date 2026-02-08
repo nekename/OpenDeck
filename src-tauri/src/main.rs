@@ -16,7 +16,8 @@ mod built_info {
 use events::frontend;
 use shared::PRODUCT_NAME;
 
-use once_cell::sync::OnceCell;
+use std::sync::OnceLock;
+
 use tauri::{
 	AppHandle, Builder, Manager, WindowEvent,
 	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
@@ -24,7 +25,7 @@ use tauri::{
 };
 use tauri_plugin_log::{Target, TargetKind};
 
-static APP_HANDLE: OnceCell<AppHandle> = OnceCell::new();
+static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
 fn show_window(app: &AppHandle) -> Result<(), tauri::Error> {
 	#[cfg(target_os = "macos")]

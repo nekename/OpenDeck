@@ -3251,7 +3251,6 @@ dependencies = [
  "json-patch 4.1.0",
  "log",
  "log-panics",
- "once_cell",
  "open",
  "os_info",
  "path-slash",

@@ -2,6 +2,7 @@ use crate::events::outbound::{encoder, keypad};
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::sync::LazyLock;
 
 use base64::Engine as _;
 use elgato_streamdeck::{
@@ -10,11 +11,10 @@ use elgato_streamdeck::{
 	info::Kind,
 };
 use image::GenericImageView as _;
-use once_cell::sync::Lazy;
 use tokio::sync::RwLock;
 
-static ELGATO_DEVICES: Lazy<RwLock<HashMap<String, AsyncStreamDeck>>> = Lazy::new(|| RwLock::new(HashMap::new()));
-static HIDAPI: Lazy<RwLock<Option<Arc<hidapi::HidApi>>>> = Lazy::new(|| RwLock::new(None));
+static ELGATO_DEVICES: LazyLock<RwLock<HashMap<String, AsyncStreamDeck>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
+static HIDAPI: LazyLock<RwLock<Option<Arc<hidapi::HidApi>>>> = LazyLock::new(|| RwLock::new(None));
 
 /// Extract the average colour from an image.
 fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {

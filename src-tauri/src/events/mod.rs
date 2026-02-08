@@ -5,18 +5,18 @@ pub mod outbound;
 use inbound::RegisterEvent;
 
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use futures::{SinkExt, StreamExt, stream::SplitSink};
-use once_cell::sync::Lazy;
 use tokio::net::TcpStream;
 use tokio::sync::{Mutex, RwLock};
 use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 
-type Sockets = Lazy<Mutex<HashMap<String, SplitSink<WebSocketStream<TcpStream>, Message>>>>;
-static PLUGIN_SOCKETS: Sockets = Lazy::new(|| Mutex::new(HashMap::new()));
-static PROPERTY_INSPECTOR_SOCKETS: Sockets = Lazy::new(|| Mutex::new(HashMap::new()));
-static PLUGIN_QUEUES: Lazy<RwLock<HashMap<String, Vec<Message>>>> = Lazy::new(|| RwLock::new(HashMap::new()));
-static PROPERTY_INSPECTOR_QUEUES: Lazy<RwLock<HashMap<String, Vec<Message>>>> = Lazy::new(|| RwLock::new(HashMap::new()));
+type Sockets = LazyLock<Mutex<HashMap<String, SplitSink<WebSocketStream<TcpStream>, Message>>>>;
+static PLUGIN_SOCKETS: Sockets = LazyLock::new(|| Mutex::new(HashMap::new()));
+static PROPERTY_INSPECTOR_SOCKETS: Sockets = LazyLock::new(|| Mutex::new(HashMap::new()));
+static PLUGIN_QUEUES: LazyLock<RwLock<HashMap<String, Vec<Message>>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
+static PROPERTY_INSPECTOR_QUEUES: LazyLock<RwLock<HashMap<String, Vec<Message>>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
 
 pub async fn registered_plugins() -> Vec<String> {
 	PLUGIN_SOCKETS.lock().await.keys().map(|x| x.to_owned()).collect()

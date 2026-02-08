@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use std::env::var;
 use std::path::Path;
+use std::sync::LazyLock;
 
 use serde::{Deserialize, Deserializer, Serialize, de::Visitor};
 use serde_inline_default::serde_inline_default;
 
 use dashmap::DashMap;
-use once_cell::sync::Lazy;
 use tauri::Manager;
 use tokio::sync::RwLock;
 
@@ -41,7 +41,7 @@ pub struct DeviceInfo {
 	pub r#type: u8,
 }
 
-pub static DEVICES: Lazy<DashMap<String, DeviceInfo>> = Lazy::new(DashMap::new);
+pub static DEVICES: LazyLock<DashMap<String, DeviceInfo>> = LazyLock::new(DashMap::new);
 
 /// Get the application configuration directory.
 pub fn config_dir() -> std::path::PathBuf {
@@ -311,7 +311,7 @@ pub struct Profile {
 }
 
 /// A map of category names to a list of actions in that category.
-pub static CATEGORIES: Lazy<RwLock<HashMap<String, Category>>> = Lazy::new(|| {
+pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::new(|| {
 	let mut hashmap = HashMap::new();
 	hashmap.insert(
 		PRODUCT_NAME.to_owned(),
