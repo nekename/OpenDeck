@@ -140,6 +140,7 @@
 		class:outline-solid={slot && $inspectedInstance == slot.context}
 		class:-m-[2.06rem]={size == 192}
 		class:rounded-full!={context?.controller == "Encoder"}
+		class:bg-black={slot != null}
 		width={size}
 		height={size}
 		draggable={slot != null}

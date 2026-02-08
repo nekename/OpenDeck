@@ -88,7 +88,7 @@
 				{:then resolvedSrc}
 					<img
 						src={resolvedSrc}
-						class="my-auto p-1 w-32 h-min aspect-square rounded-xl cursor-pointer"
+						class="my-auto w-32 h-min aspect-square bg-black rounded-xl cursor-pointer"
 						alt="State {state}"
 					/>
 				{/await}

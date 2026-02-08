@@ -86,8 +86,10 @@ export async function renderImage(
 		context.clearRect(0, 0, canvas.width, canvas.height);
 
 		// Draw background color
-		context.fillStyle = state.background_colour;
-		context.fillRect(0, 0, canvas.width, canvas.height);
+		if (!state.background_colour.startsWith("#000000")) {
+			context.fillStyle = state.background_colour;
+			context.fillRect(0, 0, canvas.width, canvas.height);
+		}
 
 		// Draw image
 		context.imageSmoothingQuality = "high";
