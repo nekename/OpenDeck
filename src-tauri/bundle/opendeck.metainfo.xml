@@ -53,6 +53,41 @@
 	</branding>
 
 	<releases>
+		<release version="2.9.0" date="2026-02-08">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.9.0</url>
+			<description>
+				<ul>
+					<li>fix: always underline available plugin version element to highlight that it is clickable</li>
+					<li>feat: display Input Simulation errors in the action's property inspector</li>
+					<li>feat: support changing the rendered text's stroke size and colour (#216)</li>
+					<li>fix: rename Input Simulation to Simulate Input for consistency with other actions</li>
+					<li>feat: implement rotating rendered images</li>
+					<li>feat: cancel key up events if their corresponding key down events targeted a different action instance</li>
+					<li>fix: centre device grid horizontally when the window is enlarged</li>
+					<li>docs: decrease references to Wine as few working plugins actually require it</li>
+					<li>feat: add support for installing Node.js to the installation script</li>
+					<li>feat: support encoders in the Switch Profile action</li>
+					<li>feat: automatically wrap Run Command commands with distrobox-host-exec when running in a Distrobox</li>
+					<li>feat: implement Open URL built-in action</li>
+					<li>fix: ensure all_from_plugin locates instances within Multi Actions and Toggle Actions</li>
+					<li>feat: support setting the background colour of an action instance's state (#233)</li>
+					<li>feat: unify instance editor preview render and normal render to display text in the preview (#237)</li>
+					<li>fix: use opaque black as default state background colour for consistency</li>
+					<li>fix: ensure invisible colour pickers function correctly on macOS</li>
+					<li>fix: ensure background colour picker opens already set to the current value</li>
+					<li>chore: update dependencies</li>
+					<li>feat: show datalist hints for device ID in Switch Profile property inspector</li>
+					<li>fix: ensure propertyInspectorDidAppear event is always dispatched when PI frame loads</li>
+					<li>docs: remove note on Flatpak caveat for background setting as single instance is now supported</li>
+					<li>docs: add tip to README for using OpenDeck with Tacto when without hardware</li>
+					<li>fix: only ever initialise hidapi once for Elgato device support to prevent crashes on macOS</li>
+					<li>feat: support opening developer tools for web-based plugins on a per-plugin basis by checking for a `debug` marker file</li>
+					<li>refactor: replace `once_cell` crate with stabilised `std::sync` equivalents</li>
+					<li>fix: ensure links in plugin README files open in the default browser</li>
+					<li>fix: ensure GFM alerts are rendered correctly when displaying plugin README files</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.8.2" date="2026-01-18">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.8.2</url>
 			<description>
