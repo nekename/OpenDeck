@@ -1,6 +1,7 @@
 use crate::events::outbound::{encoder, keypad};
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use base64::Engine as _;
 use elgato_streamdeck::{
@@ -13,6 +14,7 @@ use once_cell::sync::Lazy;
 use tokio::sync::RwLock;
 
 static ELGATO_DEVICES: Lazy<RwLock<HashMap<String, AsyncStreamDeck>>> = Lazy::new(|| RwLock::new(HashMap::new()));
+static HIDAPI: Lazy<RwLock<Option<Arc<hidapi::HidApi>>>> = Lazy::new(|| RwLock::new(None));
 
 /// Extract the average colour from an image.
 fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
@@ -177,21 +179,31 @@ pub async fn initialise_devices() {
 	}
 
 	// Iterate through detected Elgato devices and attempt to register them.
-	match elgato_streamdeck::new_hidapi() {
-		Ok(hid) => {
-			for (kind, serial) in elgato_streamdeck::asynchronous::list_devices_async(&hid) {
-				let device_id = format!("sd-{serial}");
-				if ELGATO_DEVICES.read().await.contains_key(&device_id) {
-					continue;
-				}
-				match elgato_streamdeck::AsyncStreamDeck::connect(&hid, kind, &serial) {
-					Ok(device) => {
-						tokio::spawn(init(device, device_id));
-					}
-					Err(error) => log::warn!("Failed to connect to Elgato device: {error}"),
-				}
+	let current = HIDAPI.read().await.as_ref().cloned();
+	let hid = match current {
+		Some(arc) => arc,
+		None => match elgato_streamdeck::new_hidapi() {
+			Ok(hid) => {
+				let arc = Arc::new(hid);
+				HIDAPI.write().await.replace(arc.clone());
+				arc
 			}
+			Err(error) => {
+				log::warn!("Failed to initialise hidapi: {error}");
+				return;
+			}
+		},
+	};
+	for (kind, serial) in elgato_streamdeck::asynchronous::list_devices_async(&hid) {
+		let device_id = format!("sd-{serial}");
+		if ELGATO_DEVICES.read().await.contains_key(&device_id) {
+			continue;
 		}
-		Err(error) => log::warn!("Failed to initialise hidapi: {error}"),
+		match elgato_streamdeck::AsyncStreamDeck::connect(&hid, kind, &serial) {
+			Ok(device) => {
+				tokio::spawn(init(device, device_id));
+			}
+			Err(error) => log::warn!("Failed to connect to Elgato device: {error}"),
+		}
 	}
 }

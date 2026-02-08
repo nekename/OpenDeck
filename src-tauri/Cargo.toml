@@ -21,6 +21,7 @@ tokio = { version = "1.48", features = ["full"] }
 tokio-tungstenite = "0.28"
 tiny_http = "0.12"
 elgato-streamdeck = { version = "0.12", default-features = false, features = ["async"] }
+hidapi = "2.6"
 image = { version = "0.25", default-features = false, features = ["bmp", "jpeg"] }
 # Smaller utility libraries
 once_cell = "1.21"

@@ -3246,6 +3246,7 @@ dependencies = [
  "font-loader",
  "fs2",
  "futures",
+ "hidapi",
  "image",
  "json-patch 4.1.0",
  "log",
