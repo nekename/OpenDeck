@@ -45,6 +45,9 @@ pub static DEVICES: LazyLock<DashMap<String, DeviceInfo>> = LazyLock::new(DashMa
 
 /// Get the application configuration directory.
 pub fn config_dir() -> std::path::PathBuf {
+	if let Ok(config_dir) = std::env::var("OPENDECK_CONFIG_DIR") {
+		return config_dir.into();
+	}
 	let app_handle = crate::APP_HANDLE.get().unwrap();
 	app_handle.path().app_config_dir().unwrap()
 }
