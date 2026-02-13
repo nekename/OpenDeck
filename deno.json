@@ -1,7 +1,7 @@
 {
 	"exclude": ["src-tauri", "node_modules", "build", ".svelte-kit"],
 	"fmt": {
-		"exclude": ["*.md"],
+		"exclude": ["**/*.md"],
 		"useTabs": true,
 		"lineWidth": 200
 	},

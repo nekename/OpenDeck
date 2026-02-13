@@ -1,7 +1,8 @@
 {
 	"folders": [
 		{ "path": ".." },
-		{ "path": "../plugins/com.amansprojects.starterpack.sdPlugin" }
+		{ "path": "../plugins/com.amansprojects.starterpack.sdPlugin" },
+		{ "path": "../tests" }
 	],
 	"settings": {
 		"editor.insertSpaces": false,

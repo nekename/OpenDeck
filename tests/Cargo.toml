@@ -1,0 +1,8 @@
+[package]
+name = "tests"
+edition = "2024"
+
+[dependencies]
+serde_json = "1.0"
+thirtyfour = "0.36"
+tokio = { version = "1.49", features = ["macros", "rt-multi-thread"] }
