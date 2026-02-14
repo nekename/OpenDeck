@@ -53,6 +53,16 @@
 	</branding>
 
 	<releases>
+		<release version="2.9.1" date="2026-02-14">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.9.1</url>
+			<description>
+				<ul>
+					<li>chore: sync lockfile changes made by `deno install` after earlier commit regarding displaying GFM alerts</li>
+					<li>fix: skip manual render of black background colours and use CSS instead for background colour display in the UI to prevent flickering</li>
+					<li>fix: index more safely into an action's states in the instance editor as Toggle Action instances have more states than the base action does</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.9.0" date="2026-02-08">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.9.0</url>
 			<description>
