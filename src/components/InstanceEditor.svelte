@@ -80,10 +80,10 @@
 				on:drop={handleDrop}
 				on:contextmenu={(event) => {
 					event.preventDefault();
-					instance.states[state].image = instance.action.states[state].image;
+					instance.states[state].image = instance.action.states[state]?.image ?? instance.action.icon;
 				}}
 			>
-				{#await renderImage(null, null, instance.states[state], instance.action.states[state].image ?? instance.action.icon, false, false, true, false, false, 0, true)}
+				{#await renderImage(null, null, instance.states[state], instance.action.states[state]?.image ?? instance.action.icon, false, false, true, false, false, 0, true)}
 					<div class="w-32 h-32 bg-neutral-800 animate-pulse rounded-xl"></div>
 				{:then resolvedSrc}
 					<img
