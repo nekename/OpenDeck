@@ -1,9 +1,10 @@
 <script lang="ts">
 	import Heart from "phosphor-svelte/lib/Heart";
 	import Star from "phosphor-svelte/lib/Star";
+	import ArrowArcRightIcon from "phosphor-svelte/lib/ArrowArcRight";
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
-
+	
 	import { settings } from "$lib/settings";
 	import { PRODUCT_NAME } from "$lib/singletons";
 
@@ -83,10 +84,35 @@
 			<span class="dark:text-neutral-400"> Device brightness: </span>
 			<input type="range" min="0" max="100" bind:value={$settings.brightness} />
 		</div>
+		
+		<div class="flex items-center m-2 space-x-3">
+			<span class="dark:text-neutral-400">Image rotation:</span>
 
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="dark:text-neutral-400"> Image rotation: </span>
-			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} />
+			<button
+				class="border rounded bg-neutral-100 dark:bg-neutral-700 
+					dark:border-neutral-600 w-5 h-5 
+					flex items-center justify-center
+					transition-transform duration-200"
+				on:click={() => {
+				$settings.rotation = ($settings.rotation + 90) % 360;
+				}}
+			>
+				<div
+				class="transition-transform duration-200"
+				style="transform: rotate({$settings.rotation}deg);"
+				>
+				<ArrowArcRightIcon
+					size={15}
+					weight="bold"
+					class="text-neutral-800 dark:text-neutral-200"
+				/>
+				</div>
+			</button>
+
+			<span class="text-sm dark:text-neutral-300">
+				{$settings.rotation}°
+			</span>
+
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
