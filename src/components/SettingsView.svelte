@@ -84,9 +84,26 @@
 			<input type="range" min="0" max="100" bind:value={$settings.brightness} />
 		</div>
 
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="dark:text-neutral-400"> Image rotation: </span>
-			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} />
+		<div class="flex items-center m-2 space-x-3">
+			<span class="dark:text-neutral-400">Image rotation:</span>
+
+			<button
+				class="p-2 border rounded bg-neutral-100 dark:bg-neutral-700 
+					dark:border-neutral-600 transition-transform"
+				on:click={() => {
+					$settings.rotation = ($settings.rotation + 90) % 360;
+				}}
+			>
+				<div
+					style="transform: rotate({$settings.rotation}deg);"
+					class="transition-transform duration-200"
+				>
+					⬆️
+				</div>
+			</button>
+			<span class="text-sm dark:text-neutral-300">
+				{$settings.rotation}°
+			</span>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
