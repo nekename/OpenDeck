@@ -27,7 +27,11 @@ fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
 
 pub async fn update_image(context: &crate::shared::Context, image: Option<&str>) -> Result<(), anyhow::Error> {
 	if let Some(device) = ELGATO_DEVICES.read().await.get(&context.device) {
-		let key_count = device.kind().key_count();
+		let kind = device.kind();
+		if !kind.is_visual() {
+			return Ok(());
+		}
+		let key_count = kind.key_count();
 		let is_touch_point = context.controller == "Keypad" && context.position >= key_count;
 
 		if let Some(image) = image {
