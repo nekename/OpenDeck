@@ -62,13 +62,35 @@
 			profile = profile;
 		}
 	}
+
+	$: overflowsX = Math.max(device.columns, device.encoders, device.touchpoints) > 8;
+	$: overflowsY = (device.rows + Math.min(device.encoders, 1) + Math.min(device.touchpoints, 1)) > 4;
 </script>
+
+<style>
+	.device-fade-x {
+		mask-image: linear-gradient(to right, transparent, black 7.5rem, black calc(100% - 7.5rem), transparent);
+	}
+	.device-fade-y {
+		mask-image: linear-gradient(to bottom, transparent, black 7.5rem, black calc(100% - 7.5rem), transparent);
+	}
+	.device-fade-xy {
+		mask-image:
+			linear-gradient(to right, transparent, black 7.5rem, black calc(100% - 7.5rem), transparent),
+			linear-gradient(to bottom, transparent, black 7.5rem, black calc(100% - 7.5rem), transparent);
+		mask-composite: intersect;
+	}
+</style>
 
 {#key device}
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div
-		class="flex flex-col items-center"
+		class="flex flex-col justify-center grow px-16 py-6 overflow-auto"
+		class:items-center={device.columns <= 8}
 		class:hidden={$inspectedParentAction || selectedDevice != device.id}
+		class:device-fade-x={overflowsX && !overflowsY}
+		class:device-fade-y={overflowsY && !overflowsX}
+		class:device-fade-xy={overflowsX && overflowsY}
 		on:click={() => inspectedInstance.set(null)}
 		on:keyup={() => inspectedInstance.set(null)}
 	>
