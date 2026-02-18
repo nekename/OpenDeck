@@ -14,7 +14,11 @@ button, input[type="radio"], input[type="checkbox"], input[type="range"], input[
 	@apply cursor-pointer;
 }
 
-select {
+.select-wrapper {
+	@apply relative;
+}
+
+.select-wrapper select {
 	@apply appearance-none;
 	@apply px-2 py-1;
 	@apply text-sm text-neutral-700 dark:text-neutral-300;
@@ -23,15 +27,53 @@ select {
 	@apply cursor-pointer;
 }
 
-.select-wrapper {
-	@apply relative;
-}
-
 .select-wrapper::after {
 	@apply absolute right-4 top-[47.5%] -translate-y-1/2;
 	@apply w-2 h-2 rotate-45;
 	@apply border-r-2 border-b-2;
 	@apply pointer-events-none content-["_"];
+}
+
+.select-device-wrapper {
+	@apply relative;
+}
+
+.select-device-wrapper select {
+	@apply appearance-none;
+	@apply font-semibold text-xl text-neutral-800 dark:text-neutral-100;
+	@apply outline-hidden;
+	@apply cursor-pointer;
+}
+
+.select-device-wrapper::after {
+	@apply absolute right-0.5 top-[47.5%] -translate-y-1/2;
+	@apply w-2 h-2 rotate-45;
+	@apply border-r-2 border-b-2 border-neutral-800;
+	@apply pointer-events-none content-["_"];
+}
+:is(.dark, .dark *) .select-device-wrapper::after {
+	@apply border-neutral-100;
+}
+
+.select-profile-wrapper {
+	@apply relative;
+}
+
+.select-profile-wrapper select {
+	@apply appearance-none;
+	@apply text-sm text-neutral-500 dark:text-neutral-400;
+	@apply outline-hidden;
+	@apply cursor-pointer;
+}
+
+.select-profile-wrapper::after {
+	@apply absolute right-0.5 top-[47.5%] -translate-y-1/2;
+	@apply w-1.5 h-1.5 rotate-45;
+	@apply border-r-2 border-b-2 border-neutral-500;
+	@apply pointer-events-none content-["_"];
+}
+:is(.dark, .dark *) .select-profile-wrapper::after {
+	@apply border-neutral-400;
 }
 
 .plugin-readme h1, .plugin-readme h2, .plugin-readme h3, .plugin-readme h4, .plugin-readme h5, .plugin-readme h6 {

@@ -25,48 +25,51 @@
 
 <svelte:window on:dragover={(event) => event.preventDefault()} on:drop={(event) => event.preventDefault()} />
 
-<div class="flex flex-col grow">
-	{#if Object.keys(devices).length > 0 && selectedProfiles}
-		{#if $inspectedParentAction}
-			<ParentActionView bind:profile={selectedProfiles[selectedDevice]} />
-		{/if}
-
-		{#each Object.entries(devices) as [id, device]}
-			{#if device && selectedProfiles[id]}
-				<DeviceView bind:device bind:profile={selectedProfiles[id]} bind:selectedDevice />
-			{/if}
-		{/each}
-	{:else}
-		<NoDevicesDetected />
-	{/if}
-
-	{#if selectedProfiles[selectedDevice]}
-		<PropertyInspectorView bind:device={devices[selectedDevice]} bind:profile={selectedProfiles[selectedDevice]} />
-	{/if}
-</div>
-
-<div class="flex flex-col p-2 w-[18rem] h-full border-l dark:border-neutral-700">
-	<div class="flex flex-row space-x-2">
-		<PluginManager />
-		<SettingsView />
-	</div>
-	<hr class="my-2 border dark:border-neutral-700" />
-	{#if !$inspectedParentAction}
-		<DeviceSelector
-			bind:devices
-			bind:value={selectedDevice}
-			bind:selectedProfiles
-			bind:this={$deviceSelector}
-		/>
-		{#key selectedDevice}
-			{#if selectedDevice && devices[selectedDevice]}
-				<ProfileManager
-					bind:device={devices[selectedDevice]}
-					bind:profile={selectedProfiles[selectedDevice]}
-					bind:this={$profileManager}
+<div class="flex flex-row h-screen">
+	<div class="flex flex-col grow">
+		<nav class="flex flex-row justify-between items-center px-3 py-2" class:hidden={$inspectedParentAction}>
+			<div class="flex flex-col items-start space-y-1">
+				<DeviceSelector
+					bind:devices
+					bind:value={selectedDevice}
+					bind:selectedProfiles
+					bind:this={$deviceSelector}
 				/>
+				{#key selectedDevice}
+					{#if selectedDevice && devices[selectedDevice]}
+						<ProfileManager
+							bind:device={devices[selectedDevice]}
+							bind:profile={selectedProfiles[selectedDevice]}
+							bind:this={$profileManager}
+						/>
+					{/if}
+				{/key}
+			</div>
+
+			<div class="flex flex-row items-center space-x-2">
+				<PluginManager />
+				<SettingsView />
+			</div>
+		</nav>
+
+		{#if Object.keys(devices).length > 0 && selectedProfiles}
+			{#if $inspectedParentAction}
+				<ParentActionView bind:profile={selectedProfiles[selectedDevice]} />
 			{/if}
-		{/key}
-	{/if}
+
+			{#each Object.entries(devices) as [id, device]}
+				{#if device && selectedProfiles[id]}
+					<DeviceView bind:device bind:profile={selectedProfiles[id]} bind:selectedDevice />
+				{/if}
+			{/each}
+
+			{#if selectedProfiles[selectedDevice]}
+				<PropertyInspectorView bind:device={devices[selectedDevice]} bind:profile={selectedProfiles[selectedDevice]} />
+			{/if}
+		{:else}
+			<NoDevicesDetected />
+		{/if}
+	</div>
+
 	<ActionList bind:this={$actionList} />
 </div>

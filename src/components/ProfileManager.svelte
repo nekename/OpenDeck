@@ -161,10 +161,18 @@
 			invoke("set_application_profiles", { value: applicationProfiles });
 		}
 	}
+
+	let measure: HTMLSpanElement;
+	let selectWidth = 0;
+	$: if (value && measure) {
+		measure.textContent = value.includes("/") ? value.split("/")[1] : value;
+		selectWidth = measure.offsetWidth + 16;
+	}
 </script>
 
-<div class="select-wrapper">
-	<select bind:value class="my-1 w-full">
+<div class="select-profile-wrapper">
+	<span bind:this={measure} class="invisible fixed whitespace-pre pointer-events-none text-sm" aria-hidden="true"></span>
+	<select bind:value style:width="{selectWidth}px">
 		{#each Object.entries(folders).sort() as [id, profiles]}
 			{#if id && profiles.length}
 				<optgroup label={id}>
