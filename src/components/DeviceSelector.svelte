@@ -45,22 +45,33 @@
 
 	$: {
 		if (devices[value]) {
-			const width = (Math.max(devices[value].columns, devices[value].encoders, devices[value].touchpoints) * 132) + 288;
-			const height = ((devices[value].rows + Math.min(devices[value].encoders, 1) + Math.min(devices[value].touchpoints, 1)) * 132) + 288;
+			const effectiveCols = Math.min(Math.max(devices[value].columns, devices[value].encoders, devices[value].touchpoints), 8);
+			const effectiveRows = Math.min(devices[value].rows + Math.min(devices[value].encoders, 1) + Math.min(devices[value].touchpoints, 1), 4);
+			const width = (effectiveCols * 132) + 416;
+			const height = (effectiveRows * 132) + 392;
 			const window = getCurrentWindow();
-			window.setMinSize(new LogicalSize(width, height)).then(async () => {
+			// Tauri's setMinSize seems to require an extra 92x138 pixels to match the sizing used by setSize
+			window.setMinSize(new LogicalSize(width + 92, height + 138)).then(async () => {
 				const innerSize = await window.innerSize();
-				if (innerSize.width < width || innerSize.height < height) {
+				if (innerSize.width <= width || innerSize.height <= height) {
 					await window.setSize(new LogicalSize(width, height));
 				}
 			});
 		}
 	}
+
+	let measure: HTMLSpanElement;
+	let selectWidth = 0;
+	$: if (value && measure && devices[value]) {
+		measure.textContent = devices[value].name;
+		selectWidth = measure.offsetWidth + 20;
+	}
 </script>
 
 {#if Object.keys(devices).length > 0}
-	<div class="select-wrapper">
-		<select bind:value class="w-full">
+	<div class="select-device-wrapper">
+		<span bind:this={measure} class="invisible fixed whitespace-pre pointer-events-none text-xl font-semibold" aria-hidden="true"></span>
+		<select bind:value style:width="{selectWidth}px">
 			<option value="" disabled selected>Choose a device...</option>
 
 			{#each Object.entries(devices).sort() as [id, device]}
