@@ -2,6 +2,8 @@ use super::{GenericInstancePayload, send_to_plugin, send_to_property_inspector};
 
 use crate::shared::ActionContext;
 
+use std::io::Read;
+
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -42,8 +44,17 @@ struct DidReceiveGlobalSettingsEvent {
 pub async fn did_receive_global_settings(context: &str, to_property_inspector: bool) -> Result<(), anyhow::Error> {
 	let settings_dir = crate::shared::config_dir().join("settings");
 	let path = settings_dir.join(format!("{}.json", context));
-	let settings: serde_json::Value = match tokio::fs::read(path).await {
-		Ok(contents) => serde_json::from_slice(&contents)?,
+	let settings: serde_json::Value = match std::fs::File::open(&path) {
+		Ok(mut file) => {
+			file.lock_shared()?;
+			let buf = &mut Vec::new();
+			let settings = match file.read_to_end(buf) {
+				Ok(_) => serde_json::from_slice(buf)?,
+				Err(_) => serde_json::Value::Object(serde_json::Map::new()),
+			};
+			file.unlock()?;
+			settings
+		}
 		Err(_) => serde_json::Value::Object(serde_json::Map::new()),
 	};
 
