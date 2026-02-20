@@ -21,7 +21,7 @@ button, input[type="radio"], input[type="checkbox"], input[type="range"], input[
 	@apply px-2 py-1;
 	@apply text-sm text-neutral-300;
 	@apply bg-neutral-700;
-	@apply border-2 border-neutral-900 rounded-md outline-hidden;
+	@apply border border-neutral-600 rounded-lg outline-hidden;
 	@apply cursor-pointer;
 }
 

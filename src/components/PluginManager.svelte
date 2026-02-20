@@ -196,7 +196,7 @@
 </script>
 
 <button
-	class="px-3 py-1 text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg outline-hidden"
+	class="px-3 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg outline-hidden"
 	on:click={() => showPopup = true}
 >
 	Plugins
@@ -274,7 +274,7 @@
 	<div class="flex flex-row justify-between items-center mx-2 mt-6 mb-2">
 		<h2 class="text-lg text-neutral-400">Plugin store</h2>
 		<button
-			class="flex flex-row items-center mt-2 px-1 py-0.5 text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg outline-hidden"
+			class="flex flex-row items-center mt-2 px-1 py-0.5 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg outline-hidden"
 			on:click={installPluginFile}
 		>
 			<FileArrowUp />
@@ -289,7 +289,7 @@
 		</div>
 	</div>
 
-	<div class="flex flex-row items-center m-2 bg-neutral-700 rounded-md">
+	<div class="flex flex-row items-center m-2 bg-neutral-700 border border-neutral-600 rounded-lg">
 		<MagnifyingGlass size="14" class="ml-3 mr-0.5 text-neutral-300" />
 		<input
 			bind:value={query}
@@ -328,7 +328,7 @@
 	</div>
 	{#if !showArchive}
 		<button
-			class="ml-2 mt-2 mb-2 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg"
+			class="ml-2 mt-2 mb-2 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
 			on:click={async () => {
 				showArchive = true;
 				archivePlugins = await (await fetch("https://plugins.amankhanna.me/catalogue.json")).json();
@@ -396,17 +396,17 @@
 {/if}
 
 {#if choices}
-	<div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 p-2 w-96 text-xs text-neutral-300 bg-neutral-700 border-2 border-neutral-600 rounded-lg z-40">
+	<div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 p-2 w-96 text-xs text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg z-40">
 		<h3 class="mb-2 font-semibold text-lg text-center">Choose a release asset</h3>
 		<div class="select-wrapper">
-			<select class="w-full" bind:value={choice}>
+			<select class="w-full bg-neutral-800!" bind:value={choice}>
 				{#each choices as choice, i}
 					<option value={i}>{choice.name}</option>
 				{/each}
 			</select>
 		</div>
 		<button
-			class="mt-2 p-1 w-full text-sm text-neutral-300 bg-neutral-800 border border-neutral-600 rounded-lg"
+			class="mt-2 p-1 w-full text-sm text-neutral-300 bg-neutral-800 hover:bg-neutral-900 transition-colors border border-neutral-600 rounded-lg"
 			on:click={finishChoice}
 		>
 			Install

@@ -132,13 +132,13 @@
 
 <div
 	class="relative"
-	style={`transform: scale(${(112 / size) * scale});`}
+	style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}
 >
 	<canvas
 		bind:this={canvas}
-		class="relative -m-2 border-2 border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
+		class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
+		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
 		class:outline-solid={slot && $inspectedInstance == slot.context}
-		class:-m-[2.06rem]={size == 192}
 		class:rounded-full!={context?.controller == "Encoder"}
 		class:bg-black={slot != null}
 		width={size}
@@ -158,12 +158,12 @@
 
 {#if $openContextMenu && $openContextMenu?.context == context}
 	<div
-		class="absolute text-sm font-semibold w-32 text-neutral-300 bg-neutral-700 border-2 border-neutral-600 rounded-lg divide-y z-10"
+		class="absolute w-32 font-semibold text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg divide-y divide-neutral-600! z-10"
 		style={`left: ${$openContextMenu.x}px; top: ${$openContextMenu.y}px;`}
 	>
 		{#if !slot}
 			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
+				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-lg cursor-pointer"
 				on:click={paste}
 			>
 				<Clipboard size="18" class="text-neutral-300" />
@@ -171,21 +171,21 @@
 			</button>
 		{:else}
 			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
+				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-t-lg cursor-pointer"
 				on:click={edit}
 			>
 				<Pencil size="18" class="text-neutral-300" />
 				<span class="ml-2"> Edit </span>
 			</button>
 			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
+				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors cursor-pointer"
 				on:click={() => copiedContext.set(context)}
 			>
 				<Copy size="18" class="text-neutral-300" />
 				<span class="ml-2"> Copy </span>
 			</button>
 			<button
-				class="flex flex-row p-2 w-full cursor-pointer items-center"
+				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-b-lg cursor-pointer"
 				on:click={clear}
 			>
 				<Trash size="18" class="text-red-400" />

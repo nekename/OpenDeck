@@ -103,14 +103,14 @@
 			<div class="flex flex-row items-center mt-6">
 				<button
 					on:click={install}
-					class="px-8 py-3 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 rounded-l-lg"
+					class="px-8 py-3 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 hover:bg-indigo-500 transition-colors border border-indigo-500 rounded-l-lg"
 				>
 					Install
 				</button>
 
 				<button
 					on:click={() => invoke("open_url", { url: details.download_url ?? details.repository + "/releases/latest" })}
-					class="ml-1 p-3.5 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 rounded-r-lg"
+					class="ml-1 p-3.5 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 hover:bg-indigo-500 transition-colors border border-indigo-500 rounded-r-lg"
 				>
 					<ArrowSquareOut size={24} />
 				</button>

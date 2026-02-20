@@ -46,7 +46,7 @@
 				{/key}
 			</div>
 
-			<div class="flex flex-row items-center space-x-2">
+			<div class="flex flex-row items-center space-x-2" class:mr-4={Object.keys(devices).length > 0}>
 				<PluginManager />
 				<SettingsView />
 			</div>

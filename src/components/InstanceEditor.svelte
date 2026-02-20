@@ -55,10 +55,10 @@
 	}}
 />
 
-<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 text-neutral-300 bg-neutral-700 border-2 border-neutral-600 rounded-lg z-10">
+<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg z-10">
 	<div class="flex flex-row">
 		<div class="select-wrapper m-1 w-full">
-			<select class="w-full" bind:value={state}>
+			<select class="w-full bg-neutral-600! border-neutral-500!" bind:value={state}>
 				{#each instance.states as _, i}
 					<option value={i}>State {i + 1}</option>
 				{/each}
@@ -66,7 +66,7 @@
 		</div>
 		<button class="ml-2 mr-1 float-right text-xl text-neutral-300" on:click={() => showEditor = false}>✕</button>
 	</div>
-	<div class="flex flex-row">
+	<div class="flex flex-row mx-1">
 		<div class="flex flex-col justify-center items-center">
 			<button
 				on:click={(event) => {
@@ -84,11 +84,11 @@
 				}}
 			>
 				{#await renderImage(null, null, instance.states[state], instance.action.states[state]?.image ?? instance.action.icon, false, false, true, false, false, 0, true)}
-					<div class="w-32 h-32 bg-neutral-800 animate-pulse rounded-xl"></div>
+					<div class="w-32 min-w-32 h-32 bg-neutral-800 animate-pulse border border-neutral-600 rounded-xl"></div>
 				{:then resolvedSrc}
 					<img
 						src={resolvedSrc}
-						class="my-auto w-32 h-min aspect-square bg-black rounded-xl cursor-pointer"
+						class="my-auto w-32 min-w-32 h-min aspect-square bg-black border border-neutral-600 rounded-xl cursor-pointer"
 						alt="State {state}"
 					/>
 				{/await}
@@ -107,7 +107,7 @@
 				on:mouseleave={() => {
 					if (navigator.userAgent.toLowerCase().includes("mac")) backgroundColourInput.className = "absolute invisible w-0 h-0";
 				}}
-				class="my-0.5 px-0.5 text-sm text-neutral-400 bg-neutral-600 rounded-md outline-hidden"
+				class="mt-1 px-0.5 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-lg outline-hidden"
 			>
 				Set background
 				<input
@@ -131,7 +131,7 @@
 				on:mouseleave={() => {
 					if (navigator.userAgent.toLowerCase().includes("mac")) solidColourInput.className = "absolute invisible w-0 h-0";
 				}}
-				class="mt-0.5 px-0.5 text-sm text-neutral-400 bg-neutral-600 rounded-md outline-hidden"
+				class="mt-1 px-0.5 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-lg outline-hidden"
 			>
 				Use solid colour
 				<input
@@ -174,13 +174,14 @@
 			}}
 		/>
 
-		<div class="flex flex-col pl-2 pr-1 pt-4 pb-2 space-y-2">
-			<div class="flex flex-row space-x-2">
+		<div class="flex flex-col pl-4 pr-2 pt-4 pb-2 space-y-2">
+			<div class="flex flex-row items-center space-x-2">
 				<span> Text </span>
 				<textarea
 					bind:value={instance.states[state].text}
+					placeholder={instance.action.states[state]?.text || instance.action.name}
 					rows="1"
-					class="w-full px-1 text-neutral-300 bg-neutral-600 rounded-md outline-hidden resize-none"
+					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden resize-none"
 				/>
 			</div>
 			<div class="flex flex-row items-center">
@@ -188,7 +189,7 @@
 				<input
 					type="color"
 					bind:value={instance.states[state].colour}
-					class="mr-2 px-0.5 bg-neutral-600 rounded-md outline-hidden"
+					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
 				/>
 				<span class="mr-2"> Show </span>
 				<input
@@ -210,22 +211,22 @@
 				<input
 					type="color"
 					bind:value={instance.states[state].stroke_colour}
-					class="mr-2 px-0.5 bg-neutral-600 rounded-md outline-hidden"
+					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
 				/>
 				<span class="mr-2"> Outline </span>
 				<input
 					type="number"
 					bind:value={instance.states[state].stroke_size}
-					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 rounded-md outline-hidden"
+					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
 				/>
 			</div>
-			<div class="flex flex-row">
+			<div class="flex flex-row items-center">
 				<span class="mr-2"> Font </span>
 				<input
 					list="families"
 					bind:value={instance.states[state].family}
 					placeholder="Font family"
-					class="w-full px-1 text-neutral-300 bg-neutral-600 rounded-md outline-hidden"
+					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
 				/>
 				<datalist id="families">
 					<option value="Liberation Sans">Liberation Sans</option>
@@ -243,7 +244,7 @@
 					{/each}
 				</datalist>
 			</div>
-			<div class="flex flex-row">
+			<div class="flex flex-row items-center">
 				<span class="mr-3 font-bold"> B </span>
 				<input
 					type="checkbox"
@@ -268,7 +269,7 @@
 				<input
 					type="number"
 					bind:value={instance.states[state].size}
-					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 rounded-md outline-hidden"
+					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
 				/>
 			</div>
 		</div>

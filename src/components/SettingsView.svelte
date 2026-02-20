@@ -33,7 +33,7 @@
 </script>
 
 <button
-	class="px-3 py-1 text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg outline-hidden"
+	class="px-3 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg outline-hidden"
 	on:click={() => showPopup = true}
 >
 	Settings
@@ -134,13 +134,13 @@
 
 	<div class="ml-2">
 		<button
-			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg"
+			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
 			on:click={() => invoke("open_config_directory")}
 		>
 			Open config directory
 		</button>
 		<button
-			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg"
+			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
 			on:click={() => invoke("open_log_directory")}
 		>
 			Open log directory

@@ -208,7 +208,7 @@
 		<input
 			bind:this={nameInput}
 			pattern="[a-zA-Z0-9_ ]+(\/[a-zA-Z0-9_ ]+)?"
-			class="grow p-2 text-neutral-300 invalid:text-red-400 bg-neutral-700 rounded-l-md outline-hidden"
+			class="grow p-2 text-neutral-300 invalid:text-red-400 bg-neutral-700 border-l border-y border-neutral-600 rounded-l-lg outline-hidden"
 			placeholder='Profile name or "folder/name"'
 		/>
 
@@ -220,20 +220,20 @@
 				nameInput.value = "";
 				showPopup = false;
 			}}
-			class="px-4 text-neutral-300 bg-neutral-900 rounded-r-md"
+			class="px-4 text-neutral-300 bg-neutral-900 hover:bg-neutral-800 transition-colors border-r border-y border-neutral-600 rounded-r-lg"
 		>
 			Create
 		</button>
 
 		<button
-			class="ml-2 px-4 flex items-center text-neutral-300 bg-neutral-900 rounded-md outline-hidden"
+			class="ml-2 px-4 flex items-center text-neutral-300 bg-neutral-900 hover:bg-neutral-800 transition-colors border border-neutral-600 rounded-lg outline-hidden"
 			on:click={() => showApplicationManager = true}
 		>
 			<Browsers size={24} />
 		</button>
 	</div>
 
-	<div class="divide-y">
+	<div class="divide-y divide-neutral-500!">
 		{#each Object.entries(folders).sort() as [id, profiles]}
 			{#if id && profiles.length}
 				<h4 class="py-2 font-bold text-lg text-neutral-300">{id}</h4>
@@ -281,7 +281,7 @@
 	<span class="text-sm text-neutral-400">If your application isn't listed, try switching to it and back again.</span>
 	<span class="text-sm text-neutral-400">The 'default profile' will activate when the focussed application has no profile associated with it.</span>
 
-	<table class="w-full text-neutral-300 divide-y">
+	<table class="w-full text-neutral-300 divide-y divide-neutral-500!">
 		{#each Object.entries(applicationProfiles).sort((a, b) => a[0] == "opendeck_default" ? -1 : b[0] == "opendeck_default" ? 1 : a[0].localeCompare(b[0])) as [appName, devices]}
 			{#if devices[device.id]}
 				<tr class="h-12">
