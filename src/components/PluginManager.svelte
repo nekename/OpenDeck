@@ -196,7 +196,7 @@
 </script>
 
 <button
-	class="px-3 py-1 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg outline-hidden"
+	class="px-3 py-1 text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg outline-hidden"
 	on:click={() => showPopup = true}
 >
 	Plugins
@@ -213,10 +213,10 @@
 />
 
 <Popup show={showPopup}>
-	<button class="mr-2 my-1 float-right text-xl dark:text-neutral-300" on:click={() => showPopup = false}>✕</button>
-	<h2 class="m-2 font-semibold text-xl dark:text-neutral-300">Manage plugins</h2>
+	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false}>✕</button>
+	<h2 class="m-2 font-semibold text-xl text-neutral-300">Manage plugins</h2>
 
-	<h2 class="mx-2 mt-6 mb-2 text-lg dark:text-neutral-400">Installed plugins</h2>
+	<h2 class="mx-2 mt-6 mb-2 text-lg text-neutral-400">Installed plugins</h2>
 	<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 		<!-- deno-fmt-ignore -->
 		{#each installed.sort((a, b) =>
@@ -243,7 +243,7 @@
 				<svelte:fragment slot="subtitle">
 					{plugin.version}
 					{#if availableUpdates[plugin.id]}
-						(<span class="text-yellow-600 dark:text-yellow-400">
+						(<span class="text-yellow-400">
 							available:
 							<button
 								class="font-semibold underline outline-hidden"
@@ -263,18 +263,18 @@
 				</svelte:fragment>
 
 				{#if $settings?.developer}
-					<ArrowClockwise size="24" class="mt-2 text-neutral-500 dark:text-neutral-400" />
+					<ArrowClockwise size="24" class="mt-2 text-neutral-400" />
 				{:else if !plugin.builtin}
-					<Trash size="24" class="mt-2 text-neutral-500 dark:text-neutral-400" />
+					<Trash size="24" class="mt-2 text-neutral-400" />
 				{/if}
 			</ListedPlugin>
 		{/each}
 	</div>
 
 	<div class="flex flex-row justify-between items-center mx-2 mt-6 mb-2">
-		<h2 class="text-lg dark:text-neutral-400">Plugin store</h2>
+		<h2 class="text-lg text-neutral-400">Plugin store</h2>
 		<button
-			class="flex flex-row items-center mt-2 px-1 py-0.5 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg outline-hidden"
+			class="flex flex-row items-center mt-2 px-1 py-0.5 text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg outline-hidden"
 			on:click={installPluginFile}
 		>
 			<FileArrowUp />
@@ -282,18 +282,18 @@
 		</button>
 	</div>
 
-	<div class="flex flex-row items-center mx-2 my-4 p-3 space-x-2 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 rounded">
+	<div class="flex flex-row items-center mx-2 my-4 p-3 space-x-2 bg-yellow-900/20 border-l-4 border-yellow-500 rounded">
 		<WarningCircle size="20" class="mt-0.5 text-yellow-500" />
-		<div class="text-sm text-yellow-800 dark:text-yellow-200">
+		<div class="text-sm text-yellow-200">
 			If you are experiencing issues with a plugin, please reach out on one of the {PRODUCT_NAME} support channels before attempting to contact the plugin developer.
 		</div>
 	</div>
 
-	<div class="flex flex-row items-center m-2 bg-neutral-200 dark:bg-neutral-700 rounded-md">
-		<MagnifyingGlass size="14" class="ml-3 mr-0.5 text-neutral-500 dark:text-neutral-300" />
+	<div class="flex flex-row items-center m-2 bg-neutral-700 rounded-md">
+		<MagnifyingGlass size="14" class="ml-3 mr-0.5 text-neutral-300" />
 		<input
 			bind:value={query}
-			class="w-full p-2 dark:text-neutral-300 outline-hidden"
+			class="w-full p-2 text-neutral-300 outline-hidden"
 			placeholder="Search plugins"
 			type="search"
 			spellcheck="false"
@@ -301,10 +301,10 @@
 	</div>
 
 	{#if !plugins}
-		<h2 class="mx-2 mt-6 mb-2 text-md dark:text-neutral-400">Loading open-source plugin list...</h2>
+		<h2 class="mx-2 mt-6 mb-2 text-md text-neutral-400">Loading open-source plugin list...</h2>
 	{:else}
 		<div class="flex flex-row items-center ml-2 mt-6 mb-2 space-x-2">
-			<h2 class="font-semibold text-md dark:text-neutral-400">Open-source plugins</h2>
+			<h2 class="font-semibold text-md text-neutral-400">Open-source plugins</h2>
 			<Tooltip>Open-source plugins downloaded from the author's releases</Tooltip>
 		</div>
 		<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -316,19 +316,19 @@
 					hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
 					action={() => openDetailsView = id}
 				>
-					<ArrowSquareOut size="24" class="text-neutral-500 dark:text-neutral-400" />
+					<ArrowSquareOut size="24" class="text-neutral-400" />
 				</ListedPlugin>
 			{/each}
 		</div>
 	{/if}
 
 	<div class="flex flex-row items-center mt-6 mb-2">
-		<h2 class="mx-2 font-semibold text-md dark:text-neutral-400">Elgato App Store archive</h2>
+		<h2 class="mx-2 font-semibold text-md text-neutral-400">Elgato App Store archive</h2>
 		<Tooltip>Plugins archived from the Elgato App Store (now replaced by the Elgato Marketplace)</Tooltip>
 	</div>
 	{#if !showArchive}
 		<button
-			class="ml-2 mt-2 mb-2 px-2 py-1 text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 rounded-lg"
+			class="ml-2 mt-2 mb-2 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg"
 			on:click={async () => {
 				showArchive = true;
 				archivePlugins = await (await fetch("https://plugins.amankhanna.me/catalogue.json")).json();
@@ -337,7 +337,7 @@
 			Load Elgato App Store archive
 		</button>
 	{:else if !archivePlugins}
-		<h2 class="mx-2 mt-4 mb-2 text-md dark:text-neutral-400">Loading Elgato App Store archive plugin list...</h2>
+		<h2 class="mx-2 mt-4 mb-2 text-md text-neutral-400">Loading Elgato App Store archive plugin list...</h2>
 	{:else}
 		<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 			{#each archivePlugins as plugin}
@@ -348,7 +348,7 @@
 					hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
 					action={() => installPluginElgato(plugin)}
 				>
-					<CloudArrowDown size="24" class="text-neutral-500 dark:text-neutral-400" />
+					<CloudArrowDown size="24" class="text-neutral-400" />
 				</ListedPlugin>
 			{/each}
 		</div>
@@ -356,7 +356,7 @@
 
 	{#if "Tacto Connect".toLowerCase().includes(query.toLowerCase())}
 		<div class="flex flex-row items-center mt-6 mb-2">
-			<h2 class="mx-2 font-semibold text-md dark:text-neutral-400">Tacto</h2>
+			<h2 class="mx-2 font-semibold text-md text-neutral-400">Tacto</h2>
 			<Tooltip>Turn your phone or keyboard into a control centre for your computer</Tooltip>
 		</div>
 		<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -374,10 +374,10 @@
 				secondaryAction={() => window.open("https://tacto.live")}
 			>
 				<svelte:fragment slot="secondary">
-					<ArrowSquareOut size="24" class="text-neutral-500 dark:text-neutral-400" />
+					<ArrowSquareOut size="24" class="text-neutral-400" />
 				</svelte:fragment>
 
-				<CloudArrowDown size="24" class="mt-2 text-neutral-500 dark:text-neutral-400" />
+				<CloudArrowDown size="24" class="mt-2 text-neutral-400" />
 			</ListedPlugin>
 		</div>
 	{/if}
@@ -396,7 +396,7 @@
 {/if}
 
 {#if choices}
-	<div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 p-2 w-96 text-xs dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg z-40">
+	<div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 p-2 w-96 text-xs text-neutral-300 bg-neutral-700 border-2 border-neutral-600 rounded-lg z-40">
 		<h3 class="mb-2 font-semibold text-lg text-center">Choose a release asset</h3>
 		<div class="select-wrapper">
 			<select class="w-full" bind:value={choice}>
@@ -406,7 +406,7 @@
 			</select>
 		</div>
 		<button
-			class="mt-2 p-1 w-full text-sm text-neutral-700 dark:text-neutral-300 bg-neutral-200 dark:bg-neutral-800 border dark:border-neutral-600 rounded-lg"
+			class="mt-2 p-1 w-full text-sm text-neutral-300 bg-neutral-800 border border-neutral-600 rounded-lg"
 			on:click={finishChoice}
 		>
 			Install

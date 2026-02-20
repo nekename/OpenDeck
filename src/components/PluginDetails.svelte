@@ -71,7 +71,7 @@
 </script>
 
 <Popup show>
-	<button class="mr-2 my-1 float-right text-xl dark:text-neutral-300" on:click={close}>✕</button>
+	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={close}>✕</button>
 	<div class="flex flex-row items-start">
 		<img
 			src={"https://openactionapi.github.io/plugins/icons/" + id + ".png"}
@@ -79,8 +79,8 @@
 			class="size-48 rounded-2xl"
 		/>
 		<div class="flex flex-col justify-center h-48 ml-8">
-			<div class="text-3xl dark:text-neutral-200">{details.name}</div>
-			<div class="flex items-center mt-2 text-lg text-neutral-600 dark:text-neutral-400">
+			<div class="text-3xl text-neutral-200">{details.name}</div>
+			<div class="flex items-center mt-2 text-lg text-neutral-400">
 				<span class="mr-2">by</span>
 				<img
 					src={"https://avatars.githubusercontent.com/" + details.repository.split("/")[3]}
@@ -116,7 +116,7 @@
 				</button>
 
 				{#if downloadCount}
-					<div class="flex flex-row ml-6 text-neutral-700 dark:text-neutral-300">
+					<div class="flex flex-row ml-6 text-neutral-300">
 						<span class="mr-1 text-lg">{downloadCount}</span>
 						<DownloadSimple size={28} />
 					</div>
@@ -127,7 +127,7 @@
 
 	<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 	<div
-		class="mt-4 p-6 plugin-readme text-neutral-700 dark:text-neutral-300 border-4 border-neutral-300 dark:border-neutral-600 rounded-xl"
+		class="mt-4 p-6 plugin-readme text-neutral-300 border-4 border-neutral-600 rounded-xl"
 		on:click={handleReadmeClick}
 		on:keyup={handleReadmeClick}
 		role="region"

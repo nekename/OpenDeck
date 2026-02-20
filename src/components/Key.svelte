@@ -136,7 +136,7 @@
 >
 	<canvas
 		bind:this={canvas}
-		class="relative -m-2 border-2 dark:border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
+		class="relative -m-2 border-2 border-neutral-700 rounded-md outline-none outline-offset-2 outline-blue-500"
 		class:outline-solid={slot && $inspectedInstance == slot.context}
 		class:-m-[2.06rem]={size == 192}
 		class:rounded-full!={context?.controller == "Encoder"}
@@ -152,13 +152,13 @@
 		on:contextmenu={contextMenu}
 	/>
 	{#if isTouchPoint && !slot}
-		<div class="absolute left-1/4 top-1/2 w-1/2 border-t-4 dark:border-neutral-700 pointer-events-none"></div>
+		<div class="absolute left-1/4 top-1/2 w-1/2 border-t-4 border-neutral-700 pointer-events-none"></div>
 	{/if}
 </div>
 
 {#if $openContextMenu && $openContextMenu?.context == context}
 	<div
-		class="absolute text-sm font-semibold w-32 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 border-2 dark:border-neutral-600 rounded-lg divide-y z-10"
+		class="absolute text-sm font-semibold w-32 text-neutral-300 bg-neutral-700 border-2 border-neutral-600 rounded-lg divide-y z-10"
 		style={`left: ${$openContextMenu.x}px; top: ${$openContextMenu.y}px;`}
 	>
 		{#if !slot}
@@ -166,7 +166,7 @@
 				class="flex flex-row p-2 w-full cursor-pointer items-center"
 				on:click={paste}
 			>
-				<Clipboard size="18" class="text-neutral-500 dark:text-neutral-300" />
+				<Clipboard size="18" class="text-neutral-300" />
 				<span class="ml-2"> Paste </span>
 			</button>
 		{:else}
@@ -174,14 +174,14 @@
 				class="flex flex-row p-2 w-full cursor-pointer items-center"
 				on:click={edit}
 			>
-				<Pencil size="18" class="text-neutral-500 dark:text-neutral-300" />
+				<Pencil size="18" class="text-neutral-300" />
 				<span class="ml-2"> Edit </span>
 			</button>
 			<button
 				class="flex flex-row p-2 w-full cursor-pointer items-center"
 				on:click={() => copiedContext.set(context)}
 			>
-				<Copy size="18" class="text-neutral-500 dark:text-neutral-300" />
+				<Copy size="18" class="text-neutral-300" />
 				<span class="ml-2"> Copy </span>
 			</button>
 			<button

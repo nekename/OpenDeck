@@ -3,7 +3,6 @@ export type Settings = {
 	language: string;
 	brightness: number;
 	rotation: number;
-	darktheme: boolean;
 	background: boolean;
 	autolaunch: boolean;
 	updatecheck: boolean;
