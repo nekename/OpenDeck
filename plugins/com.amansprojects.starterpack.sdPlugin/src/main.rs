@@ -1,4 +1,5 @@
 mod device_brightness;
+mod infobar_clock;
 mod input_simulation;
 mod open_url;
 mod run_command;
@@ -40,6 +41,7 @@ async fn main() -> OpenActionResult<()> {
 
 	global_events::set_global_event_handler(&GlobalEventHandler);
 	register_action(device_brightness::DeviceBrightnessAction).await;
+	register_action(infobar_clock::InfobarClockAction).await;
 	register_action(input_simulation::InputSimulationAction).await;
 	register_action(open_url::OpenUrlAction).await;
 	register_action(run_command::RunCommandAction).await;

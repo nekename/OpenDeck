@@ -348,19 +348,6 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 					}
 				))
 				.unwrap(),
-				serde_json::from_value(serde_json::json!(
-					{
-						"name": "Infobar Test",
-						"icon": "opendeck/multi-action.png",
-						"plugin": "opendeck",
-						"uuid": "opendeck.infobar.test",
-						"tooltip": "Test action for Infobar display",
-						"controllers": [ "Infobar" ],
-						"states": [ { "image": "opendeck/multi-action.png" } ],
-						"supported_in_multi_actions": false
-					}
-				))
-				.unwrap(),
 			],
 		},
 	);

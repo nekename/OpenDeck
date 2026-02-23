@@ -35,7 +35,7 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 
 	if selected_profile != id {
 		let old_profile = &locks.profile_stores.get_profile_store(&DEVICES.get(&device).unwrap(), &selected_profile)?.value;
-		for instance in old_profile.keys.iter().flatten().chain(&mut old_profile.sliders.iter().flatten()) {
+		for instance in old_profile.keys.iter().flatten().chain(&mut old_profile.sliders.iter().flatten()).chain(&mut old_profile.infobar.iter().flatten()) {
 			if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
 				let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
 			} else {
@@ -50,7 +50,7 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 	// We must use the mutable version of get_profile_store in order to create the store if it does not exist.
 	let store = locks.profile_stores.get_profile_store_mut(&DEVICES.get(&device).unwrap(), &id).await?;
 	let new_profile = &store.value;
-	for instance in new_profile.keys.iter().flatten().chain(&mut new_profile.sliders.iter().flatten()) {
+	for instance in new_profile.keys.iter().flatten().chain(&mut new_profile.sliders.iter().flatten()).chain(&mut new_profile.infobar.iter().flatten()) {
 		if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		} else {

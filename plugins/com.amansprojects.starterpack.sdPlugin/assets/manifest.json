@@ -78,6 +78,15 @@
 			"Tooltip": "Change the device brightness",
 			"UUID": "com.amansprojects.starterpack.devicebrightness",
 			"PropertyInspectorPath": "propertyInspector/deviceBrightness.html"
+		},
+		{
+			"Icon": "icons/clock",
+			"Name": "Infobar Clock",
+			"States": [{ "Image": "actionDefaultImage" }],
+			"Controllers": ["Infobar"],
+			"SupportedInMultiActions": false,
+			"Tooltip": "Display time and date on the infobar",
+			"UUID": "com.amansprojects.starterpack.infobar.clock"
 		}
 	]
 }

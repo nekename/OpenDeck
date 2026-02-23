@@ -215,7 +215,7 @@ impl DiskProfile {
 			id,
 			keys: self.keys.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
 			sliders: self.sliders.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
-			infobar: vec![],
+			infobar: self.infobar.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
 		}
 	}
 }
