@@ -202,7 +202,7 @@ If you have already donated, thank you so much for your support!"#,
 			let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
 			let separator = PredefinedMenuItem::separator(app)?;
 			let menu = MenuBuilder::new(app).items(&[&label, &separator, &show, &hide, &separator, &quit]).build()?;
-			let _tray = TrayIconBuilder::new()
+			let _tray = TrayIconBuilder::with_id("opendeck")
 				.menu(&menu)
 				.icon(app.default_window_icon().unwrap().clone())
 				.show_menu_on_left_click(false)
