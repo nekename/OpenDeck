@@ -38,6 +38,8 @@ pub struct DeviceInfo {
 	pub encoders: u8,
 	#[serde_inline_default(0)]
 	pub touchpoints: u8,
+	#[serde_inline_default(0)]
+	pub infobar: u8,
 	pub r#type: u8,
 }
 
@@ -308,6 +310,8 @@ pub struct Profile {
 	pub id: String,
 	pub keys: Vec<Option<ActionInstance>>,
 	pub sliders: Vec<Option<ActionInstance>>,
+	#[serde(default)]
+	pub infobar: Vec<Option<ActionInstance>>,
 }
 
 /// A map of category names to a list of actions in that category.
@@ -340,6 +344,19 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 						"tooltip": "Cycle through multiple actions",
 						"controllers": [ "Keypad" ],
 						"states": [ { "image": "opendeck/toggle-action.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Infobar Test",
+						"icon": "opendeck/multi-action.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.infobar.test",
+						"tooltip": "Test action for Infobar display",
+						"controllers": [ "Infobar" ],
+						"states": [ { "image": "opendeck/multi-action.png" } ],
 						"supported_in_multi_actions": false
 					}
 				))

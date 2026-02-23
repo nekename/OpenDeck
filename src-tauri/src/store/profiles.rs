@@ -37,11 +37,13 @@ impl ProfileStores {
 				id: id.to_owned(),
 				keys: Vec::new(),
 				sliders: Vec::new(),
+				infobar: Vec::new(),
 			};
 
 			let mut store = Store::new(&canonical_id, &config_dir().join("profiles"), default).context(format!("Failed to create store for profile {}", canonical_id))?;
 			store.value.keys.resize((device.rows * device.columns + device.touchpoints) as usize, None);
 			store.value.sliders.resize(device.encoders as usize, None);
+			store.value.infobar.resize(device.infobar as usize, None);
 
 			let categories = crate::shared::CATEGORIES.read().await;
 			let actions = categories.values().flat_map(|v| v.actions.iter()).collect::<Vec<_>>();
@@ -51,10 +53,10 @@ impl ProfileStores {
 				instance.action.plugin == "opendeck"
 					|| (plugins_dir.join(&instance.action.plugin).exists() && (!registered.contains(&instance.action.plugin) || actions.iter().any(|v| v.uuid == instance.action.uuid)))
 			};
-			for slot in store.value.keys.iter_mut().chain(store.value.sliders.iter_mut()) {
+			for slot in store.value.keys.iter_mut().chain(store.value.sliders.iter_mut()).chain(store.value.infobar.iter_mut()) {
 				if let Some(instance) = slot {
 					if !keep_instance(instance) {
-						*slot = None;
+						slot.take();
 					} else if let Some(children) = &mut instance.children {
 						children.retain_mut(|child| keep_instance(child));
 					}
@@ -144,7 +146,7 @@ impl ProfileStores {
 	pub fn all_from_plugin(&self, plugin: &str) -> Vec<crate::shared::ActionContext> {
 		let mut all = vec![];
 		for store in self.stores.values() {
-			for instance in store.value.keys.iter().chain(&store.value.sliders).flatten() {
+			for instance in store.value.keys.iter().chain(&store.value.sliders).chain(&store.value.infobar).flatten() {
 				if instance.action.plugin == plugin {
 					all.push(instance.context.clone());
 				} else if let Some(children) = &instance.children {
@@ -288,6 +290,7 @@ pub async fn get_slot<'a>(context: &crate::shared::Context, locks: &'a Locks<'_>
 
 	let configured = match &context.controller[..] {
 		"Encoder" => store.value.sliders.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
+		"Infobar" => store.value.infobar.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 		_ => store.value.keys.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 	};
 
@@ -299,8 +302,9 @@ pub async fn get_slot_mut<'a>(context: &crate::shared::Context, locks: &'a mut L
 	let store = locks.profile_stores.get_profile_store_mut(&device, &context.profile).await?;
 
 	let configured = match &context.controller[..] {
-		"Encoder" => store.value.sliders.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
-		_ => store.value.keys.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
+		"Encoder" => store.value.sliders.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds: {} for Encoder", context.position))?,
+		"Infobar" => store.value.infobar.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds: {} for Infobar", context.position))?,
+		_ => store.value.keys.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds: {} for Keypad", context.position))?,
 	};
 
 	Ok(configured)

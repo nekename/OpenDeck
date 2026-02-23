@@ -30,6 +30,7 @@
 	export let active: boolean = true;
 	export let scale: number = 1;
 	export let isTouchPoint: boolean = false;
+	export let isInfobar: boolean = false;
 	let pressed: boolean = false;
 
 	let state: ActionState | undefined;
@@ -140,9 +141,10 @@
 		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
 		class:outline-solid={slot && $inspectedInstance == slot.context}
 		class:rounded-full!={context?.controller == "Encoder"}
+		class:rounded-lg!={isInfobar}
 		class:bg-black={slot != null}
-		width={size}
-		height={size}
+		width={isInfobar ? 200 : size}
+		height={isInfobar ? 36 : size}
 		draggable={slot != null}
 		on:dragstart
 		on:dragover
