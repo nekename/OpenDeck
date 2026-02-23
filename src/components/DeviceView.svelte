@@ -144,6 +144,7 @@
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					isInfobar
+					deviceType={device.type}
 				/>
 			{/each}
 		</div>

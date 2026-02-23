@@ -59,7 +59,8 @@ export async function renderImage(
 		canvas.width = 144;
 		canvas.height = 144;
 	} else {
-		scale = canvas.width / 144;
+		// Use height for scale to handle rectangular infobar canvases
+		scale = canvas.height / 144;
 	}
 
 	const context = canvas.getContext("2d");

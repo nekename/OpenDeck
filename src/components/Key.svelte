@@ -31,6 +31,7 @@
 	export let scale: number = 1;
 	export let isTouchPoint: boolean = false;
 	export let isInfobar: boolean = false;
+	export let deviceType: number = 0;
 	let pressed: boolean = false;
 
 	let state: ActionState | undefined;
@@ -143,8 +144,8 @@
 		class:rounded-full!={context?.controller == "Encoder"}
 		class:rounded-lg!={isInfobar}
 		class:bg-black={slot != null}
-		width={isInfobar ? 200 : size}
-		height={isInfobar ? 36 : size}
+		width={isInfobar ? (deviceType === 9 ? 248 : 200) : size}
+		height={isInfobar ? (deviceType === 9 ? 58 : 100) : size}
 		draggable={slot != null}
 		on:dragstart
 		on:dragover
