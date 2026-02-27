@@ -122,11 +122,13 @@
 			}
 		}
 	})();
-	$: {
-		if ($settings?.rotation != undefined) {
-			canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
-			slot = slot;
-		}
+
+	function clearAndRedraw() {
+		canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+		slot = slot;
+	}
+	$: if ($settings?.rotation != undefined) {
+		clearAndRedraw();
 	}
 </script>
 
