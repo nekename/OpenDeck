@@ -75,6 +75,7 @@
 			iframeContainer.style.height = "";
 			iframeContainer.style.padding = "";
 			iframeContainer.style.zIndex = "0";
+			iframeContainer.style.maxHeight = "";
 
 			iframeClosePopup.style.display = "none";
 		}
@@ -97,6 +98,7 @@
 			iframeContainer.style.height = "100%";
 			iframeContainer.style.padding = "36px";
 			iframeContainer.style.zIndex = "20";
+			iframeContainer.style.maxHeight = "100vh";
 
 			iframeClosePopup.style.display = "block";
 		} else if (data.event == "windowClosed") {
