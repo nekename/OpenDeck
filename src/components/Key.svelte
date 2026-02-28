@@ -112,8 +112,9 @@
 		if (!sl) {
 			const unlock = await lock.lock();
 			try {
-				const context = canvas?.getContext("2d");
-				if (context) context.clearRect(0, 0, canvas.width, canvas.height);
+				const ctx = canvas?.getContext("2d");
+				if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+				if (active) await invoke("update_image", { context, image: null });
 			} finally {
 				unlock();
 			}

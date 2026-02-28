@@ -217,12 +217,12 @@ pub async fn set_state(instance: ActionInstance, state: u16) -> Result<(), Error
 }
 
 #[command]
-pub async fn update_image(context: Context, image: String) {
+pub async fn update_image(context: Context, image: Option<String>) {
 	if Some(&context.profile) != crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(&context.device).ok().as_ref() {
 		return;
 	}
 
-	if let Err(error) = crate::events::outbound::devices::update_image(context, Some(image)).await {
+	if let Err(error) = crate::events::outbound::devices::update_image(context, image).await {
 		log::warn!("Failed to update device image: {}", error);
 	}
 }
