@@ -110,8 +110,13 @@
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
-			const context = canvas?.getContext("2d");
-			if (context) context.clearRect(0, 0, canvas.width, canvas.height);
+			const unlock = await lock.lock();
+			try {
+				const context = canvas?.getContext("2d");
+				if (context) context.clearRect(0, 0, canvas.width, canvas.height);
+			} finally {
+				unlock();
+			}
 		} else {
 			const unlock = await lock.lock();
 			try {
