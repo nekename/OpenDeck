@@ -17,6 +17,7 @@
 	import { listen } from "@tauri-apps/api/event";
 
 	export let context: Context | null;
+	export let label: string = "";
 
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
@@ -107,6 +108,8 @@
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
+
+	$: accessibleLabel = label + (slot ? ": " + slot.action.name + (state?.show && state?.text ? " - " + state.text : "") : "");
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
@@ -152,11 +155,14 @@
 		width={size}
 		height={size}
 		draggable={slot != null}
+		tabindex="0"
+		role="button"
+		aria-label={accessibleLabel}
 		on:dragstart
 		on:dragover
 		on:drop
 		on:click|stopPropagation={select}
-		on:keyup|stopPropagation={select}
+		on:keyup|stopPropagation={(e) => { if (e.key === "Enter" || e.key === " ") select(e); }}
 		on:contextmenu={contextMenu}
 	/>
 	{#if isTouchPoint && !slot}
