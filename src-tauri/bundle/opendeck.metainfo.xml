@@ -53,6 +53,29 @@
 	</branding>
 
 	<releases>
+		<release version="2.10.0" date="2026-02-28">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.10.0</url>
+			<description>
+				<ul>
+					<li>refactor: replace svelte.config.js with svelte.config.ts to eliminate untyped code</li>
+					<li>fix: prevent updating images for non-visual Elgato devices</li>
+					<li>refactor: clean out unneeded sections of sdpi.css to reduce bloat</li>
+					<li>feat: move to a navbar-based layout on the home screen for easier navigation</li>
+					<li>refactor: replace `fs2` crate with stabilised `std::fs` equivalents</li>
+					<li>fix: prevent concurrent operations on plugin global settings files to ensure did_receive_global_settings can read a complete file</li>
+					<li>docs: add issue and pull request preflight checklists to reduce administrative overhead during issue and pull request review</li>
+					<li>feat: remove light mode support as it was poorly maintained</li>
+					<li>feat: refine styling across the application for better contrast and consistency</li>
+					<li>fix: initialise tray icon with a static id (#252)</li>
+					<li>fix: limit redraws to rotation setting changes to stop key canvas flickering</li>
+					<li>fix: ensure popups opened by property inspectors are able to take up the full viewport height</li>
+					<li>chore: ensure all Markdown files are excluded from the Deno formatter</li>
+					<li>docs: update screenshots</li>
+					<li>fix: extend canvas locking mechanism to canvas clearing to ensure operation order is preserved and prevent painting ghost images</li>
+					<li>fix: clear image on device as well as in the UI when clearing the canvas due to the slot becoming empty in case another render occurred since the device was cleared on profile switch</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.9.1" date="2026-02-14">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.9.1</url>
 			<description>
