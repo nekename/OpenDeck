@@ -80,7 +80,8 @@ pub async fn init_webserver(prefix: PathBuf) {
 					const opendeck_window_open = window.open;
 					const opendeck_iframe_container = document.getElementById("opendeck_iframe_container");
 
-					window.addEventListener("message", ({ data }) => {
+					window.addEventListener("message", (event) => {
+						const data = event.data;
 						if (data.event == "connect") {
 							event.stopImmediatePropagation();
 							if (typeof connectOpenActionSocket === "function") connectOpenActionSocket(...data.payload);
@@ -116,7 +117,8 @@ pub async fn init_webserver(prefix: PathBuf) {
 					const opendeck_window_fetch = window.fetch;
 					let opendeck_fetch_count = 0;
 					let opendeck_fetch_promises = {};
-					window.addEventListener("message", ({ data }) => {
+					window.addEventListener("message", (event) => {
+						const data = event.data;
 						if (data.event == "fetchResponse") {
 							event.stopImmediatePropagation();
 							const response = new Response(data.payload.response.body, data.payload.response);
