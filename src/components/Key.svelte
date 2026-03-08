@@ -109,7 +109,6 @@
 	let lock = new CanvasLock();
 	export let size = 144;
 
-	$: accessibleLabel = label + (slot ? ": " + slot.action.name + (state?.show && state?.text ? " - " + state.text : "") : "");
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
@@ -139,6 +138,8 @@
 	$: if ($settings?.rotation != undefined) {
 		clearAndRedraw();
 	}
+
+	$: accessibleLabel = label + (slot ? ": " + slot.action.name + (state?.show && state?.text ? " - " + state.text : "") : "");
 </script>
 
 <div
@@ -162,7 +163,12 @@
 		on:dragover
 		on:drop
 		on:click|stopPropagation={select}
-		on:keyup|stopPropagation={(e) => { if (e.key === "Enter" || e.key === " ") select(e); }}
+		on:keydown|stopPropagation={(e) => {
+			if (e.key === "Enter") select(e);
+		}}
+		on:keyup|stopPropagation={(e) => {
+			if (e.key === " ") select(e);
+		}}
 		on:contextmenu={contextMenu}
 	/>
 	{#if isTouchPoint && !slot}

@@ -101,12 +101,12 @@
 						<Key
 							context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (r * device.columns) + c }}
 							bind:inslot={profile.keys[(r * device.columns) + c]}
-							label="Key {String.fromCharCode(65 + r)}{c + 1}"
 							on:dragover={handleDragOver}
 							on:drop={(event) => handleDrop(event, "Keypad", (r * device.columns) + c)}
 							on:dragstart={(event) => handleDragStart(event, "Keypad", (r * device.columns) + c)}
 							{handlePaste}
 							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+							label="Key {String.fromCharCode(65 + r)}{c + 1}"
 						/>
 					{/each}
 				</div>
@@ -118,12 +118,12 @@
 				<Key
 					context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
 					bind:inslot={profile.sliders[i]}
-					label="Encoder {i + 1}"
 					on:dragover={handleDragOver}
 					on:drop={(event) => handleDrop(event, "Encoder", i)}
 					on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+					label="Encoder {i + 1}"
 				/>
 			{/each}
 		</div>
@@ -133,13 +133,13 @@
 				<Key
 					context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (device.rows * device.columns) + i }}
 					bind:inslot={profile.keys[(device.rows * device.columns) + i]}
-					label="Touch strip {i + 1}"
 					on:dragover={handleDragOver}
 					on:drop={(event) => handleDrop(event, "Keypad", (device.rows * device.columns) + i)}
 					on:dragstart={(event) => handleDragStart(event, "Keypad", (device.rows * device.columns) + i)}
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					isTouchPoint
+					label="Touch point {i + 1}"
 				/>
 			{/each}
 		</div>
