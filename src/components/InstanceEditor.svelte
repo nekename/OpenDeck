@@ -22,6 +22,11 @@
 	let solidColourInput: HTMLInputElement;
 	let backgroundColourInput: HTMLInputElement;
 
+	function adjustImageScale(delta: number) {
+		const next = (instance.states[state].image_scale || 100) + delta;
+		instance.states[state].image_scale = Math.max(10, Math.min(200, next));
+	}
+
 	function handleDrop(event: DragEvent) {
 		event.preventDefault();
 
@@ -93,6 +98,25 @@
 					/>
 				{/await}
 			</button>
+			<div class="mt-1 flex flex-row items-center justify-center space-x-1">
+				<button
+					class="w-6 h-6 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md outline-hidden"
+					on:click={() => adjustImageScale(-10)}
+					aria-label="Decrease image size"
+				>
+					-
+				</button>
+				<span class="min-w-12 text-center text-xs text-neutral-300 tabular-nums">
+					{instance.states[state].image_scale || 100}%
+				</span>
+				<button
+					class="w-6 h-6 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md outline-hidden"
+					on:click={() => adjustImageScale(10)}
+					aria-label="Increase image size"
+				>
+					+
+				</button>
+			</div>
 			<button
 				on:click={() => backgroundColourInput.click()}
 				on:focus={() => {
