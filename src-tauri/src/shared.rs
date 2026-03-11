@@ -116,6 +116,9 @@ pub struct ActionState {
 	#[serde(alias = "Image")]
 	pub image: String,
 	// Note: this is not a real manifest property; it is only used internally.
+	#[serde(alias = "ImageScale")]
+	pub image_scale: u8,
+	// Note: this is not a real manifest property; it is only used internally.
 	#[serde(alias = "BackgroundColour")]
 	pub background_colour: String,
 	#[serde(alias = "Name")]
@@ -148,6 +151,7 @@ impl Default for ActionState {
 	fn default() -> Self {
 		Self {
 			image: "actionDefaultImage".to_owned(),
+			image_scale: 100,
 			background_colour: "#000000".to_owned(),
 			name: String::new(),
 			text: String::new(),
