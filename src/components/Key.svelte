@@ -136,6 +136,11 @@
 	$: if ($settings?.rotation != undefined) {
 		clearAndRedraw();
 	}
+
+	async function triggerVirtualPress() {
+		if (!active || !context || !slot) return;
+		await invoke("trigger_virtual_press", { context });
+	}
 </script>
 
 <div
@@ -156,6 +161,7 @@
 		on:dragover
 		on:drop
 		on:click|stopPropagation={select}
+		on:dblclick|stopPropagation={triggerVirtualPress}
 		on:keyup|stopPropagation={select}
 		on:contextmenu={contextMenu}
 	/>
