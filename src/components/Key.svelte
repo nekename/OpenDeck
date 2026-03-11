@@ -138,6 +138,11 @@
 		clearAndRedraw();
 	}
 
+	async function triggerVirtualPress() {
+		if (!active || !context || !slot) return;
+		await invoke("trigger_virtual_press", { context });
+	}
+
 	$: accessibleLabel = label + (slot ? ": " + slot.action.name + (state?.show && state?.text ? " - " + state.text : "") : "");
 </script>
 
@@ -162,6 +167,7 @@
 		on:dragover
 		on:drop
 		on:click|stopPropagation={select}
+		on:dblclick|stopPropagation={triggerVirtualPress}
 		on:keydown|stopPropagation={(e) => {
 			if (e.key === "Enter") select(e);
 		}}
