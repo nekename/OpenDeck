@@ -21,6 +21,7 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 		event.payload.plugin = uuid.to_owned();
 		let _ = crate::events::outbound::devices::device_did_connect(&event.payload.id, (&event.payload).into()).await;
 		DEVICES.insert(event.payload.id.clone(), event.payload.clone());
+		let _ = crate::device_sleep::register_device(&event.payload.id).await;
 		crate::events::frontend::update_devices().await;
 
 		let mut locks = crate::store::profiles::acquire_locks_mut().await;
@@ -65,6 +66,7 @@ pub async fn deregister_device(uuid: &str, event: PayloadEvent<String>) -> Resul
 		drop(locks);
 
 		let _ = crate::events::outbound::devices::device_did_disconnect(&event.payload).await;
+		crate::device_sleep::deregister_device(&event.payload);
 		DEVICES.remove(&event.payload);
 		crate::events::frontend::update_devices().await;
 
@@ -81,10 +83,12 @@ pub struct PressPayload {
 }
 
 pub async fn key_down(event: PayloadEvent<PressPayload>) -> Result<(), anyhow::Error> {
+	let _ = crate::device_sleep::input_started(&event.payload.device).await;
 	crate::events::outbound::keypad::key_down(&event.payload.device, event.payload.position).await
 }
 
 pub async fn key_up(event: PayloadEvent<PressPayload>) -> Result<(), anyhow::Error> {
+	let _ = crate::device_sleep::input_ended(&event.payload.device).await;
 	crate::events::outbound::keypad::key_up(&event.payload.device, event.payload.position).await
 }
 
@@ -96,14 +100,17 @@ pub struct TicksPayload {
 }
 
 pub async fn encoder_change(event: PayloadEvent<TicksPayload>) -> Result<(), anyhow::Error> {
+	let _ = crate::device_sleep::note_activity(&event.payload.device).await;
 	crate::events::outbound::encoder::dial_rotate(&event.payload.device, event.payload.position, event.payload.ticks).await
 }
 
 pub async fn encoder_down(event: PayloadEvent<PressPayload>) -> Result<(), anyhow::Error> {
+	let _ = crate::device_sleep::input_started(&event.payload.device).await;
 	crate::events::outbound::encoder::dial_press(&event.payload.device, "dialDown", event.payload.position).await
 }
 
 pub async fn encoder_up(event: PayloadEvent<PressPayload>) -> Result<(), anyhow::Error> {
+	let _ = crate::device_sleep::input_ended(&event.payload.device).await;
 	crate::events::outbound::encoder::dial_press(&event.payload.device, "dialUp", event.payload.position).await
 }
 
