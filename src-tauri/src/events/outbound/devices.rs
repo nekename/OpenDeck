@@ -110,3 +110,21 @@ pub async fn set_brightness(brightness: u8) -> Result<(), anyhow::Error> {
 
 	Ok(())
 }
+
+pub async fn set_device_brightness(device: &str, brightness: u8) -> Result<(), anyhow::Error> {
+	if let Some(plugin) = DEVICE_NAMESPACES.read().await.get(&device[..2]) {
+		send_to_plugin(
+			plugin,
+			&SetBrightnessEvent {
+				event: "setBrightness",
+				device: device.to_owned(),
+				brightness,
+			},
+		)
+		.await?;
+	} else if device.starts_with("sd-") {
+		crate::elgato::set_device_brightness(device, brightness).await;
+	}
+
+	Ok(())
+}

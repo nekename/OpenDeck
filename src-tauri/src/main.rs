@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod application_watcher;
+mod device_sleep;
 mod elgato;
 mod events;
 mod plugins;
@@ -190,6 +191,7 @@ If you have already donated, thank you so much for your support!"#,
 					tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 				}
 			});
+			device_sleep::init();
 			plugins::initialise_plugins();
 			application_watcher::init_application_watcher();
 
