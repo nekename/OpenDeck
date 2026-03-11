@@ -10,6 +10,7 @@
 			"exclude": ["no-explicit-any"]
 		}
 	},
+	"unstable": ["raw-imports"],
 	"compilerOptions": {
 		"lib": ["ES2021", "DOM", "DOM.Iterable"],
 		"strict": true,
