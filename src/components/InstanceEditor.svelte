@@ -46,7 +46,7 @@
 		italic = instance.states[state].style.includes("Italic");
 	}
 	$: update(instance);
-	$: invoke("set_state", { instance, state });
+	$: invoke("set_state", { context: instance.context, index: state, state: instance.states[state] });
 </script>
 
 <svelte:window

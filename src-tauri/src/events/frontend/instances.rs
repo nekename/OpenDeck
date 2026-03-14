@@ -1,6 +1,6 @@
 use super::Error;
 
-use crate::shared::{Action, ActionContext, ActionInstance, Context, config_dir};
+use crate::shared::{Action, ActionContext, ActionInstance, ActionState, Context, config_dir};
 use crate::store::profiles::{LocksMut, acquire_locks_mut, get_instance_mut, get_slot_mut, save_profile};
 
 use tauri::{AppHandle, Emitter, Manager, command};
@@ -207,12 +207,13 @@ pub async fn update_state(app: &AppHandle, context: ActionContext, locks: &mut L
 }
 
 #[command]
-pub async fn set_state(instance: ActionInstance, state: u16) -> Result<(), Error> {
+pub async fn set_state(context: ActionContext, index: u16, state: ActionState) -> Result<(), Error> {
 	let mut locks = acquire_locks_mut().await;
-	let reference = get_instance_mut(&instance.context, &mut locks).await?.unwrap();
-	*reference = instance.clone();
-	save_profile(&instance.context.device, &mut locks).await?;
-	crate::events::outbound::states::title_parameters_did_change(&instance, state).await?;
+	let reference = get_instance_mut(&context, &mut locks).await?.unwrap();
+	reference.states[index as usize] = state;
+	let clone = reference.clone();
+	save_profile(&context.device, &mut locks).await?;
+	crate::events::outbound::states::title_parameters_did_change(&clone, index).await?;
 	Ok(())
 }
 
