@@ -108,7 +108,6 @@
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
-
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
