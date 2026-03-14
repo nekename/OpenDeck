@@ -156,7 +156,7 @@
 		height={size}
 		draggable={slot != null}
 		tabindex="0"
-		role="button"
+		role="gridcell"
 		aria-label={accessibleLabel}
 		on:dragstart
 		on:dragover
