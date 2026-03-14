@@ -15,6 +15,7 @@
 
 	export let selectedDevice: string;
 
+
 	function handleDragStart({ dataTransfer }: DragEvent, controller: string, position: number) {
 		if (!dataTransfer) return;
 		dataTransfer.effectAllowed = "move";
@@ -31,22 +32,28 @@
 
 	async function handleDrop({ dataTransfer }: DragEvent, controller: string, position: number) {
 		let context = { device: device.id, profile: profile.id, controller, position };
-		let array = controller == "Encoder" ? profile.sliders : profile.keys;
+		let array = controller == "Encoder" ? profile.sliders : controller == "Infobar" ? profile.infobar : profile.keys;
+		
 		if (dataTransfer?.getData("action")) {
 			let action = JSON.parse(dataTransfer?.getData("action"));
 			if (array[position]) {
 				return;
 			}
-			array[position] = await invoke("create_instance", { context, action });
+			console.log("drop context:", context);
+			console.log("drop action:", action);
+			let response = (await invoke("create_instance", { context, action })) as any;
+			console.log("create response:", response);
+			array[position] = response;
 			profile = profile;
 		} else if (dataTransfer?.getData("controller")) {
-			let oldArray = dataTransfer?.getData("controller") == "Encoder" ? profile.sliders : profile.keys;
+			let oldController = dataTransfer?.getData("controller");
+			let oldArray = oldController == "Encoder" ? profile.sliders : oldController == "Infobar" ? profile.infobar : profile.keys;
 			let oldPosition = parseInt(dataTransfer?.getData("position"));
-			let response: ActionInstance = await invoke("move_instance", {
-				source: { device: device.id, profile: profile.id, controller: dataTransfer?.getData("controller"), position: oldPosition },
+			let response = (await invoke("move_instance", {
+				source: { device: device.id, profile: profile.id, controller: oldController, position: oldPosition },
 				destination: context,
 				retain: false,
-			});
+			})) as any;
 			if (response) {
 				array[position] = response;
 				oldArray[oldPosition] = null;
@@ -56,9 +63,10 @@
 	}
 
 	async function handlePaste(source: Context, destination: Context) {
-		let response: ActionInstance = await invoke("move_instance", { source, destination, retain: true });
+		let response = (await invoke("move_instance", { source, destination, retain: true })) as any;
 		if (response) {
-			(destination.controller == "Encoder" ? profile.sliders : profile.keys)[destination.position] = response;
+			let array = destination.controller == "Encoder" ? profile.sliders : destination.controller == "Infobar" ? profile.infobar : profile.keys;
+			array[destination.position] = response;
 			profile = profile;
 		}
 	}
@@ -97,17 +105,17 @@
 		<div class="flex flex-col">
 			{#each { length: device.rows } as _, r}
 				<div class="flex flex-row">
-					{#each { length: device.columns } as _, c}
-						<Key
-							context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (r * device.columns) + c }}
-							bind:inslot={profile.keys[(r * device.columns) + c]}
-							on:dragover={handleDragOver}
-							on:drop={(event) => handleDrop(event, "Keypad", (r * device.columns) + c)}
-							on:dragstart={(event) => handleDragStart(event, "Keypad", (r * device.columns) + c)}
-							{handlePaste}
-							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-						/>
-					{/each}
+						{#each { length: device.columns } as _, c}
+							<Key
+								context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (r * device.columns) + c }}
+								bind:inslot={profile.keys[(r * device.columns) + c]}
+								on:dragover={handleDragOver}
+								on:drop={(event) => handleDrop(event, "Keypad", (r * device.columns) + c)}
+								on:dragstart={(event) => handleDragStart(event, "Keypad", (r * device.columns) + c)}
+								{handlePaste}
+								size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+							/>
+						{/each}
 				</div>
 			{/each}
 		</div>
@@ -125,7 +133,21 @@
 				/>
 			{/each}
 		</div>
-
+		<div class="flex flex-row">
+			{#each { length: device.infobar } as _, i}
+				<Key
+					context={{ device: device.id, profile: profile.id, controller: "Infobar", position: i }}
+					bind:inslot={profile.infobar[i]}
+					on:dragover={handleDragOver}
+					on:drop={(event) => handleDrop(event, "Infobar", i)}
+					on:dragstart={(event) => handleDragStart(event, "Infobar", i)}
+					{handlePaste}
+					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+					isInfobar
+					deviceType={device.type}
+				/>
+			{/each}
+		</div>
 		<div class="flex flex-row">
 			{#each { length: device.touchpoints } as _, i}
 				<Key

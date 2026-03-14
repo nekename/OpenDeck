@@ -45,6 +45,25 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 						&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
 					)
 					.await?;
+			} else if context.controller == "Infobar" {
+				if device.kind() == Kind::Plus {
+					device
+						.write_lcd(
+							context.position as u16 * 200,
+							0,
+							&ImageRect::from_image_async(image::DynamicImage::ImageRgba8(
+								image::load_from_memory(&bytes)?
+									.resize_exact(200, 100, image::imageops::FilterType::Lanczos3)
+									.into_rgba8()
+							))?,
+						)
+						.await?;
+				} else if device.kind() == Kind::Neo {
+					let img = image::load_from_memory(&bytes)?;
+					let format = device.kind().lcd_image_format().unwrap();
+					let data = convert_image_with_format_async(format, img.resize_exact(248, 58, image::imageops::FilterType::Lanczos3))?;
+					device.write_lcd_fill(&data).await?;
+				}
 			} else if is_touch_point {
 				let (r, g, b) = extract_average_colour(&image::load_from_memory(&bytes)?);
 				device.set_touchpoint_color(context.position - key_count, r, g, b).await?;
@@ -55,6 +74,14 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			device
 				.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
 				.await?;
+		} else if context.controller == "Infobar" {
+			if device.kind() == Kind::Plus {
+				device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?).await?;
+			} else if device.kind() == Kind::Neo {
+				let format = device.kind().lcd_image_format().unwrap();
+				let data = convert_image_with_format_async(format, image::DynamicImage::new_rgb8(248, 58))?;
+				device.write_lcd_fill(&data).await?;
+			}
 		} else if is_touch_point {
 			device.set_touchpoint_color(context.position - key_count, 0, 0, 0).await?;
 		} else {
@@ -120,6 +147,8 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 		let _ = device.set_brightness(settings.value.brightness).await;
 	}
 	let _ = device.flush().await;
+	let infobar_count = if kind == Kind::Neo { 1 } else { 0 };
+
 	crate::events::inbound::devices::register_device(
 		"",
 		crate::events::inbound::PayloadEvent {
@@ -131,12 +160,35 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				columns: kind.column_count(),
 				encoders: kind.encoder_count(),
 				touchpoints: kind.touchpoint_count(),
+				infobar: infobar_count,
 				r#type: device_type,
 			},
 		},
 	)
 	.await
 	.unwrap();
+
+	// DEBUG: Añadir dispositivo Neo simulado para pruebas
+	if kind == Kind::Mini || kind == Kind::MiniMk2 {
+		crate::events::inbound::devices::register_device(
+			"",
+			crate::events::inbound::PayloadEvent {
+				payload: crate::shared::DeviceInfo {
+					id: "sd-neo-test".to_string(),
+					plugin: String::new(),
+					name: "Stream Deck Neo (Test)".to_string(),
+					rows: 3,
+					columns: 4,
+					encoders: 0,
+					touchpoints: 0,
+					infobar: 1,
+					r#type: 9,
+				},
+			},
+		)
+		.await
+		.unwrap();
+	}
 
 	let reader = device.get_reader();
 	ELGATO_DEVICES.write().await.insert(device_id.clone(), device);
