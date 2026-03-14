@@ -34,7 +34,7 @@
 				return;
 			}
 			let response: ActionInstance | null = await invoke("create_instance", { context: $inspectedParentAction, action });
-			if (response) profile.keys[$inspectedParentAction!.position]!.children = [...children, response];
+			if (response) profile.keys[$inspectedParentAction!.position] = response;
 		}
 	}
 

@@ -1,7 +1,7 @@
 use super::Error;
 
 use crate::shared::{Action, ActionContext, ActionInstance, ActionState, Context, config_dir};
-use crate::store::profiles::{LocksMut, acquire_locks_mut, get_instance_mut, get_slot_mut, save_profile};
+use crate::store::profiles::{LocksMut, acquire_locks, acquire_locks_mut, get_instance_mut, get_slot, get_slot_mut, save_profile};
 
 use tauri::{AppHandle, Emitter, Manager, command};
 use tokio::fs::remove_dir_all;
@@ -41,9 +41,12 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 		}
 
 		save_profile(&context.device, &mut locks).await?;
+		drop(locks);
 		let _ = crate::events::outbound::will_appear::will_appear(&instance).await;
 
-		Ok(Some(instance))
+		let locks = acquire_locks().await;
+		let slot = get_slot(&context, &locks).await?.clone();
+		Ok(slot)
 	} else {
 		let instance = ActionInstance {
 			action: action.clone(),
