@@ -17,6 +17,7 @@
 	import { listen } from "@tauri-apps/api/event";
 
 	export let context: Context | null;
+	export let label: string = "";
 
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
@@ -136,6 +137,8 @@
 	$: if ($settings?.rotation != undefined) {
 		clearAndRedraw();
 	}
+
+	$: accessibleLabel = label + (slot ? ": " + slot.action.name + (state?.show && state?.text ? " - " + state.text : "") : "");
 </script>
 
 <div
@@ -152,11 +155,19 @@
 		width={size}
 		height={size}
 		draggable={slot != null}
+		tabindex="0"
+		role="gridcell"
+		aria-label={accessibleLabel}
 		on:dragstart
 		on:dragover
 		on:drop
 		on:click|stopPropagation={select}
-		on:keyup|stopPropagation={select}
+		on:keydown|stopPropagation={(e) => {
+			if (e.key === "Enter") select(e);
+		}}
+		on:keyup|stopPropagation={(e) => {
+			if (e.key === " ") select(e);
+		}}
 		on:contextmenu={contextMenu}
 	/>
 	{#if isTouchPoint && !slot}
