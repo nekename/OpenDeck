@@ -441,6 +441,25 @@ pub fn initialise_plugins() {
 			warn!("Failed to read entry of plugins directory: {}", error)
 		}
 	}
+
+	// On macOS, hidden WKWebView windows suspend JavaScript after ~7s.
+	// Periodically eval a no-op to keep them alive.
+	#[cfg(target_os = "macos")]
+	tokio::spawn(async {
+		use tauri::Manager;
+		loop {
+			tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+			let instances = INSTANCES.lock().await;
+			for (uuid, instance) in instances.iter() {
+				if matches!(instance, PluginInstance::Webview) {
+					let label = uuid.replace('.', "_");
+					if let Some(window) = APP_HANDLE.get().unwrap().get_webview_window(&label) {
+						let _ = window.eval("void(0)");
+					}
+				}
+			}
+		}
+	});
 }
 
 /// Start the WebSocket server that plugins communicate with.
