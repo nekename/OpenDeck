@@ -91,7 +91,7 @@ struct SetBrightnessEvent {
 	brightness: u8,
 }
 
-//Set brightness for all devices, used by frontend/settings.rs to set global brightness
+/// Set brightness for all devices, used by frontend/settings.rs to set global brightness
 pub async fn set_brightness(brightness: u8) -> Result<(), anyhow::Error> {
 	for device in crate::shared::DEVICES.iter() {
 		set_device_brightness(&device.id, brightness).await?;
@@ -100,7 +100,7 @@ pub async fn set_brightness(brightness: u8) -> Result<(), anyhow::Error> {
 	Ok(())
 }
 
-// Set brightness for a specific device. Used by the global setter and device wake and sleep functions
+/// Set brightness for a specific device. Used by the global setter and device wake and sleep functions
 pub async fn set_device_brightness(device: &str, brightness: u8) -> Result<(), anyhow::Error> {
 	if let Some(plugin) = DEVICE_NAMESPACES.read().await.get(&device[..2]) {
 		send_to_plugin(
