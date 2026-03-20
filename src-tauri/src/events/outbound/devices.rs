@@ -104,9 +104,10 @@ pub async fn set_brightness(brightness: u8) -> Result<(), anyhow::Error> {
 				},
 			)
 			.await?;
+		} else if device.id.starts_with("sd-") {
+			crate::elgato::set_brightness(&device.id, brightness).await;
 		}
 	}
-	crate::elgato::set_brightness(brightness).await;
 
 	Ok(())
 }
@@ -123,7 +124,7 @@ pub async fn set_device_brightness(device: &str, brightness: u8) -> Result<(), a
 		)
 		.await?;
 	} else if device.starts_with("sd-") {
-		crate::elgato::set_device_brightness(device, brightness).await;
+		crate::elgato::set_brightness(device, brightness).await;
 	}
 
 	Ok(())

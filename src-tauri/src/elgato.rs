@@ -86,14 +86,7 @@ pub async fn clear_screen(id: &str) -> Result<(), anyhow::Error> {
 	Ok(())
 }
 
-pub async fn set_brightness(brightness: u8) {
-	for (_id, device) in ELGATO_DEVICES.read().await.iter() {
-		let _ = device.set_brightness(brightness.clamp(0, 100)).await;
-		let _ = device.flush().await;
-	}
-}
-
-pub async fn set_device_brightness(id: &str, brightness: u8) {
+pub async fn set_brightness(id: &str, brightness: u8) {
 	if let Some(device) = ELGATO_DEVICES.read().await.get(id) {
 		let _ = device.set_brightness(brightness.clamp(0, 100)).await;
 		let _ = device.flush().await;
@@ -154,17 +147,13 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 		};
 		for update in updates {
 			match update {
-				DeviceStateUpdate::ButtonDown(_) | DeviceStateUpdate::TouchPointDown(_) | DeviceStateUpdate::EncoderDown(_) => {
-					if let Err(error) = crate::device_sleep::input_started(&device_id).await {
-						log::warn!("Failed to wake sleeping device {device_id}: {error}");
-					}
-				}
-				DeviceStateUpdate::ButtonUp(_) | DeviceStateUpdate::TouchPointUp(_) | DeviceStateUpdate::EncoderUp(_) => {
-					if let Err(error) = crate::device_sleep::input_ended(&device_id).await {
-						log::warn!("Failed to wake sleeping device {device_id}: {error}");
-					}
-				}
-				DeviceStateUpdate::EncoderTwist(_, _) => {
+				DeviceStateUpdate::ButtonDown(_)
+				| DeviceStateUpdate::TouchPointDown(_)
+				| DeviceStateUpdate::EncoderDown(_)
+				| DeviceStateUpdate::ButtonUp(_)
+				| DeviceStateUpdate::TouchPointUp(_)
+				| DeviceStateUpdate::EncoderUp(_)
+				| DeviceStateUpdate::EncoderTwist(_, _) => {
 					if let Err(error) = crate::device_sleep::note_activity(&device_id).await {
 						log::warn!("Failed to wake sleeping device {device_id}: {error}");
 					}
