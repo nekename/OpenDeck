@@ -447,15 +447,13 @@ pub fn initialise_plugins() {
 	#[cfg(target_os = "macos")]
 	tokio::spawn(async {
 		use tauri::Manager;
+		let app = APP_HANDLE.get().unwrap();
 		loop {
 			tokio::time::sleep(std::time::Duration::from_secs(3)).await;
 			let instances = INSTANCES.lock().await;
-			for (uuid, instance) in instances.iter() {
-				if matches!(instance, PluginInstance::Webview) {
-					let label = uuid.replace('.', "_");
-					if let Some(window) = APP_HANDLE.get().unwrap().get_webview_window(&label) {
-						let _ = window.eval("void(0)");
-					}
+			for (uuid, _) in instances.iter().filter(|(_, instance)| matches!(instance, PluginInstance::Webview)) {
+				if let Some(window) = app.get_webview_window(&uuid.replace('.', "_")) {
+					let _ = window.eval("void(0);");
 				}
 			}
 		}
