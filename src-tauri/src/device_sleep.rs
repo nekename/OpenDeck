@@ -44,9 +44,9 @@ pub async fn note_activity(device: &str) -> Result<(), anyhow::Error> {
 	wake_device(device).await
 }
 
-pub fn update_settings(settings: &crate::store::Settings) {
-	SLEEP_TIMEOUT_MINUTES.store(settings.sleep_timeout_minutes, Ordering::Relaxed);
-	if settings.sleep_timeout_minutes == 0 {
+pub fn update_timeout_minutes(minutes: u16) {
+	SLEEP_TIMEOUT_MINUTES.store(minutes, Ordering::Relaxed);
+	if minutes == 0 {
 		SLEEPING_DEVICES.clear();
 	}
 }
