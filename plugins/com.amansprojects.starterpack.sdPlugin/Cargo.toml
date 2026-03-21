@@ -15,3 +15,8 @@ ron = "0.12"
 enigo = { git = "https://github.com/enigo-rs/enigo.git", rev = "4cb8833144e6e5e679b91ae7fd53507f9abf751d", features = ["serde", "x11rb", "wayland", "libei_tokio"] }
 tokio = { version = "1.48", features = ["full"] }
 os_pipe = "1.2"
+chrono = "0.4"
+image = "0.25"
+imageproc = "0.26"
+ab_glyph = "0.2"
+base64 = "0.22"
