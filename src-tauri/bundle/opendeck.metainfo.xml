@@ -53,6 +53,18 @@
 	</branding>
 
 	<releases>
+		<release version="2.10.1" date="2026-03-21">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.10.1</url>
+			<description>
+				<ul>
+					<li>fix: accept event argument directly in property inspector message handlers instead of destructuring</li>
+					<li>refactor: update set_state command to replace the modified state instead of the entire instance</li>
+					<li>fix: return the entire slot from create_instance so that updating the frontend profile in ParentActionView sets complete and up to date values</li>
+					<li>fix: prevent WKWebView on macOS from suspending web-based plugins (#270)</li>
+					<li>fix: only parse headline of buildInfo string to prevent detecting the running OS incorrectly</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.10.0" date="2026-02-28">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.10.0</url>
 			<description>
