@@ -72,7 +72,7 @@
 		<button class="ml-2 mr-1 float-right text-xl text-neutral-300" on:click={() => showEditor = false}>✕</button>
 	</div>
 	<div class="flex flex-row mx-1">
-		<div class="flex flex-col justify-center items-center">
+		<div class="flex flex-col justify-center items-center mt-2 mb-1">
 			<button
 				on:click={(event) => {
 					if (event.ctrlKey) return;
@@ -98,21 +98,21 @@
 					/>
 				{/await}
 			</button>
-			<div class="mt-1 flex flex-row items-center justify-center space-x-1">
+			<div class="flex flex-row items-center justify-center mt-1 space-x-1 text-neutral-300">
 				<button
-					class="w-6 h-6 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md outline-hidden"
 					on:click={() => adjustImageScale(-10)}
-					aria-label="Decrease image size"
+					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md outline-hidden"
+					title="Decrease image scale"
 				>
 					-
 				</button>
-				<span class="min-w-12 text-center text-xs text-neutral-300 tabular-nums">
+				<span class="min-w-12 text-center text-xs tabular-nums">
 					{instance.states[state].image_scale || 100}%
 				</span>
 				<button
-					class="w-6 h-6 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md outline-hidden"
 					on:click={() => adjustImageScale(10)}
-					aria-label="Increase image size"
+					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md outline-hidden"
+					title="Increase image scale"
 				>
 					+
 				</button>
@@ -198,7 +198,7 @@
 			}}
 		/>
 
-		<div class="flex flex-col pl-4 pr-2 pt-4 pb-2 space-y-2">
+		<div class="flex flex-col justify-center pl-4 pr-2 pt-4 pb-2 space-y-2">
 			<div class="flex flex-row items-center space-x-2">
 				<span> Text </span>
 				<textarea
