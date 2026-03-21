@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod application_watcher;
+mod device_sleep;
 mod elgato;
 mod events;
 mod plugins;
@@ -193,6 +194,7 @@ If you have already donated, thank you so much for your support!"#,
 			});
 			plugins::initialise_plugins();
 			application_watcher::init_application_watcher();
+			device_sleep::init_device_sleep();
 
 			let label = IconMenuItemBuilder::with_id("label", PRODUCT_NAME)
 				.icon(app.default_window_icon().unwrap().clone())

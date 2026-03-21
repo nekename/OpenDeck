@@ -91,22 +91,30 @@ struct SetBrightnessEvent {
 	brightness: u8,
 }
 
+/// Set the brightness for all devices.
 pub async fn set_brightness(brightness: u8) -> Result<(), anyhow::Error> {
-	let namespaces = DEVICE_NAMESPACES.read().await;
 	for device in crate::shared::DEVICES.iter() {
-		if let Some(plugin) = namespaces.get(&device.id[..2]) {
-			send_to_plugin(
-				plugin,
-				&SetBrightnessEvent {
-					event: "setBrightness",
-					device: device.id.clone(),
-					brightness,
-				},
-			)
-			.await?;
-		}
+		set_device_brightness(&device.id, brightness).await?;
 	}
-	crate::elgato::set_brightness(brightness).await;
+
+	Ok(())
+}
+
+/// Set the brightness for a specific device.
+pub async fn set_device_brightness(device: &str, brightness: u8) -> Result<(), anyhow::Error> {
+	if let Some(plugin) = DEVICE_NAMESPACES.read().await.get(&device[..2]) {
+		send_to_plugin(
+			plugin,
+			&SetBrightnessEvent {
+				event: "setBrightness",
+				device: device.to_owned(),
+				brightness,
+			},
+		)
+		.await?;
+	} else if device.starts_with("sd-") {
+		crate::elgato::set_brightness(device, brightness).await;
+	}
 
 	Ok(())
 }

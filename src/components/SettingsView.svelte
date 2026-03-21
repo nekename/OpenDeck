@@ -73,6 +73,13 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<span class="text-neutral-400"> Sleep after inactivity: </span>
+			<input type="number" min="0" bind:value={$settings.sleep_timeout_minutes} class="w-12 px-1 text-neutral-300 border border-neutral-600 rounded-lg" />
+			<span class="text-neutral-400">minutes</span>
+			<Tooltip> This option controls how many minutes of inactivity will cause devices to enter sleep mode, where a value of 0 disables sleeping automatically. </Tooltip>
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="text-neutral-400"> Image rotation: </span>
 			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} />
 		</div>

@@ -1,4 +1,4 @@
-use crate::events::outbound::{encoder, keypad};
+use crate::events::inbound;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -86,8 +86,8 @@ pub async fn clear_screen(id: &str) -> Result<(), anyhow::Error> {
 	Ok(())
 }
 
-pub async fn set_brightness(brightness: u8) {
-	for (_id, device) in ELGATO_DEVICES.read().await.iter() {
+pub async fn set_brightness(id: &str, brightness: u8) {
+	if let Some(device) = ELGATO_DEVICES.read().await.get(id) {
 		let _ = device.set_brightness(brightness.clamp(0, 100)).await;
 		let _ = device.flush().await;
 	}
@@ -140,6 +140,16 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 
 	let reader = device.get_reader();
 	ELGATO_DEVICES.write().await.insert(device_id.clone(), device);
+	let press = |position| inbound::PayloadEvent {
+		payload: inbound::devices::PressPayload { device: device_id.clone(), position },
+	};
+	let encoder = |position, ticks: i8| inbound::PayloadEvent {
+		payload: inbound::devices::TicksPayload {
+			device: device_id.clone(),
+			position,
+			ticks: ticks.into(),
+		},
+	};
 	loop {
 		let updates = match reader.read(100.0).await {
 			Ok(updates) => updates,
@@ -147,13 +157,13 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 		};
 		for update in updates {
 			match match update {
-				DeviceStateUpdate::ButtonDown(key) => keypad::key_down(&device_id, key).await,
-				DeviceStateUpdate::ButtonUp(key) => keypad::key_up(&device_id, key).await,
-				DeviceStateUpdate::TouchPointDown(point) => keypad::key_down(&device_id, kind.key_count() + point).await,
-				DeviceStateUpdate::TouchPointUp(point) => keypad::key_up(&device_id, kind.key_count() + point).await,
-				DeviceStateUpdate::EncoderTwist(dial, ticks) => encoder::dial_rotate(&device_id, dial, ticks.into()).await,
-				DeviceStateUpdate::EncoderDown(dial) => encoder::dial_press(&device_id, "dialDown", dial).await,
-				DeviceStateUpdate::EncoderUp(dial) => encoder::dial_press(&device_id, "dialUp", dial).await,
+				DeviceStateUpdate::ButtonDown(key) => inbound::devices::key_down(press(key)).await,
+				DeviceStateUpdate::ButtonUp(key) => inbound::devices::key_up(press(key)).await,
+				DeviceStateUpdate::TouchPointDown(point) => inbound::devices::key_down(press(kind.key_count() + point)).await,
+				DeviceStateUpdate::TouchPointUp(point) => inbound::devices::key_up(press(kind.key_count() + point)).await,
+				DeviceStateUpdate::EncoderTwist(dial, ticks) => inbound::devices::encoder_change(encoder(dial, ticks)).await,
+				DeviceStateUpdate::EncoderDown(dial) => inbound::devices::encoder_down(press(dial)).await,
+				DeviceStateUpdate::EncoderUp(dial) => inbound::devices::encoder_up(press(dial)).await,
 				_ => Ok(()),
 			} {
 				Ok(_) => (),
