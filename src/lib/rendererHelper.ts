@@ -94,11 +94,11 @@ export async function renderImage(
 		// Draw image
 		context.imageSmoothingQuality = "high";
 		const imageScale = Math.max(10, state.image_scale || 100) / 100;
-		const scaledWidth = canvas.width * imageScale;
-		const scaledHeight = canvas.height * imageScale;
-		const xOffset = (canvas.width - scaledWidth) / 2;
-		const yOffset = (canvas.height - scaledHeight) / 2;
-		context.drawImage(image, xOffset, yOffset, scaledWidth, scaledHeight);
+		const xScaled = canvas.width * imageScale;
+		const yScaled = canvas.height * imageScale;
+		const xOffset = (canvas.width - xScaled) / 2;
+		const yOffset = (canvas.height - yScaled) / 2;
+		context.drawImage(image, xOffset, yOffset, xScaled, yScaled);
 	} catch (error: any) {
 		if (!(error instanceof Event)) console.error(error);
 		context.clearRect(0, 0, canvas.width, canvas.height);
