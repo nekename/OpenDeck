@@ -91,7 +91,7 @@ struct SetBrightnessEvent {
 	brightness: u8,
 }
 
-/// Set brightness for all devices, used by frontend/settings.rs to set global brightness
+/// Set the brightness for all devices.
 pub async fn set_brightness(brightness: u8) -> Result<(), anyhow::Error> {
 	for device in crate::shared::DEVICES.iter() {
 		set_device_brightness(&device.id, brightness).await?;
@@ -100,7 +100,7 @@ pub async fn set_brightness(brightness: u8) -> Result<(), anyhow::Error> {
 	Ok(())
 }
 
-/// Set brightness for a specific device. Used by the global setter and device wake and sleep functions
+/// Set the brightness for a specific device.
 pub async fn set_device_brightness(device: &str, brightness: u8) -> Result<(), anyhow::Error> {
 	if let Some(plugin) = DEVICE_NAMESPACES.read().await.get(&device[..2]) {
 		send_to_plugin(
@@ -112,7 +112,7 @@ pub async fn set_device_brightness(device: &str, brightness: u8) -> Result<(), a
 			},
 		)
 		.await?;
-	} else {
+	} else if device.starts_with("sd-") {
 		crate::elgato::set_brightness(device, brightness).await;
 	}
 

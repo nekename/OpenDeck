@@ -191,9 +191,9 @@ If you have already donated, thank you so much for your support!"#,
 					tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 				}
 			});
-			device_sleep::init();
 			plugins::initialise_plugins();
 			application_watcher::init_application_watcher();
+			device_sleep::init_device_sleep();
 
 			let label = IconMenuItemBuilder::with_id("label", PRODUCT_NAME)
 				.icon(app.default_window_icon().unwrap().clone())
