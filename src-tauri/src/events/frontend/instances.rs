@@ -231,6 +231,31 @@ pub async fn update_image(context: Context, image: Option<String>) {
 	}
 }
 
+#[command]
+pub async fn trigger_virtual_press(context: Context) -> Result<(), Error> {
+	let event = || crate::events::inbound::PayloadEvent {
+		payload: crate::events::inbound::devices::PressPayload {
+			device: context.device.clone(),
+			position: context.position,
+		},
+	};
+	match context.controller.as_str() {
+		"Keypad" => {
+			crate::events::inbound::devices::key_down(event()).await?;
+			tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+			crate::events::inbound::devices::key_up(event()).await?;
+		}
+		"Encoder" => {
+			crate::events::inbound::devices::encoder_down(event()).await?;
+			tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+			crate::events::inbound::devices::encoder_up(event()).await?;
+		}
+		_ => {}
+	}
+
+	Ok(())
+}
+
 #[derive(Clone, serde::Serialize)]
 struct KeyMovedEvent {
 	context: Context,
