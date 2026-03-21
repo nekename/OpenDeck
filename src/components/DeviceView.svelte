@@ -106,6 +106,7 @@
 							on:dragstart={(event) => handleDragStart(event, "Keypad", (r * device.columns) + c)}
 							{handlePaste}
 							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+							label="Key {String.fromCharCode(65 + r)}{c + 1}"
 						/>
 					{/each}
 				</div>
@@ -122,6 +123,7 @@
 					on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+					label="Encoder {i + 1}"
 				/>
 			{/each}
 		</div>
@@ -137,6 +139,7 @@
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					isTouchPoint
+					label="Touch point {i + 1}"
 				/>
 			{/each}
 		</div>
