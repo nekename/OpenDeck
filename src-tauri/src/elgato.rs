@@ -140,18 +140,18 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 
 	let reader = device.get_reader();
 	ELGATO_DEVICES.write().await.insert(device_id.clone(), device);
+	let press = |position| PayloadEvent {
+		payload: inbound_devices::PressPayload { device: device_id.clone(), position },
+	};
+	let encoder = |position, ticks: i8| PayloadEvent {
+		payload: inbound_devices::TicksPayload { device: device_id.clone(), position, ticks: ticks.into() },
+	};
 	loop {
 		let updates = match reader.read(100.0).await {
 			Ok(updates) => updates,
 			Err(_) => break,
 		};
 		for update in updates {
-			let press = |position| PayloadEvent {
-				payload: inbound_devices::PressPayload { device: device_id.clone(), position },
-			};
-			let encoder = |position, ticks: i8| PayloadEvent {
-				payload: inbound_devices::TicksPayload { device: device_id.clone(), position, ticks: ticks.into() },
-			};
 			match match update {
 				DeviceStateUpdate::ButtonDown(key) => inbound_devices::key_down(press(key)).await,
 				DeviceStateUpdate::ButtonUp(key) => inbound_devices::key_up(press(key)).await,
