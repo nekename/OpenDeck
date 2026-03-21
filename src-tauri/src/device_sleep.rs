@@ -30,7 +30,7 @@ pub fn update_timeout_minutes(minutes: u16) {
 	}
 }
 
-pub async fn register_device(device: &str) -> Result<(), anyhow::Error> {
+pub async fn note_activity(device: &str) -> Result<(), anyhow::Error> {
 	LAST_ACTIVITY.insert(device.to_owned(), Instant::now());
 	wake_device(device).await
 }
@@ -38,11 +38,6 @@ pub async fn register_device(device: &str) -> Result<(), anyhow::Error> {
 pub fn deregister_device(device: &str) {
 	LAST_ACTIVITY.remove(device);
 	SLEEPING_DEVICES.remove(device);
-}
-
-pub async fn note_activity(device: &str) -> Result<(), anyhow::Error> {
-	LAST_ACTIVITY.insert(device.to_owned(), Instant::now());
-	wake_device(device).await
 }
 
 async fn sleep_idle_devices() -> Result<(), anyhow::Error> {
