@@ -11,7 +11,7 @@
 	<div class="w-80 text-sm">
 		<h2 class="text-lg font-bold mb-2">No devices detected</h2>
 		<p class="mb-2">Make sure your devices are connected properly and you have permission to access them.</p>
-		{#if buildInfo?.includes("linux")}
+		{#if buildInfo?.split("</summary>")[0]?.includes("linux")}
 			<p class="mb-2">Ensure you have the correct udev subsystem rules installed.</p>
 		{/if}
 		<p class="mb-4">You may need to install a plugin that adds support for your device.</p>

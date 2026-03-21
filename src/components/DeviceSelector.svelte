@@ -52,7 +52,7 @@
 			const effectiveCols = Math.min(Math.max(devices[value].columns, devices[value].encoders, devices[value].touchpoints), 8);
 			const effectiveRows = Math.min(devices[value].rows + Math.min(devices[value].encoders, 1) + Math.min(devices[value].touchpoints, 1), 4);
 			const idealWidth = (effectiveCols * 132) + 416;
-			const idealHeight = (effectiveRows * 132) + 384 + (buildInfo?.includes("darwin") ? 28 : 0);
+			const idealHeight = (effectiveRows * 132) + 384 + (buildInfo?.split("</summary>")[0]?.includes("darwin") ? 28 : 0);
 			(async () => {
 				const monitor = await currentMonitor();
 				const scaleFactor = monitor?.scaleFactor ?? 1;

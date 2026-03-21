@@ -88,7 +88,7 @@
 			<input type="checkbox" bind:checked={$settings.autolaunch} />
 			<Tooltip>
 				If this option is enabled, {PRODUCT_NAME} will automatically start at login.
-				{#if buildInfo?.includes("linux")}
+				{#if buildInfo?.split("</summary>")[0]?.includes("linux")}
 					<br />
 					If you used Flatpak to install {PRODUCT_NAME}, this option may not function as intended.
 				{/if}
@@ -105,7 +105,7 @@
 			<input type="checkbox" bind:checked={$settings.statistics} />
 		</div>
 
-		{#if !buildInfo?.includes("windows")}
+		{#if !buildInfo?.split("</summary>")[0]?.includes("windows")}
 			<div class="flex flex-row items-center m-2 space-x-2">
 				<span class="text-neutral-400"> Create separate Wine prefixes: </span>
 				<input type="checkbox" bind:checked={$settings.separatewine} />
