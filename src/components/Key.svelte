@@ -18,6 +18,7 @@
 
 	export let context: Context | null;
 	export let label: string = "";
+	export let tabIndex: number = -1;
 
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
@@ -160,7 +161,7 @@
 		width={size}
 		height={size}
 		draggable={slot != null}
-		tabindex="0"
+		tabindex={tabIndex}
 		role="gridcell"
 		aria-label={accessibleLabel}
 		on:dragstart
