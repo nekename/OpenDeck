@@ -51,8 +51,7 @@
 		if (JSON.stringify(context) == JSON.stringify(payload.context)) pressed = payload.pressed;
 	});
 
-	function select(event: MouseEvent | KeyboardEvent) {
-		if (event instanceof MouseEvent && event.ctrlKey) return;
+	function loadInspector() {
 		$openContextMenu = null;
 		if (!slot) return;
 		if (slot.action.uuid == "opendeck.multiaction" || slot.action.uuid == "opendeck.toggleaction") {
@@ -60,6 +59,11 @@
 		} else {
 			inspectedInstance.set(slot.context);
 		}
+	}
+
+	function select(event: MouseEvent | KeyboardEvent) {
+		if (event instanceof MouseEvent && event.ctrlKey) return;
+		loadInspector();
 	}
 
 	async function contextMenu(event: MouseEvent) {
@@ -175,6 +179,7 @@
 		on:keyup|stopPropagation={(e) => {
 			if (e.key === " ") select(e);
 		}}
+		on:focus={loadInspector}
 		on:contextmenu={contextMenu}
 	/>
 	{#if isTouchPoint && !slot}

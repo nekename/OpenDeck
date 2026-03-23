@@ -154,6 +154,7 @@
 </style>
 
 {#key device}
+	<span id="grid-description" class="sr-only">Use arrow keys to navigate between keys. Moving to a key will load its settings.</span>
 	<div
 		class="flex flex-col justify-center grow px-16 py-6 overflow-auto"
 		class:items-center={device.columns <= 8}
@@ -163,6 +164,7 @@
 		class:device-fade-xy={overflowsX && overflowsY}
 		role="grid"
 		aria-label={device.name}
+		aria-describedby="grid-description"
 		tabindex="-1"
 		on:click={() => inspectedInstance.set(null)}
 		on:keyup={() => inspectedInstance.set(null)}
