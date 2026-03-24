@@ -18,7 +18,7 @@
 
 	export let context: Context | null;
 	export let label: string = "";
-	export let tabIndex: number = -1;
+	export let tabIndex: number = 0;
 
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
