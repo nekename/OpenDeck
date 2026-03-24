@@ -192,7 +192,7 @@
 							{handlePaste}
 							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 							label="Key {String.fromCharCode(65 + r)}{c + 1}"
-							tabIndex={focusedRow === r && focusedCol === c ? 0 : -1}
+							tabindex={focusedRow === r && focusedCol === c ? 0 : -1}
 						/>
 					{/each}
 				</div>
@@ -210,7 +210,7 @@
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					label="Encoder {i + 1}"
-					tabIndex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
+					tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
 				/>
 			{/each}
 		</div>
@@ -227,7 +227,7 @@
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					isTouchPoint
 					label="Touch point {i + 1}"
-					tabIndex={focusedRow === touchpointRowIndex && focusedCol === i ? 0 : -1}
+					tabindex={focusedRow === touchpointRowIndex && focusedCol === i ? 0 : -1}
 				/>
 			{/each}
 		</div>
