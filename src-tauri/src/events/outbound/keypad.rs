@@ -121,9 +121,10 @@ pub async fn key_up(device: &str, key: u8) -> Result<(), anyhow::Error> {
 	};
 
 	let _ = key_moved(crate::APP_HANDLE.get().unwrap(), context.clone(), false).await;
-	if let Some((_, expected_context)) = KEY_DOWN_TARGETS.remove(&(device.to_owned(), key))
-		&& context != expected_context
-	{
+	let Some((_, expected_context)) = KEY_DOWN_TARGETS.remove(&(device.to_owned(), key)) else {
+		return Ok(());
+	};
+	if context != expected_context {
 		return Ok(());
 	}
 

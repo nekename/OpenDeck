@@ -30,7 +30,7 @@ pub fn update_timeout_minutes(minutes: u16) {
 	}
 }
 
-pub async fn note_activity(device: &str) -> Result<(), anyhow::Error> {
+pub async fn note_activity(device: &str) -> Result<bool, anyhow::Error> {
 	LAST_ACTIVITY.insert(device.to_owned(), Instant::now());
 	wake_device(device).await
 }
@@ -63,11 +63,12 @@ async fn sleep_idle_devices() -> Result<(), anyhow::Error> {
 	Ok(())
 }
 
-async fn wake_device(device: &str) -> Result<(), anyhow::Error> {
+async fn wake_device(device: &str) -> Result<bool, anyhow::Error> {
 	if SLEEPING_DEVICES.remove(device).is_some() {
 		let brightness = crate::store::get_settings().map(|s| s.value.brightness).unwrap_or(50);
 		crate::events::outbound::devices::set_device_brightness(device, brightness).await?;
+		return Ok(true);
 	}
 
-	Ok(())
+	Ok(false)
 }
