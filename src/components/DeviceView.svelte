@@ -105,8 +105,12 @@
 		let newCol = focusedCol;
 
 		switch (event.key) {
-			case "ArrowRight": newCol = Math.min(focusedCol + 1, gridRowLengths[focusedRow] - 1); break;
-			case "ArrowLeft": newCol = Math.max(focusedCol - 1, 0); break;
+			case "ArrowRight":
+				newCol = Math.min(focusedCol + 1, gridRowLengths[focusedRow] - 1);
+				break;
+			case "ArrowLeft":
+				newCol = Math.max(focusedCol - 1, 0);
+				break;
 			case "ArrowDown":
 				newRow = Math.min(focusedRow + 1, gridRowLengths.length - 1);
 				newCol = Math.min(focusedCol, gridRowLengths[newRow] - 1);
@@ -115,8 +119,12 @@
 				newRow = Math.max(focusedRow - 1, 0);
 				newCol = Math.min(focusedCol, gridRowLengths[newRow] - 1);
 				break;
-			case "Home": newCol = 0; break;
-			case "End": newCol = gridRowLengths[focusedRow] - 1; break;
+			case "Home":
+				newCol = 0;
+				break;
+			case "End":
+				newCol = gridRowLengths[focusedRow] - 1;
+				break;
 		}
 
 		if (newRow === focusedRow && newCol === focusedCol) return;
