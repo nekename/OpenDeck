@@ -65,6 +65,85 @@
 
 	$: overflowsX = Math.max(device.columns, device.encoders, device.touchpoints) > 8;
 	$: overflowsY = (device.rows + Math.min(device.encoders, 1) + Math.min(device.touchpoints, 1)) > 4;
+
+	// Grid navigation: track focused cell and compute row lengths for arrow key movement.
+	let focusedRow = 0;
+	let focusedCol = 0;
+
+	$: gridRowLengths = [
+		...Array(device.rows).fill(device.columns),
+		...(device.encoders > 0 ? [device.encoders] : []),
+		...(device.touchpoints > 0 ? [device.touchpoints] : []),
+	];
+	$: encoderRowIndex = device.rows;
+	$: touchpointRowIndex = device.rows + (device.encoders > 0 ? 1 : 0);
+
+	function flatIndexFromRowCol(row: number, col: number): number {
+		let index = 0;
+		for (let r = 0; r < row; r++) index += gridRowLengths[r];
+		return index + col;
+	}
+
+	function rowColFromFlatIndex(flatIndex: number): [number, number] {
+		let remaining = flatIndex;
+		for (let r = 0; r < gridRowLengths.length; r++) {
+			if (remaining < gridRowLengths[r]) return [r, remaining];
+			remaining -= gridRowLengths[r];
+		}
+		return [0, 0];
+	}
+
+	function handleGridKeydown(event: KeyboardEvent) {
+		const target = event.target as HTMLElement;
+		if (target.getAttribute("role") !== "gridcell") return;
+		if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		let newRow = focusedRow;
+		let newCol = focusedCol;
+
+		switch (event.key) {
+			case "ArrowRight":
+				newCol = Math.min(focusedCol + 1, gridRowLengths[focusedRow] - 1);
+				break;
+			case "ArrowLeft":
+				newCol = Math.max(focusedCol - 1, 0);
+				break;
+			case "ArrowDown":
+				newRow = Math.min(focusedRow + 1, gridRowLengths.length - 1);
+				newCol = Math.min(focusedCol, gridRowLengths[newRow] - 1);
+				break;
+			case "ArrowUp":
+				newRow = Math.max(focusedRow - 1, 0);
+				newCol = Math.min(focusedCol, gridRowLengths[newRow] - 1);
+				break;
+			case "Home":
+				newCol = 0;
+				break;
+			case "End":
+				newCol = gridRowLengths[focusedRow] - 1;
+				break;
+		}
+
+		if (newRow === focusedRow && newCol === focusedCol) return;
+
+		focusedRow = newRow;
+		focusedCol = newCol;
+
+		const grid = event.currentTarget as HTMLElement;
+		const cells = grid.querySelectorAll("[role='gridcell']");
+		(cells[flatIndexFromRowCol(newRow, newCol)] as HTMLElement)?.focus();
+	}
+
+	function handleGridFocusin(event: FocusEvent) {
+		const grid = event.currentTarget as HTMLElement;
+		const cells = Array.from(grid.querySelectorAll("[role='gridcell']"));
+		const index = cells.indexOf(event.target as Element);
+		if (index === -1) return;
+		[focusedRow, focusedCol] = rowColFromFlatIndex(index);
+	}
 </script>
 
 <style>
@@ -83,7 +162,7 @@
 </style>
 
 {#key device}
-	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<span id="grid-description" class="sr-only">Use arrow keys to navigate between keys. Moving to a key will display its property inspector.</span>
 	<div
 		class="flex flex-col justify-center grow px-16 py-6 overflow-auto"
 		class:items-center={device.columns <= 8}
@@ -91,12 +170,18 @@
 		class:device-fade-x={overflowsX && !overflowsY}
 		class:device-fade-y={overflowsY && !overflowsX}
 		class:device-fade-xy={overflowsX && overflowsY}
+		role="grid"
+		aria-label={device.name}
+		aria-describedby="grid-description"
+		tabindex="-1"
 		on:click={() => inspectedInstance.set(null)}
 		on:keyup={() => inspectedInstance.set(null)}
+		on:keydown|capture={handleGridKeydown}
+		on:focusin={handleGridFocusin}
 	>
-		<div class="flex flex-col">
+		<div class="flex flex-col" role="rowgroup">
 			{#each { length: device.rows } as _, r}
-				<div class="flex flex-row">
+				<div class="flex flex-row" role="row">
 					{#each { length: device.columns } as _, c}
 						<Key
 							context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (r * device.columns) + c }}
@@ -107,13 +192,14 @@
 							{handlePaste}
 							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 							label="Key {String.fromCharCode(65 + r)}{c + 1}"
+							tabindex={focusedRow === r && focusedCol === c ? 0 : -1}
 						/>
 					{/each}
 				</div>
 			{/each}
 		</div>
 
-		<div class="flex flex-row">
+		<div class="flex flex-row" role="row">
 			{#each { length: device.encoders } as _, i}
 				<Key
 					context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
@@ -124,11 +210,12 @@
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					label="Encoder {i + 1}"
+					tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
 				/>
 			{/each}
 		</div>
 
-		<div class="flex flex-row">
+		<div class="flex flex-row" role="row">
 			{#each { length: device.touchpoints } as _, i}
 				<Key
 					context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (device.rows * device.columns) + i }}
@@ -140,6 +227,7 @@
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					isTouchPoint
 					label="Touch point {i + 1}"
+					tabindex={focusedRow === touchpointRowIndex && focusedCol === i ? 0 : -1}
 				/>
 			{/each}
 		</div>

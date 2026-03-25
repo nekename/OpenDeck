@@ -18,6 +18,7 @@
 
 	export let context: Context | null;
 	export let label: string = "";
+	export let tabindex: number = 0;
 
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
@@ -57,6 +58,14 @@
 		if (slot.action.uuid == "opendeck.multiaction" || slot.action.uuid == "opendeck.toggleaction") {
 			inspectedParentAction.set(context);
 		} else {
+			inspectedInstance.set(slot.context);
+		}
+	}
+
+	function onfocus() {
+		$openContextMenu = null;
+		if (!slot) return;
+		if (slot.action.uuid != "opendeck.multiaction" && slot.action.uuid != "opendeck.toggleaction") {
 			inspectedInstance.set(slot.context);
 		}
 	}
@@ -160,7 +169,7 @@
 		width={size}
 		height={size}
 		draggable={slot != null}
-		tabindex="0"
+		{tabindex}
 		role="gridcell"
 		aria-label={accessibleLabel}
 		on:dragstart
@@ -174,6 +183,7 @@
 		on:keyup|stopPropagation={(e) => {
 			if (e.key === " ") select(e);
 		}}
+		on:focus={onfocus}
 		on:contextmenu={contextMenu}
 	/>
 	{#if isTouchPoint && !slot}
