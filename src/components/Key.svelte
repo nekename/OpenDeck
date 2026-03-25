@@ -62,7 +62,7 @@
 		}
 	}
 
-	function focus() {
+	function onfocus() {
 		$openContextMenu = null;
 		if (!slot) return;
 		if (slot.action.uuid != "opendeck.multiaction" && slot.action.uuid != "opendeck.toggleaction") {
@@ -183,7 +183,7 @@
 		on:keyup|stopPropagation={(e) => {
 			if (e.key === " ") select(e);
 		}}
-		on:focus={focus}
+		on:focus={onfocus}
 		on:contextmenu={contextMenu}
 	/>
 	{#if isTouchPoint && !slot}
