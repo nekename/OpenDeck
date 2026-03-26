@@ -57,6 +57,20 @@ async fn main() {
 	log_panics::init();
 	let _ = fix_path_env::fix();
 
+	// Grab a named OS mutex before Tauri initialises. CreateMutexW returns a valid handle
+	// whether it creates the mutex or opens an existing one; GetLastError() == ERROR_ALREADY_EXISTS
+	// means another instance owns it. We intentionally leak the handle so it lives until exit.
+	#[cfg(windows)]
+	{
+		use windows_sys::Win32::Foundation::{ERROR_ALREADY_EXISTS, GetLastError};
+		use windows_sys::Win32::System::Threading::CreateMutexW;
+		let name: Vec<u16> = "Local\\OpenDeck_SingleInstance\0".encode_utf16().collect();
+		let handle = unsafe { CreateMutexW(std::ptr::null(), 0, name.as_ptr()) };
+		if !handle.is_null() && unsafe { GetLastError() } == ERROR_ALREADY_EXISTS {
+			return;
+		}
+	}
+
 	#[cfg(target_os = "linux")]
 	// SAFETY: std::env::set_var can cause race conditions in multithreaded contexts. We have not spawned any other threads at this point.
 	unsafe {
