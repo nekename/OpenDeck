@@ -16,6 +16,8 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 
+	$: rotation = $settings?.rotation;
+
 	export let context: Context | null;
 	export let label: string = "";
 	export let tabindex: number = 0;
@@ -132,7 +134,7 @@
 			const unlock = await lock.lock();
 			try {
 				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
-				if (state) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, $settings?.rotation);
+				if (state) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, rotation);
 			} finally {
 				unlock();
 			}
