@@ -14,9 +14,25 @@
 	let buildInfo: string;
 	(async () => buildInfo = await invoke("get_build_info"))();
 
+	let pendingBrightness: number | null = null;
+	let brightnessTimer: ReturnType<typeof setTimeout>;
+	let sliderBrightness = $settings?.brightness ?? 50;
+	$: if ($settings && pendingBrightness === null) sliderBrightness = $settings.brightness;
+	let sliderTimer: ReturnType<typeof setTimeout>;
+	function onSliderInput(e: Event) {
+		sliderBrightness = parseInt((e.target as HTMLInputElement).value);
+		clearTimeout(sliderTimer);
+		sliderTimer = setTimeout(() => {
+			if ($settings) $settings.brightness = sliderBrightness;
+		}, 50);
+	}
+	function onSliderChange() {
+		clearTimeout(sliderTimer);
+		if ($settings) $settings.brightness = sliderBrightness;
+	}
 	listen("device_brightness", ({ payload }: { payload: { action: string; value: number } }) => {
 		if (!$settings) return;
-		let value = $settings.brightness;
+		let value = pendingBrightness ?? $settings.brightness;
 		switch (payload.action) {
 			case "increase":
 				value += payload.value;
@@ -28,7 +44,15 @@
 				value = payload.value;
 				break;
 		}
-		$settings.brightness = Math.max(0, Math.min(100, value));
+		pendingBrightness = Math.max(0, Math.min(100, value));
+		clearTimeout(brightnessTimer);
+		brightnessTimer = setTimeout(() => {
+			if (pendingBrightness !== null && $settings) {
+				$settings.brightness = pendingBrightness;
+				sliderBrightness = pendingBrightness;
+				pendingBrightness = null;
+			}
+		}, 50);
 	});
 </script>
 
@@ -69,7 +93,7 @@
 
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<span class="text-neutral-400"> Device brightness: </span>
-			<input type="range" min="0" max="100" bind:value={$settings.brightness} />
+			<input type="range" min="0" max="100" value={sliderBrightness} on:input={onSliderInput} on:change={onSliderChange} />
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
