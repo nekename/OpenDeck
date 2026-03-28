@@ -364,13 +364,14 @@
 				icon="https://tacto.live/icon-192.png"
 				name="Tacto Connect"
 				subtitle="Rivulus"
-				action={() =>
+				action={() => {
 					installPluginGitHub("us.rivul.tacto", {
 						name: "Tacto Connect",
 						author: "Rivulus",
 						repository: "https://github.com/RivulusLive/tacto-desktop",
 						download_url: undefined,
-					})}
+					});
+				}}
 				secondaryAction={() => window.open("https://tacto.live")}
 			>
 				<svelte:fragment slot="secondary">

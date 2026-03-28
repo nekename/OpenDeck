@@ -45,7 +45,7 @@
 	<body>
 		<div class="sdpi-item">
 			<div class="sdpi-item-label">Action</div>
-			<select id="action" onchange="update();" class="sdpi-item-value select">
+			<select id="action" onchange="update()" class="sdpi-item-value select">
 				<option value="set">Set</option>
 				<option value="increase">Increase</option>
 				<option value="decrease">Decrease</option>
@@ -53,7 +53,7 @@
 		</div>
 		<div class="sdpi-item">
 			<div class="sdpi-item-label">Value (<span id="value-display"></span>%)</div>
-			<input id="value" oninput="update();" class="sdpi-item-value" type="range" min="0" max="100" />
+			<input id="value" oninput="update()" class="sdpi-item-value" type="range" min="0" max="100" />
 		</div>
 	</body>
 </html>
