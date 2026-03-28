@@ -57,13 +57,15 @@
 		<div class="border border-neutral-700 rounded-lg mb-2">
 			<button
 				class="w-full flex items-center justify-between px-3 py-2 text-left text-neutral-300 font-medium hover:bg-neutral-700/50 transition-colors rounded-lg"
+				aria-expanded={open.general}
+				aria-controls="section-general"
 				on:click={() => open.general = !open.general}
 			>
 				<span>General</span>
 				<CaretDown class="transition-transform duration-200 {open.general ? 'rotate-180' : ''}" size={16} />
 			</button>
 			{#if open.general}
-				<div class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
+				<div id="section-general" class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
 					<div class="flex flex-row items-center space-x-2">
 						<span class="text-neutral-400">Language:</span>
 						<div class="select-wrapper">
@@ -117,13 +119,15 @@
 		<div class="border border-neutral-700 rounded-lg mb-2">
 			<button
 				class="w-full flex items-center justify-between px-3 py-2 text-left text-neutral-300 font-medium hover:bg-neutral-700/50 transition-colors rounded-lg"
+				aria-expanded={open.features}
+				aria-controls="section-features"
 				on:click={() => open.features = !open.features}
 			>
 				<span>Features</span>
 				<CaretDown class="transition-transform duration-200 {open.features ? 'rotate-180' : ''}" size={16} />
 			</button>
 			{#if open.features}
-				<div class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
+				<div id="section-features" class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
 					<div class="flex flex-row items-center space-x-2">
 						<span class="text-neutral-400">Sleep after inactivity:</span>
 						<input type="number" min="0" bind:value={$settings.sleep_timeout_minutes} class="w-12 px-1 text-neutral-300 border border-neutral-600 rounded-lg" />
@@ -143,13 +147,15 @@
 		<div class="border border-neutral-700 rounded-lg mb-2">
 			<button
 				class="w-full flex items-center justify-between px-3 py-2 text-left text-neutral-300 font-medium hover:bg-neutral-700/50 transition-colors rounded-lg"
+				aria-expanded={open.developer}
+				aria-controls="section-developer"
 				on:click={() => open.developer = !open.developer}
 			>
 				<span>Developer</span>
 				<CaretDown class="transition-transform duration-200 {open.developer ? 'rotate-180' : ''}" size={16} />
 			</button>
 			{#if open.developer}
-				<div class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
+				<div id="section-developer" class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
 					<div class="flex flex-row items-center space-x-2">
 						<span class="text-neutral-400">Contribute statistics:</span>
 						<input type="checkbox" bind:checked={$settings.statistics} />
