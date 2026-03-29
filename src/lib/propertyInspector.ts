@@ -2,12 +2,15 @@ import type { Context } from "./Context.ts";
 
 import { type Writable, writable } from "svelte/store";
 
-export const inspectedInstance: Writable<string | null> = writable(null);
+export const inspectedInstance: Writable<string | Context | null> = writable(null);
 
 import { invoke } from "@tauri-apps/api/core";
-let old: string | null = null;
+let old: string | Context | null = null;
 inspectedInstance.subscribe(async (value) => {
-	await invoke("switch_property_inspector", { old, new: value });
+	await invoke("switch_property_inspector", {
+		old: typeof old == "string" ? old : null,
+		new: typeof value == "string" ? value : null,
+	});
 	old = value;
 });
 

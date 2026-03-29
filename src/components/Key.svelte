@@ -15,6 +15,7 @@
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
+	import { tick } from "svelte";
 
 	export let context: Context | null;
 	export let label: string = "";
@@ -54,19 +55,27 @@
 	function select(event: MouseEvent | KeyboardEvent) {
 		if (event instanceof MouseEvent && event.ctrlKey) return;
 		$openContextMenu = null;
-		if (!slot) return;
+		if (!slot) {
+			$inspectedInstance = context;
+			return;
+		}
 		if (slot.action.uuid == "opendeck.multiaction" || slot.action.uuid == "opendeck.toggleaction") {
-			inspectedParentAction.set(context);
+			$inspectedParentAction = context;
 		} else {
-			inspectedInstance.set(slot.context);
+			$inspectedInstance = slot.context;
 		}
 	}
 
 	function onfocus() {
 		$openContextMenu = null;
-		if (!slot) return;
+		if (!slot) {
+			$inspectedInstance = context;
+			return;
+		}
 		if (slot.action.uuid != "opendeck.multiaction" && slot.action.uuid != "opendeck.toggleaction") {
-			inspectedInstance.set(slot.context);
+			$inspectedInstance = slot.context;
+		} else {
+			$inspectedInstance = context;
 		}
 	}
 
@@ -78,22 +87,33 @@
 
 	let showEditor = false;
 	function edit() {
+		$openContextMenu = null;
 		showEditor = true;
+	}
+
+	function copy() {
+		$openContextMenu = null;
+		copiedContext.set(context);
 	}
 
 	export let handlePaste: ((source: Context, destination: Context) => void) | undefined = undefined;
 	async function paste() {
+		$openContextMenu = null;
 		if (!$copiedContext || !context) return;
 		if (handlePaste) handlePaste($copiedContext, context);
+		await tick();
+		$inspectedInstance = `${context.device}.${context.profile}.${context.controller}.${context.position}.0`;
 	}
 
 	async function clear() {
+		$openContextMenu = null;
 		if (!slot) return;
 		await invoke("remove_instance", { context: slot.context });
-		if ($inspectedInstance == slot.context) inspectedInstance.set(null);
 		showEditor = false;
 		slot = null;
 		inslot = slot;
+		await tick();
+		$inspectedInstance = context;
 	}
 
 	let showAlert: boolean = false;
@@ -163,7 +183,7 @@
 		bind:this={canvas}
 		class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
 		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
-		class:outline-solid={slot && $inspectedInstance == slot.context}
+		class:outline-solid={(slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context)}
 		class:rounded-full!={context?.controller == "Encoder"}
 		class:bg-black={slot != null}
 		width={size}
@@ -199,7 +219,7 @@
 		{#if !slot}
 			<button
 				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-lg cursor-pointer"
-				on:click={paste}
+				on:click|stopPropagation={paste}
 			>
 				<Clipboard size="18" class="text-neutral-300" />
 				<span class="ml-2"> Paste </span>
@@ -207,21 +227,21 @@
 		{:else}
 			<button
 				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-t-lg cursor-pointer"
-				on:click={edit}
+				on:click|stopPropagation={edit}
 			>
 				<Pencil size="18" class="text-neutral-300" />
 				<span class="ml-2"> Edit </span>
 			</button>
 			<button
 				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors cursor-pointer"
-				on:click={() => copiedContext.set(context)}
+				on:click|stopPropagation={copy}
 			>
 				<Copy size="18" class="text-neutral-300" />
 				<span class="ml-2"> Copy </span>
 			</button>
 			<button
 				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-b-lg cursor-pointer"
-				on:click={clear}
+				on:click|stopPropagation={clear}
 			>
 				<Trash size="18" class="text-red-400" />
 				<span class="ml-2"> Delete </span>
