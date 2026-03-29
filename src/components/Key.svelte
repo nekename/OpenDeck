@@ -199,6 +199,9 @@
 		on:dblclick|stopPropagation={triggerVirtualPress}
 		on:keydown|stopPropagation={(e) => {
 			if (e.key === "Enter") select(e);
+			else if (e.key == "Delete") clear();
+			else if (e.ctrlKey && e.key == "c") copy();
+			else if (e.ctrlKey && e.key == "v") paste();
 		}}
 		on:keyup|stopPropagation={(e) => {
 			if (e.key === " ") select(e);
