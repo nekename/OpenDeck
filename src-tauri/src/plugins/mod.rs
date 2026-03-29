@@ -425,10 +425,7 @@ pub fn initialise_plugins() {
 	// Iterate through all directory entries in the plugins folder and initialise them as plugins if appropriate
 	for entry in entries {
 		if let Ok(entry) = entry {
-			let path = match entry.metadata().unwrap().is_symlink() {
-				true => entry.path().parent().unwrap_or_else(|| path::Path::new(".")).join(fs::read_link(entry.path()).unwrap()),
-				false => entry.path(),
-			};
+			let path = crate::shared::plugin_entry_path(&entry.path()).unwrap_or_else(|_| entry.path());
 			let metadata = fs::metadata(&path).unwrap();
 			if metadata.is_dir() {
 				tokio::spawn(async move {

@@ -14,9 +14,38 @@ fn mime(extension: &str) -> String {
 	}
 }
 
+fn is_allowed_asset_path(path: &Path, config_dir: &Path) -> bool {
+	let Ok(path) = path.canonicalize() else {
+		return false;
+	};
+
+	if path.starts_with(config_dir) {
+		return true;
+	}
+
+	let plugins_dir = config_dir.join("plugins");
+	let Ok(entries) = std::fs::read_dir(plugins_dir) else {
+		return false;
+	};
+
+	for entry in entries.flatten() {
+		let Ok(plugin_root) = crate::shared::plugin_entry_path(&entry.path()) else {
+			continue;
+		};
+		let Ok(plugin_root) = plugin_root.canonicalize() else {
+			continue;
+		};
+		if path.starts_with(plugin_root) {
+			return true;
+		}
+	}
+
+	false
+}
+
 /// Start a simple webserver to serve files of plugins that run in a browser environment.
-pub async fn init_webserver(prefix: PathBuf) {
-	let prefix = prefix.canonicalize().unwrap();
+pub async fn init_webserver(config_dir: PathBuf) {
+	let canonical_config_dir = config_dir.canonicalize().unwrap();
 	let server = {
 		let listener = std::net::TcpListener::bind(format!("0.0.0.0:{}", *super::PORT_BASE + 2)).unwrap();
 
@@ -46,11 +75,11 @@ pub async fn init_webserver(prefix: PathBuf) {
 		}
 
 		// Ensure the requested path is within the config directory to prevent unrestricted access to the filesystem.
-		let developer = match crate::store::Store::new("settings", &prefix, crate::store::Settings::default()) {
+		let developer = match crate::store::Store::new("settings", &canonical_config_dir, crate::store::Settings::default()) {
 			Ok(store) => store.value.developer,
 			Err(_) => false,
 		};
-		if !developer && !path.canonicalize().is_ok_and(|p| p.starts_with(&prefix)) {
+		if !developer && !is_allowed_asset_path(path, &canonical_config_dir) {
 			let _ = request.respond(Response::empty(403));
 			continue;
 		}

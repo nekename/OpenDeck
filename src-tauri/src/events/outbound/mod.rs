@@ -74,13 +74,10 @@ async fn send_to_plugin(plugin: &str, data: &impl Serialize) -> Result<(), anyho
 async fn send_to_all_plugins(data: &impl Serialize) -> Result<(), anyhow::Error> {
 	let mut entries = tokio::fs::read_dir(crate::shared::config_dir().join("plugins")).await?;
 	while let Ok(Some(entry)) = entries.next_entry().await {
-		let path = match entry.metadata().await?.is_symlink() {
-			true => tokio::fs::read_link(entry.path()).await?,
-			false => entry.path(),
-		};
+		let path = crate::shared::plugin_entry_path(&entry.path()).unwrap_or_else(|_| entry.path());
 		let metadata = tokio::fs::metadata(&path).await?;
 		if metadata.is_dir() {
-			let _ = send_to_plugin(entry.file_name().to_str().unwrap(), data).await;
+			let _ = send_to_plugin(path.file_name().unwrap().to_str().unwrap(), data).await;
 		}
 	}
 	Ok(())

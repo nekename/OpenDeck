@@ -34,10 +34,7 @@ pub async fn list_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, Error> {
 	};
 
 	while let Ok(Some(entry)) = entries.next_entry().await {
-		let path = match entry.metadata().await.unwrap().is_symlink() {
-			true => fs::read_link(entry.path()).await.unwrap(),
-			false => entry.path(),
-		};
+		let path = crate::shared::plugin_entry_path(&entry.path()).unwrap_or_else(|_| entry.path());
 		let metadata = fs::metadata(&path).await.unwrap();
 		if metadata.is_dir() {
 			let id = path.file_name().unwrap().to_str().unwrap().to_owned();

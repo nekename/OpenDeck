@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::env::var;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
 use serde::{Deserialize, Deserializer, Serialize, de::Visitor};
@@ -23,6 +23,23 @@ pub fn copy_dir(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), std:
 		}
 	}
 	Ok(())
+}
+
+pub fn resolve_symlink_target(path: &Path, target: PathBuf) -> PathBuf {
+	if target.is_absolute() {
+		target
+	} else {
+		path.parent().unwrap_or_else(|| Path::new(".")).join(target)
+	}
+}
+
+pub fn plugin_entry_path(path: &Path) -> Result<PathBuf, std::io::Error> {
+	let metadata = std::fs::symlink_metadata(path)?;
+	if metadata.file_type().is_symlink() {
+		Ok(resolve_symlink_target(path, std::fs::read_link(path)?))
+	} else {
+		Ok(path.to_path_buf())
+	}
 }
 
 /// Metadata of a device.
