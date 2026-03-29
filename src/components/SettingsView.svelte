@@ -111,6 +111,11 @@
 						<span class="text-neutral-400">Check for updates:</span>
 						<input type="checkbox" bind:checked={$settings.updatecheck} />
 					</div>
+
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Contribute statistics:</span>
+						<input type="checkbox" bind:checked={$settings.statistics} />
+					</div>
 				</div>
 			{/if}
 		</div>
@@ -139,6 +144,23 @@
 						<span class="text-neutral-400">Image rotation:</span>
 						<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} />
 					</div>
+
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Disable Elgato device discovery:</span>
+						<input type="checkbox" bind:checked={$settings.disableelgato} />
+						<Tooltip>This option disables discovery of Elgato devices so that they can be managed by other software.</Tooltip>
+					</div>
+
+					{#if !buildInfo?.split("</summary>")[0]?.includes("windows")}
+						<div class="flex flex-row items-center space-x-2">
+							<span class="text-neutral-400">Create separate Wine prefixes:</span>
+							<input type="checkbox" bind:checked={$settings.separatewine} />
+							<Tooltip>
+								If this option is enabled, {PRODUCT_NAME} will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when
+								initialised.
+							</Tooltip>
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -157,11 +179,6 @@
 			{#if open.developer}
 				<div id="section-developer" class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
 					<div class="flex flex-row items-center space-x-2">
-						<span class="text-neutral-400">Contribute statistics:</span>
-						<input type="checkbox" bind:checked={$settings.statistics} />
-					</div>
-
-					<div class="flex flex-row items-center space-x-2">
 						<span class="text-neutral-400">Enable developer mode:</span>
 						<input type="checkbox" bind:checked={$settings.developer} />
 						<Tooltip>
@@ -169,23 +186,6 @@
 							of plugins, so you should disable it if it is not in use.
 						</Tooltip>
 					</div>
-
-					<div class="flex flex-row items-center space-x-2">
-						<span class="text-neutral-400">Disable Elgato device discovery:</span>
-						<input type="checkbox" bind:checked={$settings.disableelgato} />
-						<Tooltip>This option disables discovery of Elgato devices so that they can be managed by other software.</Tooltip>
-					</div>
-
-					{#if !buildInfo?.split("</summary>")[0]?.includes("windows")}
-						<div class="flex flex-row items-center space-x-2">
-							<span class="text-neutral-400">Create separate Wine prefixes:</span>
-							<input type="checkbox" bind:checked={$settings.separatewine} />
-							<Tooltip>
-								If this option is enabled, {PRODUCT_NAME} will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when
-								initialised.
-							</Tooltip>
-						</div>
-					{/if}
 
 					<div class="flex flex-row items-center space-x-2">
 						<button
