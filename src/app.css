@@ -8,6 +8,10 @@
 	border-color: var(--color-gray-200, currentColor);
 }
 
+button:focus:not(:focus-visible), select:focus:not(:focus-visible), input:focus, textarea:focus {
+	@apply outline-hidden;
+}
+
 button, input[type="radio"], input[type="checkbox"], input[type="range"], input[type="color"] {
 	@apply cursor-pointer;
 }
@@ -21,7 +25,7 @@ button, input[type="radio"], input[type="checkbox"], input[type="range"], input[
 	@apply px-2 py-1;
 	@apply text-sm text-neutral-300;
 	@apply bg-neutral-700;
-	@apply border border-neutral-600 rounded-lg outline-hidden;
+	@apply border border-neutral-600 rounded-lg;
 	@apply cursor-pointer;
 }
 
@@ -39,7 +43,6 @@ button, input[type="radio"], input[type="checkbox"], input[type="range"], input[
 .select-device-wrapper select {
 	@apply appearance-none;
 	@apply font-semibold text-xl text-neutral-200;
-	@apply outline-hidden;
 	@apply cursor-pointer;
 }
 
@@ -57,7 +60,6 @@ button, input[type="radio"], input[type="checkbox"], input[type="range"], input[
 .select-profile-wrapper select {
 	@apply appearance-none;
 	@apply text-neutral-400;
-	@apply outline-hidden;
 	@apply cursor-pointer;
 }
 

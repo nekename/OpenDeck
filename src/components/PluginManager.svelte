@@ -196,7 +196,7 @@
 </script>
 
 <button
-	class="px-3 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg outline-hidden"
+	class="px-3 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
 	on:click={() => showPopup = true}
 >
 	Plugins
@@ -246,7 +246,7 @@
 						(<span class="text-yellow-400">
 							available:
 							<button
-								class="font-semibold underline outline-hidden"
+								class="font-semibold underline"
 								on:click={() => openDetailsView = plugin.id.endsWith(".sdPlugin") ? plugin.id.slice(0, -9) : plugin.id}
 							>
 								{availableUpdates[plugin.id]}
@@ -274,7 +274,7 @@
 	<div class="flex flex-row justify-between items-center mx-2 mt-6 mb-2">
 		<h2 class="text-lg text-neutral-400">Plugin store</h2>
 		<button
-			class="flex flex-row items-center mt-2 px-1 py-0.5 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg outline-hidden"
+			class="flex flex-row items-center mt-2 px-1 py-0.5 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
 			on:click={installPluginFile}
 		>
 			<FileArrowUp />
@@ -293,7 +293,7 @@
 		<MagnifyingGlass size="14" class="ml-3 mr-0.5 text-neutral-300" />
 		<input
 			bind:value={query}
-			class="w-full p-2 text-neutral-300 outline-hidden"
+			class="w-full p-2 text-neutral-300"
 			placeholder="Search plugins"
 			type="search"
 			spellcheck="false"

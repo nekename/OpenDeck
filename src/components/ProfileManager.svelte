@@ -208,7 +208,7 @@
 		<input
 			bind:this={nameInput}
 			pattern="[a-zA-Z0-9_ ]+(\/[a-zA-Z0-9_ ]+)?"
-			class="grow p-2 text-neutral-300 invalid:text-red-400 bg-neutral-700 border-l border-y border-neutral-600 rounded-l-lg outline-hidden"
+			class="grow p-2 text-neutral-300 invalid:text-red-400 bg-neutral-700 border-l border-y border-neutral-600 rounded-l-lg"
 			placeholder='Profile name or "folder/name"'
 		/>
 
@@ -226,7 +226,7 @@
 		</button>
 
 		<button
-			class="ml-2 px-4 flex items-center text-neutral-300 bg-neutral-900 hover:bg-neutral-800 transition-colors border border-neutral-600 rounded-lg outline-hidden"
+			class="ml-2 px-4 flex items-center text-neutral-300 bg-neutral-900 hover:bg-neutral-800 transition-colors border border-neutral-600 rounded-lg"
 			on:click={() => showApplicationManager = true}
 		>
 			<Browsers size={24} />
@@ -246,7 +246,7 @@
 							bind:this={renameInput}
 							bind:value={newId}
 							pattern="[a-zA-Z0-9_ ]+(\/[a-zA-Z0-9_ ]+)?"
-							class="grow px-2 py-1 text-neutral-300 invalid:text-red-400 bg-neutral-700 rounded outline-hidden"
+							class="grow px-2 py-1 text-neutral-300 invalid:text-red-400 bg-neutral-700 rounded"
 							placeholder='Profile name or "folder/name"'
 							on:keydown={(e) => {
 								if (e.key === "Enter") saveRenamedProfile(profile);

@@ -101,7 +101,7 @@
 			<div class="flex flex-row items-center justify-center mt-1 space-x-1 text-neutral-300">
 				<button
 					on:click={() => adjustImageScale(-10)}
-					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md outline-hidden"
+					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md"
 					title="Decrease image scale"
 				>
 					-
@@ -111,7 +111,7 @@
 				</span>
 				<button
 					on:click={() => adjustImageScale(10)}
-					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md outline-hidden"
+					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md"
 					title="Increase image scale"
 				>
 					+
@@ -131,7 +131,7 @@
 				on:mouseleave={() => {
 					if (navigator.userAgent.toLowerCase().includes("mac")) backgroundColourInput.className = "absolute invisible w-0 h-0";
 				}}
-				class="mt-1 px-0.5 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-lg outline-hidden"
+				class="mt-1 px-0.5 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-lg"
 			>
 				Set background
 				<input
@@ -155,7 +155,7 @@
 				on:mouseleave={() => {
 					if (navigator.userAgent.toLowerCase().includes("mac")) solidColourInput.className = "absolute invisible w-0 h-0";
 				}}
-				class="mt-1 px-0.5 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-lg outline-hidden"
+				class="mt-1 px-0.5 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-lg"
 			>
 				Use solid colour
 				<input
@@ -205,7 +205,7 @@
 					bind:value={instance.states[state].text}
 					placeholder={instance.action.states[state]?.text || instance.action.name}
 					rows="1"
-					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden resize-none"
+					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg resize-none"
 				/>
 			</div>
 			<div class="flex flex-row items-center">
@@ -213,7 +213,7 @@
 				<input
 					type="color"
 					bind:value={instance.states[state].colour}
-					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
+					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg"
 				/>
 				<span class="mr-2"> Show </span>
 				<input
@@ -235,13 +235,13 @@
 				<input
 					type="color"
 					bind:value={instance.states[state].stroke_colour}
-					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
+					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg"
 				/>
 				<span class="mr-2"> Outline </span>
 				<input
 					type="number"
 					bind:value={instance.states[state].stroke_size}
-					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
+					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg"
 				/>
 			</div>
 			<div class="flex flex-row items-center">
@@ -250,7 +250,7 @@
 					list="families"
 					bind:value={instance.states[state].family}
 					placeholder="Font family"
-					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
+					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg"
 				/>
 				<datalist id="families">
 					<option value="Liberation Sans">Liberation Sans</option>
@@ -293,7 +293,7 @@
 				<input
 					type="number"
 					bind:value={instance.states[state].size}
-					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg outline-hidden"
+					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg"
 				/>
 			</div>
 		</div>

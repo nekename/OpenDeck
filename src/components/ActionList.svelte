@@ -38,7 +38,7 @@
 		<MagnifyingGlass size="13" class="ml-2 mr-1 text-neutral-300" />
 		<input
 			bind:value={query}
-			class="w-full p-1 text-sm text-neutral-300 outline-hidden"
+			class="w-full p-1 text-sm text-neutral-300"
 			placeholder="Search actions"
 			type="search"
 			spellcheck="false"
