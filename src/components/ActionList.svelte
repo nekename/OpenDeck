@@ -4,6 +4,7 @@
 	import MagnifyingGlass from "phosphor-svelte/lib/MagnifyingGlass";
 
 	import { getWebserverUrl } from "$lib/ports";
+	import { copiedItem } from "$lib/propertyInspector";
 	import { localisations } from "$lib/settings";
 	import { PRODUCT_NAME } from "$lib/singletons";
 
@@ -121,6 +122,11 @@
 								if (!event.dataTransfer) return;
 								event.dataTransfer.effectAllowed = "copy";
 								event.dataTransfer.setData("action", JSON.stringify(action));
+							}}
+							on:keydown={(event) => {
+								if ((event.ctrlKey || event.metaKey) && event.key == "c") {
+									copiedItem.set({ type: "action", action });
+								}
 							}}
 						>
 							<img

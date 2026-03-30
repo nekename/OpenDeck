@@ -3,6 +3,7 @@
 	import type { Context } from "$lib/Context";
 	import type { DeviceInfo } from "$lib/DeviceInfo";
 	import type { Profile } from "$lib/Profile";
+	import type { CopiedItem } from "$lib/propertyInspector";
 
 	import Key from "./Key.svelte";
 
@@ -55,10 +56,19 @@
 		}
 	}
 
-	async function handlePaste(source: Context, destination: Context) {
-		let response: ActionInstance = await invoke("move_instance", { source, destination, retain: true });
+	async function handlePaste(item: CopiedItem, destination: Context) {
+		let array = destination.controller == "Encoder" ? profile.sliders : profile.keys;
+
+		if (item.type == "action") {
+			if (array[destination.position]) return;
+			array[destination.position] = await invoke("create_instance", { context: destination, action: item.action });
+			profile = profile;
+			return;
+		}
+
+		let response: ActionInstance = await invoke("move_instance", { source: item.source, destination, retain: true });
 		if (response) {
-			(destination.controller == "Encoder" ? profile.sliders : profile.keys)[destination.position] = response;
+			array[destination.position] = response;
 			profile = profile;
 		}
 	}

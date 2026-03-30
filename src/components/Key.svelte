@@ -2,6 +2,7 @@
 	import type { ActionInstance } from "$lib/ActionInstance";
 	import type { ActionState } from "$lib/ActionState";
 	import type { Context } from "$lib/Context";
+	import type { CopiedItem } from "$lib/propertyInspector";
 
 	import Clipboard from "phosphor-svelte/lib/Clipboard";
 	import Copy from "phosphor-svelte/lib/Copy";
@@ -9,7 +10,7 @@
 	import Trash from "phosphor-svelte/lib/Trash";
 	import InstanceEditor from "./InstanceEditor.svelte";
 
-	import { copiedContext, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
+	import { copiedItem, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
 	import { CanvasLock, renderImage } from "$lib/rendererHelper";
 	import { settings } from "$lib/settings";
 
@@ -99,14 +100,15 @@
 
 	function copy() {
 		$openContextMenu = null;
-		copiedContext.set(context);
+		if (!context || !slot) return;
+		copiedItem.set({ type: "instance", source: context });
 	}
 
-	export let handlePaste: ((source: Context, destination: Context) => void) | undefined = undefined;
+	export let handlePaste: ((item: CopiedItem, destination: Context) => Promise<void>) | undefined = undefined;
 	async function paste() {
 		$openContextMenu = null;
-		if (!$copiedContext || !context) return;
-		if (handlePaste) handlePaste($copiedContext, context);
+		if (!$copiedItem || !context || !handlePaste) return;
+		await handlePaste($copiedItem, context);
 		await tick();
 		$inspectedInstance = `${context.device}.${context.profile}.${context.controller}.${context.position}.0`;
 	}
@@ -206,8 +208,8 @@
 		on:keydown={(e) => {
 			if (e.key == "Enter") select(e);
 			else if (e.key == "F2") edit();
-			else if (e.ctrlKey && e.key == "c") copy();
-			else if (e.ctrlKey && e.key == "v") paste();
+			else if ((e.ctrlKey || e.metaKey) && e.key == "c") copy();
+			else if ((e.ctrlKey || e.metaKey) && e.key == "v") paste();
 			else if (e.key == "Delete") clear();
 			else if (e.key == "ContextMenu" || (e.shiftKey && e.key == "F10")) contextMenu(e);
 		}}

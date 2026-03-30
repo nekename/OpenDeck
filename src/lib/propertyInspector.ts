@@ -1,3 +1,4 @@
+import type { Action } from "./Action.ts";
 import type { Context } from "./Context.ts";
 
 import { type Writable, writable } from "svelte/store";
@@ -23,4 +24,7 @@ document.addEventListener("keydown", (event) => {
 });
 globalThis.addEventListener("blur", () => openContextMenu.set(null));
 
-export const copiedContext: Writable<Context | null> = writable(null);
+export type CopiedItem =
+	| { type: "instance"; source: Context }
+	| { type: "action"; action: Action };
+export const copiedItem: Writable<CopiedItem | null> = writable(null);
