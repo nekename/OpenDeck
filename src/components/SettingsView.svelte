@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Heart from "phosphor-svelte/lib/Heart";
 	import Star from "phosphor-svelte/lib/Star";
+	import CaretDown from "phosphor-svelte/lib/CaretDown";
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
 
@@ -13,6 +14,8 @@
 	let showPopup: boolean;
 	let buildInfo: string;
 	(async () => buildInfo = await invoke("get_build_info"))();
+
+	let open = { general: true, features: false, developer: false };
 
 	listen("device_brightness", ({ payload }: { payload: { action: string; value: number } }) => {
 		if (!$settings) return;
@@ -48,110 +51,162 @@
 <Popup show={showPopup}>
 	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false}>✕</button>
 	<h2 class="m-2 font-semibold text-xl text-neutral-300">Settings</h2>
+
 	{#if $settings}
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Language: </span>
-			<div class="select-wrapper">
-				<select bind:value={$settings.language} class="w-32">
-					<option value="en">English</option>
-					<option value="es">Español</option>
-					<option value="zh_CN">中文</option>
-					<option value="fr">Français</option>
-					<option value="de">Deutsch</option>
-					<option value="ja">日本語</option>
-					<option value="ko">韓国語</option>
-				</select>
-			</div>
-			<Tooltip>
-				{PRODUCT_NAME} itself is not yet translated. Changing this setting will translate the text from installed plugins into your language for those that support it.
-			</Tooltip>
+		<!-- General -->
+		<div class="border border-neutral-700 rounded-lg mb-2">
+			<button
+				class="w-full flex items-center justify-between px-3 py-2 text-left text-neutral-300 font-medium hover:bg-neutral-700/50 transition-colors rounded-lg"
+				aria-expanded={open.general}
+				aria-controls="section-general"
+				on:click={() => open.general = !open.general}
+			>
+				<span>General</span>
+				<CaretDown class="transition-transform duration-200 {open.general ? 'rotate-180' : ''}" size={16} />
+			</button>
+			{#if open.general}
+				<div id="section-general" class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Language:</span>
+						<div class="select-wrapper">
+							<select bind:value={$settings.language} class="w-32">
+								<option value="en">English</option>
+								<option value="es">Español</option>
+								<option value="zh_CN">中文</option>
+								<option value="fr">Français</option>
+								<option value="de">Deutsch</option>
+								<option value="ja">日本語</option>
+								<option value="ko">韓国語</option>
+							</select>
+						</div>
+						<Tooltip>
+							{PRODUCT_NAME} itself is not yet translated. Changing this setting will translate the text from installed plugins into your language for those that support it.
+						</Tooltip>
+					</div>
+
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Device brightness:</span>
+						<input type="range" min="0" max="100" bind:value={$settings.brightness} />
+					</div>
+
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Run in background:</span>
+						<input type="checkbox" bind:checked={$settings.background} />
+						<Tooltip>If this option is enabled, {PRODUCT_NAME} will minimise to the tray and run in the background.</Tooltip>
+					</div>
+
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Start at login:</span>
+						<input type="checkbox" bind:checked={$settings.autolaunch} />
+						<Tooltip>
+							If this option is enabled, {PRODUCT_NAME} will automatically start at login.
+							{#if buildInfo?.split("</summary>")[0]?.includes("linux")}
+								<br />
+								If you used Flatpak to install {PRODUCT_NAME}, this option may not function as intended.
+							{/if}
+						</Tooltip>
+					</div>
+
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Check for updates:</span>
+						<input type="checkbox" bind:checked={$settings.updatecheck} />
+					</div>
+
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Contribute statistics:</span>
+						<input type="checkbox" bind:checked={$settings.statistics} />
+					</div>
+				</div>
+			{/if}
 		</div>
 
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Device brightness: </span>
-			<input type="range" min="0" max="100" bind:value={$settings.brightness} />
+		<!-- Features -->
+		<div class="border border-neutral-700 rounded-lg mb-2">
+			<button
+				class="w-full flex items-center justify-between px-3 py-2 text-left text-neutral-300 font-medium hover:bg-neutral-700/50 transition-colors rounded-lg"
+				aria-expanded={open.features}
+				aria-controls="section-features"
+				on:click={() => open.features = !open.features}
+			>
+				<span>Features</span>
+				<CaretDown class="transition-transform duration-200 {open.features ? 'rotate-180' : ''}" size={16} />
+			</button>
+			{#if open.features}
+				<div id="section-features" class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Sleep after inactivity:</span>
+						<input type="number" min="0" bind:value={$settings.sleep_timeout_minutes} class="w-12 px-1 text-neutral-300 border border-neutral-600 rounded-lg" />
+						<span class="text-neutral-400">minutes</span>
+						<Tooltip>This option controls how many minutes of inactivity will cause devices to enter sleep mode, where a value of 0 disables sleeping automatically.</Tooltip>
+					</div>
+
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Image rotation:</span>
+						<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} />
+					</div>
+
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Disable Elgato device discovery:</span>
+						<input type="checkbox" bind:checked={$settings.disableelgato} />
+						<Tooltip>This option disables discovery of Elgato devices so that they can be managed by other software.</Tooltip>
+					</div>
+
+					{#if !buildInfo?.split("</summary>")[0]?.includes("windows")}
+						<div class="flex flex-row items-center space-x-2">
+							<span class="text-neutral-400">Create separate Wine prefixes:</span>
+							<input type="checkbox" bind:checked={$settings.separatewine} />
+							<Tooltip>
+								If this option is enabled, {PRODUCT_NAME} will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when
+								initialised.
+							</Tooltip>
+						</div>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Sleep after inactivity: </span>
-			<input type="number" min="0" bind:value={$settings.sleep_timeout_minutes} class="w-12 px-1 text-neutral-300 border border-neutral-600 rounded-lg" />
-			<span class="text-neutral-400">minutes</span>
-			<Tooltip> This option controls how many minutes of inactivity will cause devices to enter sleep mode, where a value of 0 disables sleeping automatically. </Tooltip>
-		</div>
+		<!-- Developer -->
+		<div class="border border-neutral-700 rounded-lg mb-2">
+			<button
+				class="w-full flex items-center justify-between px-3 py-2 text-left text-neutral-300 font-medium hover:bg-neutral-700/50 transition-colors rounded-lg"
+				aria-expanded={open.developer}
+				aria-controls="section-developer"
+				on:click={() => open.developer = !open.developer}
+			>
+				<span>Developer</span>
+				<CaretDown class="transition-transform duration-200 {open.developer ? 'rotate-180' : ''}" size={16} />
+			</button>
+			{#if open.developer}
+				<div id="section-developer" class="px-3 pb-3 space-y-3 border-t border-neutral-700 pt-3">
+					<div class="flex flex-row items-center space-x-2">
+						<span class="text-neutral-400">Enable developer mode:</span>
+						<input type="checkbox" bind:checked={$settings.developer} />
+						<Tooltip>
+							This option enables features that make plugin development and debugging easier. Additionally, this option exposes all file paths on your device on the local webserver to allow symbolic linking
+							of plugins, so you should disable it if it is not in use.
+						</Tooltip>
+					</div>
 
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Image rotation: </span>
-			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} />
-		</div>
-
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Run in background: </span>
-			<input type="checkbox" bind:checked={$settings.background} />
-			<Tooltip> If this option is enabled, {PRODUCT_NAME} will minimise to the tray and run in the background. </Tooltip>
-		</div>
-
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Start at login: </span>
-			<input type="checkbox" bind:checked={$settings.autolaunch} />
-			<Tooltip>
-				If this option is enabled, {PRODUCT_NAME} will automatically start at login.
-				{#if buildInfo?.split("</summary>")[0]?.includes("linux")}
-					<br />
-					If you used Flatpak to install {PRODUCT_NAME}, this option may not function as intended.
-				{/if}
-			</Tooltip>
-		</div>
-
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Check for updates: </span>
-			<input type="checkbox" bind:checked={$settings.updatecheck} />
-		</div>
-
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Contribute statistics: </span>
-			<input type="checkbox" bind:checked={$settings.statistics} />
-		</div>
-
-		{#if !buildInfo?.split("</summary>")[0]?.includes("windows")}
-			<div class="flex flex-row items-center m-2 space-x-2">
-				<span class="text-neutral-400"> Create separate Wine prefixes: </span>
-				<input type="checkbox" bind:checked={$settings.separatewine} />
-				<Tooltip>
-					If this option is enabled, {PRODUCT_NAME} will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when
-					initialised.
-				</Tooltip>
-			</div>
-		{/if}
-
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Enable developer mode: </span>
-			<input type="checkbox" bind:checked={$settings.developer} />
-			<Tooltip>
-				This option enables features that make plugin development and debugging easier. Additionally, this option exposes all file paths on your device on the local webserver to allow symbolic linking
-				of plugins, so you should disable it if it is not in use.
-			</Tooltip>
-		</div>
-
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Disable Elgato device discovery: </span>
-			<input type="checkbox" bind:checked={$settings.disableelgato} />
-			<Tooltip> This option disables discovery of Elgato devices so that they can be managed by other software. </Tooltip>
+					<div class="flex flex-row items-center space-x-2">
+						<button
+							class="px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
+							on:click={() => invoke("open_config_directory")}
+						>
+							Open config directory
+						</button>
+						<button
+							class="px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
+							on:click={() => invoke("open_log_directory")}
+						>
+							Open log directory
+						</button>
+					</div>
+				</div>
+			{/if}
 		</div>
 	{/if}
 
-	<div class="ml-2">
-		<button
-			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
-			on:click={() => invoke("open_config_directory")}
-		>
-			Open config directory
-		</button>
-		<button
-			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
-			on:click={() => invoke("open_log_directory")}
-		>
-			Open log directory
-		</button>
+	<div class="ml-1 mt-2">
 		<span class="text-xs text-neutral-400">
 			{@html buildInfo}
 		</span>
