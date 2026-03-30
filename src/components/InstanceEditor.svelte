@@ -87,6 +87,7 @@
 					event.preventDefault();
 					instance.states[state].image = instance.action.states[state]?.image ?? instance.action.icon;
 				}}
+				title="Click to select an image, or right-click to reset to the default image."
 			>
 				{#await renderImage(null, null, instance.states[state], instance.action.states[state]?.image ?? instance.action.icon, false, false, true, false, false, 0, true)}
 					<div class="w-32 min-w-32 h-32 bg-neutral-800 animate-pulse border border-neutral-600 rounded-xl"></div>
@@ -200,30 +201,34 @@
 
 		<div class="flex flex-col justify-center pl-4 pr-2 pt-4 pb-2 space-y-2">
 			<div class="flex flex-row items-center space-x-2">
-				<span> Text </span>
+				<label for="editor-text">Text</label>
 				<textarea
 					bind:value={instance.states[state].text}
 					placeholder={instance.action.states[state]?.text || instance.action.name}
 					rows="1"
 					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg resize-none"
+					id="editor-text"
 				/>
 			</div>
 			<div class="flex flex-row items-center">
-				<span class="mr-2"> Colour </span>
+				<label for="editor-colour" class="mr-2">Colour</label>
 				<input
 					type="color"
 					bind:value={instance.states[state].colour}
 					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg"
+					id="editor-colour"
 				/>
-				<span class="mr-2"> Show </span>
+				<label for="editor-show" class="mr-2">Show</label>
 				<input
 					type="checkbox"
 					bind:checked={instance.states[state].show}
 					class="mr-4 mt-1 scale-125"
+					id="editor-show"
 				/>
 				<select
 					bind:value={instance.states[state].alignment}
 					class="px-1! py-0.5!"
+					aria-label="Alignment"
 				>
 					<option value="top">Top</option>
 					<option value="middle">Middle</option>
@@ -231,26 +236,29 @@
 				</select>
 			</div>
 			<div class="flex flex-row items-center">
-				<span class="mr-2"> Stroke </span>
+				<label for="editor-stroke" class="mr-2">Stroke</label>
 				<input
 					type="color"
 					bind:value={instance.states[state].stroke_colour}
 					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg"
+					id="editor-stroke"
 				/>
-				<span class="mr-2"> Outline </span>
+				<label for="editor-outline" class="mr-2">Outline</label>
 				<input
 					type="number"
 					bind:value={instance.states[state].stroke_size}
 					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg"
+					id="editor-outline"
 				/>
 			</div>
 			<div class="flex flex-row items-center">
-				<span class="mr-2"> Font </span>
+				<label for="editor-font" class="mr-2">Font</label>
 				<input
 					list="families"
 					bind:value={instance.states[state].family}
 					placeholder="Font family"
 					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg"
+					id="editor-font"
 				/>
 				<datalist id="families">
 					<option value="Liberation Sans">Liberation Sans</option>
@@ -269,31 +277,35 @@
 				</datalist>
 			</div>
 			<div class="flex flex-row items-center">
-				<span class="mr-3 font-bold"> B </span>
+				<label for="editor-bold" class="mr-3 font-bold">B</label>
 				<input
 					type="checkbox"
 					bind:checked={bold}
 					on:change={() => instance.states[state].style = bold && italic ? "Bold Italic" : bold ? "Bold" : italic ? "Italic" : "Regular"}
 					class="mr-4 mt-1 scale-125"
+					id="editor-bold"
 				/>
-				<span class="mr-3 italic"> I </span>
+				<label for="editor-italic" class="mr-3 italic">I</label>
 				<input
 					type="checkbox"
 					bind:checked={italic}
 					on:change={() => instance.states[state].style = bold && italic ? "Bold Italic" : bold ? "Bold" : italic ? "Italic" : "Regular"}
 					class="mr-4 mt-1 scale-125"
+					id="editor-italic"
 				/>
-				<span class="mr-3 underline"> U </span>
+				<label for="editor-underline" class="mr-3 underline">U</label>
 				<input
 					type="checkbox"
 					bind:checked={instance.states[state].underline}
 					class="mr-4 mt-1 scale-125"
+					id="editor-underline"
 				/>
-				<span class="mr-2"> Size </span>
+				<label for="editor-size" class="mr-2">Size</label>
 				<input
 					type="number"
 					bind:value={instance.states[state].size}
 					class="px-0.5 w-14 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg"
+					id="editor-size"
 				/>
 			</div>
 		</div>
