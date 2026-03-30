@@ -79,10 +79,16 @@
 		}
 	}
 
-	async function contextMenu(event: MouseEvent) {
+	let contextMenuEl: HTMLDivElement;
+	async function contextMenu(event: MouseEvent | KeyboardEvent) {
 		event.preventDefault();
 		if (!active || !context) return;
-		$openContextMenu = { context, x: event.x, y: event.y };
+		const rect = canvas.getBoundingClientRect();
+		let x = (event instanceof MouseEvent && event.x) ? event.x : rect.left;
+		let y = (event instanceof MouseEvent && event.y) ? event.y : rect.bottom;
+		$openContextMenu = { context, x, y };
+		await tick();
+		contextMenuEl?.querySelector("button")?.focus();
 	}
 
 	let showEditor = false;
@@ -197,14 +203,16 @@
 		on:drop
 		on:click|stopPropagation={select}
 		on:dblclick|stopPropagation={triggerVirtualPress}
-		on:keydown|stopPropagation={(e) => {
-			if (e.key === "Enter") select(e);
-			else if (e.key == "Delete") clear();
+		on:keydown={(e) => {
+			if (e.key == "Enter") select(e);
+			else if (e.key == "F2") edit();
 			else if (e.ctrlKey && e.key == "c") copy();
 			else if (e.ctrlKey && e.key == "v") paste();
+			else if (e.key == "Delete") clear();
+			else if (e.key == "ContextMenu" || (e.shiftKey && e.key == "F10")) contextMenu(e);
 		}}
 		on:keyup|stopPropagation={(e) => {
-			if (e.key === " ") select(e);
+			if (e.key == " ") select(e);
 		}}
 		on:focus={onfocus}
 		on:contextmenu={contextMenu}
@@ -216,6 +224,7 @@
 
 {#if $openContextMenu && $openContextMenu?.context == context}
 	<div
+		bind:this={contextMenuEl}
 		class="absolute w-32 font-semibold text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg divide-y divide-neutral-600! z-10"
 		style={`left: ${$openContextMenu.x}px; top: ${$openContextMenu.y}px;`}
 	>

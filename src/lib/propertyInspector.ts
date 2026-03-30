@@ -18,6 +18,9 @@ export const inspectedParentAction: Writable<Context | null> = writable(null);
 
 export const openContextMenu: Writable<{ context: Context; x: number; y: number } | null> = writable(null);
 document.addEventListener("click", () => openContextMenu.set(null));
+document.addEventListener("keydown", (event) => {
+	if (event.key == "Escape") openContextMenu.set(null);
+});
 globalThis.addEventListener("blur", () => openContextMenu.set(null));
 
 export const copiedContext: Writable<Context | null> = writable(null);
