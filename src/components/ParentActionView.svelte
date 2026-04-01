@@ -9,7 +9,7 @@
 	import { copiedItem, inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
 
 	import { invoke } from "@tauri-apps/api/core";
-	import { onMount } from "svelte";
+	import { onMount, tick } from "svelte";
 
 	export let profile: Profile;
 
@@ -55,10 +55,22 @@
 		await addAction($copiedItem.action);
 	}
 
-	async function removeInstance(index: number) {
+	async function removeInstance(index: number, refocus = false) {
 		await invoke("remove_instance", { context: children[index].context });
 		children.splice(index, 1);
 		profile.keys[$inspectedParentAction!.position]!.children = children;
+
+		if (!refocus) return;
+
+		await tick();
+		const items = Array.from(listEl?.querySelectorAll("[role='listitem']") ?? []) as HTMLElement[];
+		if (items.length == 0) return;
+
+		const targetIndex = children.length == 0 ? 0 : Math.min(index, children.length - 1);
+		for (let i = 0; i < items.length; i++) {
+			items[i].tabIndex = i == targetIndex ? 0 : -1;
+		}
+		items[targetIndex]?.focus();
 	}
 
 	function handleListKeydown(event: KeyboardEvent) {
@@ -120,7 +132,7 @@
 			on:click|stopPropagation={() => $inspectedInstance = instance.context}
 			on:focus|stopPropagation={() => $inspectedInstance = instance.context}
 			on:keydown={(e) => {
-				if (e.key == "Delete") removeInstance(index);
+				if (e.key == "Delete") removeInstance(index, true);
 			}}
 			role="listitem"
 			tabindex={index == 0 ? 0 : -1}
