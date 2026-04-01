@@ -2,6 +2,7 @@
 	import type { ActionInstance } from "$lib/ActionInstance";
 
 	import { renderImage, resizeImage } from "$lib/rendererHelper";
+	import { settings } from "$lib/settings";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { onMount } from "svelte";
@@ -60,8 +61,11 @@
 	}}
 />
 
-<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg z-10">
-	<div class="flex flex-row">
+<div
+	class="absolute left-1/2 top-1/2 p-2 text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg z-10"
+	style={`transform: translate(-50%, -50%) rotate(${($settings?.device_rotation ?? 0)}deg); transform-origin: center;`}
+>
+		<div class="flex flex-row">
 		<div class="select-wrapper m-1 w-full">
 			<select class="w-full bg-neutral-600! border-neutral-500!" bind:value={state} aria-label="State">
 				{#each instance.states as _, i}
@@ -70,8 +74,8 @@
 			</select>
 		</div>
 		<button class="ml-2 mr-1 float-right text-xl text-neutral-300" on:click={() => showEditor = false} aria-label="Close">✕</button>
-	</div>
-	<div class="flex flex-row mx-1">
+		</div>
+		<div class="flex flex-row mx-1">
 		<div class="flex flex-col justify-center items-center mt-2 mb-1">
 			<button
 				on:click={(event) => {
@@ -312,5 +316,5 @@
 				/>
 			</div>
 		</div>
-	</div>
+		</div>
 </div>

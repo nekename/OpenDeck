@@ -82,12 +82,16 @@
 	}
 
 	let contextMenuEl: HTMLDivElement;
+	let keyContainerEl: HTMLDivElement;
 	async function contextMenu(event: MouseEvent | KeyboardEvent) {
 		event.preventDefault();
 		if (!active || !context) return;
 		const rect = canvas.getBoundingClientRect();
-		let x = (event instanceof MouseEvent && event.x) ? event.x : rect.left;
-		let y = (event instanceof MouseEvent && event.y) ? event.y : rect.bottom;
+		const containerRect = keyContainerEl.getBoundingClientRect();
+		const clickX = (event instanceof MouseEvent && event.clientX) ? event.clientX : rect.left;
+		const clickY = (event instanceof MouseEvent && event.clientY) ? event.clientY : rect.bottom;
+		const x = clickX - containerRect.left;
+		const y = clickY - containerRect.top;
 		$openContextMenu = { context, x, y };
 		await tick();
 		contextMenuEl?.querySelector("button")?.focus();
@@ -185,7 +189,9 @@
 </script>
 
 <div
+	bind:this={keyContainerEl}
 	class="relative"
+	class:z-50={$openContextMenu && $openContextMenu?.context == context}
 	style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}
 >
 	<canvas
@@ -225,47 +231,47 @@
 	{#if isTouchPoint && !slot}
 		<div class="absolute left-1/4 top-1/2 w-1/2 border-t-4 border-neutral-700 pointer-events-none"></div>
 	{/if}
-</div>
 
-{#if $openContextMenu && $openContextMenu?.context == context}
-	<div
-		bind:this={contextMenuEl}
-		class="absolute w-32 font-semibold text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg divide-y divide-neutral-600! z-10"
-		style={`left: ${$openContextMenu.x}px; top: ${$openContextMenu.y}px;`}
-	>
-		{#if !slot}
-			<button
-				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-lg cursor-pointer"
-				on:click|stopPropagation={paste}
-			>
-				<Clipboard size="18" class="text-neutral-300" />
-				<span class="ml-2"> Paste </span>
-			</button>
-		{:else}
-			<button
-				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-t-lg cursor-pointer"
-				on:click|stopPropagation={edit}
-			>
-				<Pencil size="18" class="text-neutral-300" />
-				<span class="ml-2"> Edit </span>
-			</button>
-			<button
-				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors cursor-pointer"
-				on:click|stopPropagation={copy}
-			>
-				<Copy size="18" class="text-neutral-300" />
-				<span class="ml-2"> Copy </span>
-			</button>
-			<button
-				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-b-lg cursor-pointer"
-				on:click|stopPropagation={clear}
-			>
-				<Trash size="18" class="text-red-400" />
-				<span class="ml-2"> Delete </span>
-			</button>
-		{/if}
-	</div>
-{/if}
+	{#if $openContextMenu && $openContextMenu?.context == context}
+		<div
+			bind:this={contextMenuEl}
+			class="absolute w-32 font-semibold text-sm text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg divide-y divide-neutral-600! z-10"
+			style={`left: ${$openContextMenu.x}px; top: ${$openContextMenu.y}px; transform: rotate(${($settings?.device_rotation ?? 0)}deg); transform-origin: top left;`}
+		>
+			{#if !slot}
+				<button
+					class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-lg cursor-pointer"
+					on:click|stopPropagation={paste}
+				>
+					<Clipboard size="18" class="text-neutral-300" />
+					<span class="ml-2"> Paste </span>
+				</button>
+			{:else}
+				<button
+					class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-t-lg cursor-pointer"
+					on:click|stopPropagation={edit}
+				>
+					<Pencil size="18" class="text-neutral-300" />
+					<span class="ml-2"> Edit </span>
+				</button>
+				<button
+					class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors cursor-pointer"
+					on:click|stopPropagation={copy}
+				>
+					<Copy size="18" class="text-neutral-300" />
+					<span class="ml-2"> Copy </span>
+				</button>
+				<button
+					class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-b-lg cursor-pointer"
+					on:click|stopPropagation={clear}
+				>
+					<Trash size="18" class="text-red-400" />
+					<span class="ml-2"> Delete </span>
+				</button>
+			{/if}
+		</div>
+	{/if}
+</div>
 
 {#if slot && showEditor}
 	<InstanceEditor bind:instance={slot} bind:showEditor />
