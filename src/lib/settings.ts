@@ -4,6 +4,7 @@ export type Settings = {
 	brightness: number;
 	sleep_timeout_minutes: number;
 	rotation: number;
+	device_rotation: number;
 	background: boolean;
 	autolaunch: boolean;
 	updatecheck: boolean;

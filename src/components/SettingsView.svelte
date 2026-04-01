@@ -85,6 +85,11 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-device-rotation" class="text-neutral-400">Device preview rotation:</label>
+			<input type="range" min="0" max="270" step="90" bind:value={$settings.device_rotation} id="settings-device-rotation" />
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-background" class="text-neutral-400">Run in background:</label>
 			<input type="checkbox" bind:checked={$settings.background} id="settings-background" />
 			<Tooltip> If this option is enabled, {PRODUCT_NAME} will minimise to the tray and run in the background. </Tooltip>

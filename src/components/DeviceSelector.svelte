@@ -3,6 +3,7 @@
 	import type { Profile } from "$lib/Profile";
 
 	import { profileManager } from "$lib/singletons";
+	import { settings } from "$lib/settings";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
@@ -49,10 +50,14 @@
 
 	$: {
 		if (devices[value]) {
-			const effectiveCols = Math.min(Math.max(devices[value].columns, devices[value].encoders, devices[value].touchpoints), 8);
-			const effectiveRows = Math.min(devices[value].rows + Math.min(devices[value].encoders, 1) + Math.min(devices[value].touchpoints, 1), 4);
-			const idealWidth = (effectiveCols * 132) + 416;
-			const idealHeight = (effectiveRows * 132) + 384 + (buildInfo?.split("</summary>")[0]?.includes("darwin") ? 28 : 0);
+			const maxColumns = Math.max(devices[value].columns, devices[value].encoders, devices[value].touchpoints);
+			const totalRows = devices[value].rows + Math.min(devices[value].encoders, 1) + Math.min(devices[value].touchpoints, 1);
+			const rotatedPortrait = $settings?.device_rotation == 90 || $settings?.device_rotation == 270;
+			const visualCols = rotatedPortrait ? totalRows : maxColumns;
+			const visualRows = rotatedPortrait ? maxColumns : totalRows;
+			// Keep room for paddings, right inspector, and nav controls while matching the real preview size.
+			const idealWidth = (visualCols * 132) + 520;
+			const idealHeight = (visualRows * 132) + 432 + (buildInfo?.split("</summary>")[0]?.includes("darwin") ? 28 : 0);
 			(async () => {
 				const monitor = await currentMonitor();
 				const scaleFactor = monitor?.scaleFactor ?? 1;
