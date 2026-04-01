@@ -95,7 +95,7 @@
 					<img
 						src={resolvedSrc}
 						class="my-auto w-32 min-w-32 h-min aspect-square bg-black border border-neutral-600 rounded-xl cursor-pointer"
-						alt="State {state}"
+						alt="State {state + 1} image"
 					/>
 				{/await}
 			</button>
