@@ -175,6 +175,8 @@ export async function renderImage(
 				canvas.width * (1 - (margin * 2)),
 				canvas.height * (1 - (margin * 2)),
 			);
+			// Draw pressed preview in untransformed coordinates to avoid rotation drift.
+			context.setTransform(1, 0, 0, 1, 0, 0);
 			context.clearRect(0, 0, canvas.width, canvas.height);
 			context.drawImage(smallCanvas, 0, 0);
 		}

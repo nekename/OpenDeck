@@ -16,12 +16,73 @@
 	export let profile: Profile;
 
 	export let selectedDevice: string;
+	let dragPreviewEl: HTMLCanvasElement | null = null;
 
-	function handleDragStart({ dataTransfer }: DragEvent, controller: string, position: number) {
+	function getDragSourceCanvas(event: DragEvent): HTMLCanvasElement | null {
+		if (event.target instanceof HTMLCanvasElement) return event.target;
+		if (event.currentTarget instanceof HTMLCanvasElement) return event.currentTarget;
+		for (const node of event.composedPath()) {
+			if (node instanceof HTMLCanvasElement) return node;
+		}
+		return null;
+	}
+
+	function cleanupDragPreview() {
+		if (dragPreviewEl?.parentElement) dragPreviewEl.parentElement.removeChild(dragPreviewEl);
+		dragPreviewEl = null;
+	}
+
+	function createRotatedDragPreview(source: HTMLCanvasElement, rotation: number): HTMLCanvasElement | null {
+		const normalizedRotation = ((rotation % 360) + 360) % 360;
+		if (normalizedRotation === 0) return null;
+
+		const swapSides = normalizedRotation === 90 || normalizedRotation === 270;
+		const preview = document.createElement("canvas");
+		preview.width = swapSides ? source.height : source.width;
+		preview.height = swapSides ? source.width : source.height;
+
+		const context = preview.getContext("2d");
+		if (!context) return null;
+
+		context.translate(preview.width / 2, preview.height / 2);
+		context.rotate((-normalizedRotation * Math.PI) / 180);
+		context.drawImage(source, -source.width / 2, -source.height / 2);
+
+		// Keep the preview in the DOM so WebView drag image rendering stays reliable.
+		preview.style.position = "fixed";
+		preview.style.left = "-9999px";
+		preview.style.top = "0";
+		preview.style.pointerEvents = "none";
+		document.body.appendChild(preview);
+
+		return preview;
+	}
+
+	function handleDragStart(event: DragEvent, controller: string, position: number) {
+		const { dataTransfer } = event;
 		if (!dataTransfer) return;
+		cleanupDragPreview();
 		dataTransfer.effectAllowed = "move";
 		dataTransfer.setData("controller", controller);
 		dataTransfer.setData("position", position.toString());
+		dataTransfer.setData("text/plain", `${controller}:${position}`);
+
+		const source = getDragSourceCanvas(event);
+		if (!source) return;
+
+		const preview = createRotatedDragPreview(source, visualRotation);
+		if (preview) {
+			dragPreviewEl = preview;
+			dataTransfer.setDragImage(preview, preview.width / 2, preview.height / 2);
+			return;
+		}
+
+		// Fallback to native ghost image when no rotation is needed or preview creation failed.
+		dataTransfer.setDragImage(source, source.width / 2, source.height / 2);
+	}
+
+	function handleDragEnd() {
+		cleanupDragPreview();
 	}
 
 	function handleDragOver(event: DragEvent) {
@@ -197,6 +258,7 @@
 		tabindex="-1"
 		on:click={() => inspectedInstance.set(null)}
 		on:keyup={() => inspectedInstance.set(null)}
+		on:dragend={handleDragEnd}
 		on:keydown|capture={handleGridKeydown}
 		on:focusin={handleGridFocusin}
 	>
