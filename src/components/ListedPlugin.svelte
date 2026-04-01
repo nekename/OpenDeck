@@ -5,7 +5,9 @@
 	export let hidden: boolean = false;
 	export let disconnected: boolean = false;
 	export let action: () => void;
+	export let actionLabel: string = "";
 	export let secondaryAction: (() => void) | undefined = undefined;
+	export let secondaryActionLabel: string = "";
 </script>
 
 <div
@@ -20,11 +22,11 @@
 
 	<div class="flex flex-col ml-auto mr-4">
 		{#if secondaryAction}
-			<button on:click={secondaryAction}>
+			<button on:click={secondaryAction} aria-label={secondaryActionLabel}>
 				<slot name="secondary" />
 			</button>
 		{/if}
-		<button on:click={action}>
+		<button on:click={action} aria-label={actionLabel}>
 			<slot />
 		</button>
 	</div>

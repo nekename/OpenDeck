@@ -117,7 +117,7 @@
 							role="option"
 							aria-selected="false"
 							tabindex={i == 0 ? 0 : -1}
-							aria-label="{$localisations?.[action.plugin]?.[action.uuid]?.Name ?? action.name}: {$localisations?.[action.plugin]?.[action.uuid]?.Tooltip ?? action.tooltip}"
+							aria-label={$localisations?.[action.plugin]?.[action.uuid]?.Name ?? action.name}
 							on:dragstart={(event) => {
 								if (!event.dataTransfer) return;
 								event.dataTransfer.effectAllowed = "copy";
