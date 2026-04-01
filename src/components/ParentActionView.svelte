@@ -108,6 +108,7 @@
 <div
 	bind:this={listEl}
 	class="flex flex-col h-128 overflow-auto"
+	on:click={() => $inspectedInstance = null}
 	role="list"
 	aria-label="{parentUuid == 'opendeck.toggleaction' ? 'Toggle Action' : 'Multi Action'} children"
 	on:keydown={handleListKeydown}
@@ -115,9 +116,9 @@
 	{#each children as instance, index}
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 		<div
-			class="flex flex-row items-center mx-4 my-2 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
-			on:click={() => $inspectedInstance = instance.context}
-			on:focus={() => $inspectedInstance = instance.context}
+			class="flex flex-row items-center mx-4 my-2 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
+			on:click|stopPropagation={() => $inspectedInstance = instance.context}
+			on:focus|stopPropagation={() => $inspectedInstance = instance.context}
 			on:keydown={(e) => {
 				if (e.key == "Delete") removeInstance(index);
 			}}
@@ -146,9 +147,11 @@
 	{/each}
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 	<div
-		class="flex flex-row items-center mx-4 mt-2 mb-4 p-3 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-dashed border-neutral-600 rounded-lg"
+		class="flex flex-row items-center mx-4 mt-2 mb-4 p-3 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-dashed border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
 		on:dragover={handleDragOver}
 		on:drop={handleDrop}
+		on:click={() => $inspectedInstance = null}
+		on:focus={() => $inspectedInstance = null}
 		on:keydown={(e) => {
 			if ((e.ctrlKey || e.metaKey) && e.key == "v") handlePaste();
 		}}

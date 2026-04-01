@@ -192,7 +192,7 @@
 		bind:this={canvas}
 		class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
 		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
-		class:outline-solid={(slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context)}
+		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
 		class:rounded-full!={context?.controller == "Encoder"}
 		class:bg-black={slot != null}
 		width={size}
