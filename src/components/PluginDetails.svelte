@@ -70,8 +70,8 @@
 	});
 </script>
 
-<Popup show>
-	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={close}>✕</button>
+<Popup show label="{details.name} plugin details">
+	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={close} aria-label="Close">✕</button>
 	<div class="flex flex-row items-start">
 		<img
 			src={"https://openactionapi.github.io/plugins/icons/" + id + ".png"}
@@ -111,6 +111,7 @@
 				<button
 					on:click={() => invoke("open_url", { url: details.download_url ?? details.repository + "/releases/latest" })}
 					class="ml-1 p-3.5 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 hover:bg-indigo-500 transition-colors border border-indigo-500 rounded-r-lg"
+					aria-label="Download latest release from GitHub"
 				>
 					<ArrowSquareOut size={24} />
 				</button>

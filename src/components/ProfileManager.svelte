@@ -200,7 +200,7 @@
 	}}
 />
 
-<Popup show={showPopup}>
+<Popup show={showPopup} label="{device.name} profiles">
 	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false} aria-label="Close">✕</button>
 	<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
 
@@ -278,7 +278,7 @@
 	</div>
 </Popup>
 
-<Popup show={showApplicationManager}>
+<Popup show={showApplicationManager} label="Application profiles">
 	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => showApplicationManager = false} aria-label="Close">✕</button>
 	<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
 	<span class="text-sm text-neutral-400">If your application isn't listed, try switching to it and back again.</span>

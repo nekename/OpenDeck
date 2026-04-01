@@ -212,8 +212,8 @@
 	}}
 />
 
-<Popup show={showPopup}>
-	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false}>✕</button>
+<Popup show={showPopup} label="Manage plugins">
+	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false} aria-label="Close">✕</button>
 	<h2 class="m-2 font-semibold text-xl text-neutral-300">Manage plugins</h2>
 
 	<h2 class="mx-2 mt-6 mb-2 text-lg text-neutral-400">Installed plugins</h2>
@@ -235,10 +235,9 @@
 					if ($settings?.developer) invoke("reload_plugin", { id: plugin.id });
 					else removePlugin(plugin);
 				}}
-				secondaryAction={() => {
-					if (!plugin.registered) invoke("open_log_directory");
-					else if (plugin.has_settings_interface) invoke("show_settings_interface", { plugin: plugin.id });
-				}}
+				actionLabel={$settings?.developer ? "Reload" : "Remove"}
+				secondaryAction={!plugin.registered ? () => invoke("open_log_directory") : plugin.has_settings_interface ? () => invoke("show_settings_interface", { plugin: plugin.id }) : undefined}
+				secondaryActionLabel={!plugin.registered ? "View logs" : "Settings"}
 			>
 				<svelte:fragment slot="subtitle">
 					{plugin.version}
@@ -295,6 +294,7 @@
 			bind:value={query}
 			class="w-full p-2 text-neutral-300"
 			placeholder="Search plugins"
+			aria-label="Search plugins"
 			type="search"
 			spellcheck="false"
 		/>
@@ -315,6 +315,7 @@
 					subtitle={plugin.author}
 					hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
 					action={() => openDetailsView = id}
+					actionLabel="View details"
 				>
 					<ArrowSquareOut size="24" class="text-neutral-400" />
 				</ListedPlugin>
@@ -347,6 +348,7 @@
 					subtitle={plugin.author}
 					hidden={!plugin.name.toLowerCase().includes(query.toLowerCase())}
 					action={() => installPluginElgato(plugin)}
+					actionLabel="Install"
 				>
 					<CloudArrowDown size="24" class="text-neutral-400" />
 				</ListedPlugin>
@@ -372,7 +374,9 @@
 						download_url: undefined,
 					});
 				}}
+				actionLabel="Install"
 				secondaryAction={() => window.open("https://tacto.live")}
+				secondaryActionLabel="Visit website"
 			>
 				<svelte:fragment slot="secondary">
 					<ArrowSquareOut size="24" class="text-neutral-400" />
@@ -400,7 +404,7 @@
 	<div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 p-2 w-96 text-xs text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg z-40">
 		<h3 class="mb-2 font-semibold text-lg text-center">Choose a release asset</h3>
 		<div class="select-wrapper">
-			<select class="w-full bg-neutral-800!" bind:value={choice}>
+			<select class="w-full bg-neutral-800!" bind:value={choice} aria-label="Release asset">
 				{#each choices as choice, i}
 					<option value={i}>{choice.name}</option>
 				{/each}

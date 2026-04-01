@@ -45,7 +45,7 @@
 	}}
 />
 
-<Popup show={showPopup}>
+<Popup show={showPopup} label="Settings">
 	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false} aria-label="Close">✕</button>
 	<h2 class="m-2 font-semibold text-xl text-neutral-300">Settings</h2>
 	{#if $settings}
