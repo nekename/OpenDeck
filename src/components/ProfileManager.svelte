@@ -200,7 +200,7 @@
 	}}
 />
 
-<Popup show={showPopup} label="Profiles">
+<Popup show={showPopup} label="{device.name} profiles">
 	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false} aria-label="Close">✕</button>
 	<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
 

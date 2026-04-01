@@ -111,7 +111,7 @@
 				<button
 					on:click={() => invoke("open_url", { url: details.download_url ?? details.repository + "/releases/latest" })}
 					class="ml-1 p-3.5 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 hover:bg-indigo-500 transition-colors border border-indigo-500 rounded-r-lg"
-					aria-label="View releases"
+					aria-label="Download latest release from GitHub"
 				>
 					<ArrowSquareOut size={24} />
 				</button>

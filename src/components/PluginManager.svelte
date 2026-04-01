@@ -369,8 +369,6 @@
 				icon="https://tacto.live/icon-192.png"
 				name="Tacto Connect"
 				subtitle="Rivulus"
-				actionLabel="Install"
-				secondaryActionLabel="Open website"
 				action={() => {
 					installPluginGitHub("us.rivul.tacto", {
 						name: "Tacto Connect",
@@ -379,7 +377,9 @@
 						download_url: undefined,
 					});
 				}}
+				actionLabel="Install"
 				secondaryAction={() => window.open("https://tacto.live")}
+				secondaryActionLabel="Visit website"
 			>
 				<svelte:fragment slot="secondary">
 					<ArrowSquareOut size="24" class="text-neutral-400" />

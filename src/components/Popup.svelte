@@ -15,9 +15,7 @@
 		previousFocus = null;
 	}
 
-	onDestroy(() => {
-		previousFocus?.focus();
-	});
+	onDestroy(() => previousFocus?.focus());
 </script>
 
 {#if show}
@@ -25,8 +23,8 @@
 		bind:this={popupEl}
 		class="absolute top-0 left-0 m-2 p-4 w-[calc(100%-1rem)] h-[calc(100%-1rem)] bg-neutral-800 border border-neutral-700 rounded-lg overflow-auto z-30"
 		role="dialog"
-		aria-label={label}
 		tabindex="-1"
+		aria-label={label}
 	>
 		<slot />
 	</div>
