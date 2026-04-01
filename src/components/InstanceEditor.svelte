@@ -63,13 +63,13 @@
 <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg z-10">
 	<div class="flex flex-row">
 		<div class="select-wrapper m-1 w-full">
-			<select class="w-full bg-neutral-600! border-neutral-500!" bind:value={state}>
+			<select class="w-full bg-neutral-600! border-neutral-500!" bind:value={state} aria-label="State">
 				{#each instance.states as _, i}
 					<option value={i}>State {i + 1}</option>
 				{/each}
 			</select>
 		</div>
-		<button class="ml-2 mr-1 float-right text-xl text-neutral-300" on:click={() => showEditor = false}>✕</button>
+		<button class="ml-2 mr-1 float-right text-xl text-neutral-300" on:click={() => showEditor = false} aria-label="Close">✕</button>
 	</div>
 	<div class="flex flex-row mx-1">
 		<div class="flex flex-col justify-center items-center mt-2 mb-1">
@@ -88,13 +88,14 @@
 					instance.states[state].image = instance.action.states[state]?.image ?? instance.action.icon;
 				}}
 				title="Click to select an image, or right-click to reset to the default image."
+				aria-label="Click to select an image, or right-click to reset to the default image."
 			>
 				{#await renderImage(null, null, instance.states[state], instance.action.states[state]?.image ?? instance.action.icon, false, false, true, false, false, 0, true) then resolvedSrc}
 					{#if typeof resolvedSrc === "string"}
 						<img
 							src={resolvedSrc}
 							class="my-auto w-32 min-w-32 h-min aspect-square bg-black border border-neutral-600 rounded-xl cursor-pointer"
-							alt="State {state}"
+							alt="State {state + 1} image"
 						/>
 					{/if}
 				{/await}
@@ -104,6 +105,7 @@
 					on:click={() => adjustImageScale(-10)}
 					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md"
 					title="Decrease image scale"
+					aria-label="Decrease image scale"
 				>
 					-
 				</button>
@@ -114,6 +116,7 @@
 					on:click={() => adjustImageScale(10)}
 					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md"
 					title="Increase image scale"
+					aria-label="Increase image scale"
 				>
 					+
 				</button>

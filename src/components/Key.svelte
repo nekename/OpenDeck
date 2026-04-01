@@ -21,6 +21,7 @@
 	export let context: Context | null;
 	export let label: string = "";
 	export let tabindex: number = 0;
+	export let role: string = "gridcell";
 
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
@@ -203,14 +204,14 @@
 		bind:this={canvas}
 		class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
 		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
-		class:outline-solid={(slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context)}
+		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
 		class:rounded-full!={context?.controller == "Encoder"}
 		class:bg-black={slot != null}
 		width={size}
 		height={size}
 		draggable={slot != null}
 		{tabindex}
-		role="gridcell"
+		{role}
 		aria-label={accessibleLabel}
 		on:dragstart
 		on:dragover
@@ -218,6 +219,7 @@
 		on:click|stopPropagation={select}
 		on:dblclick|stopPropagation={triggerVirtualPress}
 		on:keydown={(e) => {
+			if (!active || !context) return;
 			if (e.key == "Enter") select(e);
 			else if (e.key == "F2") edit();
 			else if ((e.ctrlKey || e.metaKey) && e.key == "c") copy();
@@ -226,6 +228,7 @@
 			else if (e.key == "ContextMenu" || (e.shiftKey && e.key == "F10")) contextMenu(e);
 		}}
 		on:keyup|stopPropagation={(e) => {
+			if (!active || !context) return;
 			if (e.key == " ") select(e);
 		}}
 		on:focus={onfocus}

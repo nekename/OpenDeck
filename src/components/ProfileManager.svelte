@@ -172,7 +172,7 @@
 
 <div class="select-profile-wrapper">
 	<span bind:this={measure} class="invisible fixed whitespace-pre pointer-events-none" aria-hidden="true"></span>
-	<select bind:value style:width="{selectWidth}px">
+	<select bind:value style:width="{selectWidth}px" aria-label="Profile">
 		{#each Object.entries(folders).sort() as [id, profiles]}
 			{#if id && profiles.length}
 				<optgroup label={id}>
@@ -201,7 +201,7 @@
 />
 
 <Popup show={showPopup}>
-	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false}>✕</button>
+	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false} aria-label="Close">✕</button>
 	<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
 
 	<div class="flex flex-row mt-2 mb-1">
@@ -210,6 +210,7 @@
 			pattern="[a-zA-Z0-9_ ]+(\/[a-zA-Z0-9_ ]+)?"
 			class="grow p-2 text-neutral-300 invalid:text-red-400 bg-neutral-700 border-l border-y border-neutral-600 rounded-l-lg"
 			placeholder='Profile name or "folder/name"'
+			aria-label="Profile name"
 		/>
 
 		<button
@@ -228,6 +229,7 @@
 		<button
 			class="ml-2 px-4 flex items-center text-neutral-300 bg-neutral-900 hover:bg-neutral-800 transition-colors border border-neutral-600 rounded-lg"
 			on:click={() => showApplicationManager = true}
+			aria-label="Application profiles"
 		>
 			<Browsers size={24} />
 		</button>
@@ -240,7 +242,7 @@
 			{/if}
 			{#each profiles.sort() as profile}
 				<div class="flex flex-row items-center py-2 space-x-2" class:ml-6={id} class:pl-2={id}>
-					<input type="radio" bind:group={value} value={profile} disabled={renamingProfile == profile} />
+					<input type="radio" bind:group={value} value={profile} disabled={renamingProfile == profile} aria-label={id ? profile.split("/")[1] : profile} />
 					{#if profile == renamingProfile}
 						<input
 							bind:this={renameInput}
@@ -252,7 +254,7 @@
 								if (e.key === "Enter") saveRenamedProfile(profile);
 							}}
 						/>
-						<button on:click={() => saveRenamedProfile(profile)} title="Save">
+						<button on:click={() => saveRenamedProfile(profile)} title="Save" aria-label="Save">
 							<FloppyDisk size="20" class="text-green-500" />
 						</button>
 					{:else}
@@ -261,10 +263,11 @@
 							<button
 								on:click={() => renamingProfile = newId = profile}
 								title="Rename"
+								aria-label="Rename"
 							>
 								<Pencil size="20" class="text-neutral-400" />
 							</button>
-							<button on:click={() => deleteProfile(profile)} title="Delete">
+							<button on:click={() => deleteProfile(profile)} title="Delete" aria-label="Delete">
 								<Trash size="20" class="text-neutral-400" />
 							</button>
 						{/if}
@@ -276,7 +279,7 @@
 </Popup>
 
 <Popup show={showApplicationManager}>
-	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => showApplicationManager = false}>✕</button>
+	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => showApplicationManager = false} aria-label="Close">✕</button>
 	<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
 	<span class="text-sm text-neutral-400">If your application isn't listed, try switching to it and back again.</span>
 	<span class="text-sm text-neutral-400">The 'default profile' will activate when the focussed application has no profile associated with it.</span>
@@ -287,7 +290,7 @@
 				<tr class="h-12">
 					<td>{appName == "opendeck_default" ? "Default profile" : appName}:</td>
 					<td class="select-wrapper">
-						<select bind:value={applicationProfiles[appName][device.id]} class="w-full">
+						<select bind:value={applicationProfiles[appName][device.id]} class="w-full" aria-label="{appName == 'opendeck_default' ? 'Default profile' : appName} profile">
 							{#each Object.entries(folders) as [id, profiles]}
 								{#if id && profiles.length}
 									<optgroup label={id}>
@@ -310,7 +313,7 @@
 		{/each}
 		<tr class="h-12">
 			<td class="w-48 select-wrapper">
-				<select bind:value={applicationsAddAppName} class="w-full">
+				<select bind:value={applicationsAddAppName} class="w-full" aria-label="Select application">
 					<option selected disabled value="opendeck_select_application">Select application...</option>
 					{#if !applicationProfiles["opendeck_default"] || !applicationProfiles["opendeck_default"][device.id]}
 						<option value="opendeck_default">Default profile</option>
@@ -326,7 +329,7 @@
 				</select>
 			</td>
 			<td class="w-96 select-wrapper">
-				<select bind:value={applicationsAddProfile} class="w-full">
+				<select bind:value={applicationsAddProfile} class="w-full" aria-label="Select profile">
 					<option selected disabled value="opendeck_select_profile">Select profile...</option>
 					{#each Object.entries(folders) as [id, profiles]}
 						{#if id && profiles.length}
