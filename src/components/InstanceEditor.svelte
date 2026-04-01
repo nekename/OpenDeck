@@ -88,6 +88,7 @@
 					instance.states[state].image = instance.action.states[state]?.image ?? instance.action.icon;
 				}}
 				title="Click to select an image, or right-click to reset to the default image."
+				aria-label="Click to select an image, or right-click to reset to the default image."
 			>
 				{#await renderImage(null, null, instance.states[state], instance.action.states[state]?.image ?? instance.action.icon, false, false, true, false, false, 0, true)}
 					<div class="w-32 min-w-32 h-32 bg-neutral-800 animate-pulse border border-neutral-600 rounded-xl"></div>
@@ -104,6 +105,7 @@
 					on:click={() => adjustImageScale(-10)}
 					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md"
 					title="Decrease image scale"
+					aria-label="Decrease image scale"
 				>
 					-
 				</button>
@@ -114,6 +116,7 @@
 					on:click={() => adjustImageScale(10)}
 					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md"
 					title="Increase image scale"
+					aria-label="Increase image scale"
 				>
 					+
 				</button>
