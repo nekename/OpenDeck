@@ -46,13 +46,13 @@
 />
 
 <Popup show={showPopup}>
-	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false}>✕</button>
+	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false} aria-label="Close">✕</button>
 	<h2 class="m-2 font-semibold text-xl text-neutral-300">Settings</h2>
 	{#if $settings}
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Language: </span>
+			<label for="settings-language" class="text-neutral-400">Language:</label>
 			<div class="select-wrapper">
-				<select bind:value={$settings.language} class="w-32">
+				<select bind:value={$settings.language} class="w-32" id="settings-language">
 					<option value="en">English</option>
 					<option value="es">Español</option>
 					<option value="zh_CN">中文</option>
@@ -68,31 +68,31 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Device brightness: </span>
-			<input type="range" min="0" max="100" bind:value={$settings.brightness} />
+			<label for="settings-brightness" class="text-neutral-400">Device brightness:</label>
+			<input type="range" min="0" max="100" bind:value={$settings.brightness} id="settings-brightness" />
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Sleep after inactivity: </span>
-			<input type="number" min="0" bind:value={$settings.sleep_timeout_minutes} class="w-12 px-1 text-neutral-300 border border-neutral-600 rounded-lg" />
+			<label for="settings-sleep" class="text-neutral-400">Sleep after inactivity:</label>
+			<input type="number" min="0" bind:value={$settings.sleep_timeout_minutes} class="w-12 px-1 text-neutral-300 border border-neutral-600 rounded-lg" id="settings-sleep" />
 			<span class="text-neutral-400">minutes</span>
 			<Tooltip> This option controls how many minutes of inactivity will cause devices to enter sleep mode, where a value of 0 disables sleeping automatically. </Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Image rotation: </span>
-			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} />
+			<label for="settings-rotation" class="text-neutral-400">Image rotation:</label>
+			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} id="settings-rotation" />
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Run in background: </span>
-			<input type="checkbox" bind:checked={$settings.background} />
+			<label for="settings-background" class="text-neutral-400">Run in background:</label>
+			<input type="checkbox" bind:checked={$settings.background} id="settings-background" />
 			<Tooltip> If this option is enabled, {PRODUCT_NAME} will minimise to the tray and run in the background. </Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Start at login: </span>
-			<input type="checkbox" bind:checked={$settings.autolaunch} />
+			<label for="settings-autolaunch" class="text-neutral-400">Start at login:</label>
+			<input type="checkbox" bind:checked={$settings.autolaunch} id="settings-autolaunch" />
 			<Tooltip>
 				If this option is enabled, {PRODUCT_NAME} will automatically start at login.
 				{#if buildInfo?.split("</summary>")[0]?.includes("linux")}
@@ -103,19 +103,19 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Check for updates: </span>
-			<input type="checkbox" bind:checked={$settings.updatecheck} />
+			<label for="settings-updatecheck" class="text-neutral-400">Check for updates:</label>
+			<input type="checkbox" bind:checked={$settings.updatecheck} id="settings-updatecheck" />
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Contribute statistics: </span>
-			<input type="checkbox" bind:checked={$settings.statistics} />
+			<label for="settings-statistics" class="text-neutral-400">Contribute statistics:</label>
+			<input type="checkbox" bind:checked={$settings.statistics} id="settings-statistics" />
 		</div>
 
 		{#if !buildInfo?.split("</summary>")[0]?.includes("windows")}
 			<div class="flex flex-row items-center m-2 space-x-2">
-				<span class="text-neutral-400"> Create separate Wine prefixes: </span>
-				<input type="checkbox" bind:checked={$settings.separatewine} />
+				<label for="settings-separatewine" class="text-neutral-400">Create separate Wine prefixes:</label>
+				<input type="checkbox" bind:checked={$settings.separatewine} id="settings-separatewine" />
 				<Tooltip>
 					If this option is enabled, {PRODUCT_NAME} will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when
 					initialised.
@@ -124,8 +124,8 @@
 		{/if}
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Enable developer mode: </span>
-			<input type="checkbox" bind:checked={$settings.developer} />
+			<label for="settings-developer" class="text-neutral-400">Enable developer mode:</label>
+			<input type="checkbox" bind:checked={$settings.developer} id="settings-developer" />
 			<Tooltip>
 				This option enables features that make plugin development and debugging easier. Additionally, this option exposes all file paths on your device on the local webserver to allow symbolic linking
 				of plugins, so you should disable it if it is not in use.
@@ -133,8 +133,8 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<span class="text-neutral-400"> Disable Elgato device discovery: </span>
-			<input type="checkbox" bind:checked={$settings.disableelgato} />
+			<label for="settings-disableelgato" class="text-neutral-400">Disable Elgato device discovery:</label>
+			<input type="checkbox" bind:checked={$settings.disableelgato} id="settings-disableelgato" />
 			<Tooltip> This option disables discovery of Elgato devices so that they can be managed by other software. </Tooltip>
 		</div>
 	{/if}

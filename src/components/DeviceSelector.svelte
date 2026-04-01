@@ -78,7 +78,7 @@
 {#if Object.keys(devices).length > 0}
 	<div class="select-device-wrapper">
 		<span bind:this={measure} class="invisible fixed whitespace-pre pointer-events-none text-xl font-semibold" aria-hidden="true"></span>
-		<select bind:value style:width="{selectWidth}px">
+		<select bind:value style:width="{selectWidth}px" aria-label="Device">
 			<option value="" disabled selected>Choose a device...</option>
 
 			{#each Object.entries(devices).sort() as [id, device]}
