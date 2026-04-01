@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Action } from "$lib/Action";
 	import type { ActionInstance } from "$lib/ActionInstance";
 	import type { Profile } from "$lib/Profile";
 
@@ -28,7 +29,7 @@
 		if (event.dataTransfer?.types.includes("action")) event.dataTransfer.dropEffect = "copy";
 	}
 
-	async function addAction(action: any) {
+	async function addAction(action: Action) {
 		if (
 			(parentUuid == "opendeck.multiaction" && !action.supported_in_multi_actions) ||
 			(
@@ -65,7 +66,7 @@
 		const list = event.currentTarget as HTMLElement;
 		const items = Array.from(list.querySelectorAll("[role='listitem']"));
 		const currentIndex = items.indexOf(document.activeElement?.closest("[role='listitem']") as Element);
-		if (currentIndex === -1) return;
+		if (currentIndex == -1) return;
 
 		event.preventDefault();
 
@@ -85,7 +86,7 @@
 				break;
 		}
 
-		if (newIndex === currentIndex) return;
+		if (newIndex == currentIndex) return;
 		(items[currentIndex] as HTMLElement).tabIndex = -1;
 		(items[newIndex] as HTMLElement).tabIndex = 0;
 		(items[newIndex] as HTMLElement).focus();
@@ -114,19 +115,14 @@
 	{#each children as instance, index}
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 		<div
-			class="flex flex-row items-center mx-4 my-2 bg-neutral-700 hover:bg-neutral-600 focus-within:outline-solid focus-within:outline-2 focus-within:outline-blue-500 transition-colors border border-neutral-600 rounded-lg"
-			role="listitem"
-			tabindex={index === 0 ? 0 : -1}
-			on:focus={() => {
-				$inspectedInstance = instance.context;
-			}}
-			on:click={() => {
-				$inspectedInstance = instance.context;
-			}}
+			class="flex flex-row items-center mx-4 my-2 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
+			on:click={() => $inspectedInstance = instance.context}
+			on:focus={() => $inspectedInstance = instance.context}
 			on:keydown={(e) => {
-				if (e.key == "Enter") $inspectedInstance = instance.context;
-				else if (e.key == "Delete") removeInstance(index);
+				if (e.key == "Delete") removeInstance(index);
 			}}
+			role="listitem"
+			tabindex={index == 0 ? 0 : -1}
 		>
 			<Key
 				inslot={instance}
@@ -140,8 +136,8 @@
 			<p class="ml-4 text-xl text-neutral-300">{instance.action.name}</p>
 			<button
 				class="ml-auto mr-10"
-				tabindex={-1}
 				on:click|stopPropagation={() => removeInstance(index)}
+				tabindex={-1}
 				aria-label="Remove {instance.action.name}"
 			>
 				<Trash size="32" class="text-neutral-400" />
@@ -150,14 +146,14 @@
 	{/each}
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 	<div
-		class="flex flex-row items-center mx-4 mt-2 mb-4 p-3 bg-neutral-700 hover:bg-neutral-600 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-blue-500 transition-colors border border-dashed border-neutral-600 rounded-lg"
-		role="listitem"
-		tabindex={children.length === 0 ? 0 : -1}
+		class="flex flex-row items-center mx-4 mt-2 mb-4 p-3 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-dashed border-neutral-600 rounded-lg"
 		on:dragover={handleDragOver}
 		on:drop={handleDrop}
 		on:keydown={(e) => {
 			if ((e.ctrlKey || e.metaKey) && e.key == "v") handlePaste();
 		}}
+		role="listitem"
+		tabindex={children.length == 0 ? 0 : -1}
 		aria-label="Add new action. Drag an action here or copy one with Control+C and paste with Control+V."
 	>
 		<img src="/cube.png" class="m-2 w-24 rounded-xl" alt="" />

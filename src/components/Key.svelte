@@ -207,6 +207,7 @@
 		on:click|stopPropagation={select}
 		on:dblclick|stopPropagation={triggerVirtualPress}
 		on:keydown={(e) => {
+			if (!active || !context) return;
 			if (e.key == "Enter") select(e);
 			else if (e.key == "F2") edit();
 			else if ((e.ctrlKey || e.metaKey) && e.key == "c") copy();
@@ -215,6 +216,7 @@
 			else if (e.key == "ContextMenu" || (e.shiftKey && e.key == "F10")) contextMenu(e);
 		}}
 		on:keyup|stopPropagation={(e) => {
+			if (!active || !context) return;
 			if (e.key == " ") select(e);
 		}}
 		on:focus={onfocus}
