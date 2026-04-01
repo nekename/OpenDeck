@@ -169,7 +169,7 @@
 		}}
 		role="listitem"
 		tabindex={children.length == 0 ? 0 : -1}
-		aria-label="Add new action. Drag an action here or copy one with Control+C and paste with Control+V."
+		aria-label="Drag a new action here or copy one with Control+C and paste with Control+V."
 	>
 		<img src="/cube.png" class="m-2 w-24 rounded-xl" alt="" />
 		<p class="ml-4 text-xl text-neutral-400">Drop or paste actions here</p>
