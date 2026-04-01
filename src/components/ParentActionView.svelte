@@ -7,6 +7,7 @@
 	import Key from "./Key.svelte";
 
 	import { copiedItem, inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
+	import { settings } from "$lib/settings";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { onMount, tick } from "svelte";
@@ -137,15 +138,17 @@
 			role="listitem"
 			tabindex={index == 0 ? 0 : -1}
 		>
-			<Key
-				inslot={instance}
-				context={null}
-				active={false}
-				scale={3 / 4}
-				role="presentation"
-				tabindex={-1}
-				label={(parentUuid == "opendeck.toggleaction" ? "Toggle Action" : "Multi Action") + " action " + (index + 1)}
-			/>
+			<div style={`transform: rotate(${-($settings?.device_rotation ?? 0)}deg); transform-origin: center;`}>
+				<Key
+					inslot={instance}
+					context={null}
+					active={false}
+					scale={3 / 4}
+					role="presentation"
+					tabindex={-1}
+					label={(parentUuid == "opendeck.toggleaction" ? "Toggle Action" : "Multi Action") + " action " + (index + 1)}
+				/>
+			</div>
 			<p class="ml-4 text-xl text-neutral-300">{instance.action.name}</p>
 			<button
 				class="ml-auto mr-10"
