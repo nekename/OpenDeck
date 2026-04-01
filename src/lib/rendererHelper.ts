@@ -40,6 +40,27 @@ export function getImage(image: string | undefined, fallback: string | undefined
 
 /** Shared global origin for all animation clocks, so all animated keys on the same page stay in sync. */
 const ANIMATION_ORIGIN = performance.now();
+const ACTIVE_RENDER_TOKENS = new Map<string, symbol>();
+const UPDATE_SEQUENCES = new Map<string, number>();
+
+function contextKey(slotContext: Context | null): string | null {
+	if (!slotContext) return null;
+	return `${slotContext.device}.${slotContext.profile}.${slotContext.controller}.${slotContext.position}`;
+}
+
+export function invalidateRenderContext(slotContext: Context | null) {
+	const key = contextKey(slotContext);
+	if (!key) return;
+	ACTIVE_RENDER_TOKENS.delete(key);
+}
+
+function nextUpdateSequence(slotContext: Context | null): number | null {
+	const key = contextKey(slotContext);
+	if (!key) return null;
+	const next = (UPDATE_SEQUENCES.get(key) ?? 0) + 1;
+	UPDATE_SEQUENCES.set(key, next);
+	return next;
+}
 
 /** Compute which frame index to display given a shared time origin and per-frame durations. */
 function computeFrameIndex(durations: number[], now: number): number {
@@ -173,14 +194,21 @@ function drawFrame(
 }
 
 /** Pre-load a static overlay image (ok/alert). Returns null if it fails to load. */
+const OVERLAY_CACHE = new Map<string, Promise<HTMLImageElement | null>>();
+
 function loadOverlay(src: string): Promise<HTMLImageElement | null> {
+	const cached = OVERLAY_CACHE.get(src);
+	if (cached) return cached;
+
 	const img = document.createElement("img");
 	img.crossOrigin = "anonymous";
 	img.src = src;
-	return new Promise((resolve) => {
+	const promise = new Promise<HTMLImageElement | null>((resolve) => {
 		img.onload = () => resolve(img);
 		img.onerror = () => resolve(null);
 	});
+	OVERLAY_CACHE.set(src, promise);
+	return promise;
 }
 
 interface AnimatedFrames {
@@ -213,7 +241,8 @@ async function decodeAnimatedFrames(src: string): Promise<AnimatedFrames | null>
 		const durations: number[] = [];
 
 		for (let i = 0; i < track.frameCount; i++) {
-			const result = await decoder.decode({ frameIndex: i });
+			// Request fully composited frames to avoid disposal-mode flicker on device updates.
+			const result = await decoder.decode({ frameIndex: i, completeFrames: true });
 			const bitmap = await createImageBitmap(result.image);
 			frames.push(bitmap);
 			// VideoFrame.duration is in microseconds; default to 100ms if missing
@@ -241,6 +270,17 @@ export async function renderImage(
 	rotation?: number,
 	preview?: boolean,
 ): Promise<(() => void) | string | undefined> {
+	const key = contextKey(slotContext);
+	const renderToken = key ? Symbol(key) : null;
+	if (key && renderToken) {
+		ACTIVE_RENDER_TOKENS.set(key, renderToken);
+	}
+
+	const isCurrentRender = () => {
+		if (!key || !renderToken) return true;
+		return ACTIVE_RENDER_TOKENS.get(key) === renderToken;
+	};
+
 	// Create canvas
 	let scale = 1;
 	if (!canvas) {
@@ -272,13 +312,33 @@ export async function renderImage(
 			image.onerror = reject;
 		});
 
+		// Always render a first static frame immediately so all keys appear fast on page load.
+		drawFrame(canvas, context, image, state, showOk, showAlert, pressed, rotation, scale, okImage, alertImage);
+
+		if (active && slotContext && isCurrentRender()) {
+			void invoke("update_image", {
+				context: slotContext,
+				image: canvas.toDataURL("image/jpeg"),
+				render_sequence: nextUpdateSequence(slotContext),
+			});
+		}
+
 		if (animated && !preview) {
-			// Try to decode individual frames using the ImageDecoder WebCodecs API.
-			const animData = await decodeAnimatedFrames(imageSrc);
-			if (animData) {
-				let stopped = false;
+			let stopped = false;
+			let cleanupFrames: (() => void) | undefined;
+
+			// Decode and start animation in background without blocking first paint.
+			void (async () => {
+				const animData = await decodeAnimatedFrames(imageSrc);
+				if (!animData || stopped || !isCurrentRender()) {
+					if (animData) {
+						for (const frame of animData.frames) frame.close();
+					}
+					return;
+				}
+
 				let deviceUpdateInFlight = false;
-				const DEVICE_MIN_INTERVAL = 150; // minimum ms between device updates
+				let lastSentFrameIndex = -1;
 
 				// Separate canvas for device frames to avoid interfering with UI.
 				const deviceCanvas = document.createElement("canvas");
@@ -287,7 +347,7 @@ export async function renderImage(
 				const deviceCtx = deviceCanvas.getContext("2d")!;
 
 				const tick = () => {
-					if (stopped) return;
+					if (stopped || !isCurrentRender()) return;
 					const now = performance.now();
 
 					// All animations use the shared global clock so they stay in sync.
@@ -296,33 +356,39 @@ export async function renderImage(
 					// Draw current frame to the visible canvas (UI)
 					drawFrame(canvas!, context, animData.frames[frameIndex], state, showOk, showAlert, pressed, rotation, scale, okImage, alertImage);
 
-					// Send the same frame to the device at a throttled rate
-					if (active && slotContext && !deviceUpdateInFlight) {
+					// Send to hardware only when frame changes to preserve ordering and avoid aliasing artifacts.
+					if (active && slotContext && !deviceUpdateInFlight && isCurrentRender() && frameIndex !== lastSentFrameIndex) {
 						deviceUpdateInFlight = true;
+						lastSentFrameIndex = frameIndex;
 						drawFrame(deviceCanvas, deviceCtx, animData.frames[frameIndex], state, showOk, showAlert, false, rotation, scale, okImage, alertImage);
-						invoke("update_image", { context: slotContext, image: deviceCanvas.toDataURL("image/jpeg") })
+						invoke("update_image", {
+							context: slotContext,
+							image: deviceCanvas.toDataURL("image/jpeg"),
+							render_sequence: nextUpdateSequence(slotContext),
+						})
 							.finally(() => {
-								setTimeout(() => {
-									deviceUpdateInFlight = false;
-								}, DEVICE_MIN_INTERVAL);
+								deviceUpdateInFlight = false;
 							});
 					}
 
 					requestAnimationFrame(tick);
 				};
 
-				requestAnimationFrame(tick);
-
-				return () => {
-					stopped = true;
+				cleanupFrames = () => {
 					for (const frame of animData.frames) frame.close();
 				};
-			}
-			// If ImageDecoder is unavailable or image is not truly animated, fall through to static draw.
-		}
 
-		// Static image: single draw
-		drawFrame(canvas, context, image, state, showOk, showAlert, pressed, rotation, scale, okImage, alertImage);
+				requestAnimationFrame(tick);
+			})();
+
+			return () => {
+				stopped = true;
+				cleanupFrames?.();
+				if (key && ACTIVE_RENDER_TOKENS.get(key) === renderToken) {
+					ACTIVE_RENDER_TOKENS.delete(key);
+				}
+			};
+		}
 	} catch (error: any) {
 		if (!(error instanceof Event)) console.error(error);
 		context.save();
@@ -340,8 +406,16 @@ export async function renderImage(
 		}
 	}
 
-	if (active && slotContext) setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas!.toDataURL("image/jpeg") }), 10);
-	else if (preview) return canvas.toDataURL();
+	if (active && slotContext) {
+		setTimeout(async () => {
+			if (!isCurrentRender()) return;
+			await invoke("update_image", {
+				context: slotContext,
+				image: canvas!.toDataURL("image/jpeg"),
+				render_sequence: nextUpdateSequence(slotContext),
+			});
+		}, 10);
+	} else if (preview) return canvas.toDataURL();
 }
 
 export async function resizeImage(source: string): Promise<string | undefined> {
