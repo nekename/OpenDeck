@@ -16,7 +16,7 @@
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
-	import { tick } from "svelte";
+	import { onDestroy, tick } from "svelte";
 
 	export let context: Context | null;
 	export let label: string = "";
@@ -144,26 +144,38 @@
 
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
+	let animationCleanup: (() => void) | undefined;
 	export let size = 144;
+
+	function stopAnimation() {
+		if (animationCleanup) {
+			animationCleanup();
+			animationCleanup = undefined;
+		}
+	}
+
+	onDestroy(stopAnimation);
+
 	$: (async () => {
 		const sl = structuredClone(slot);
-		if (!sl) {
-			const unlock = await lock.lock();
-			try {
+		const unlock = await lock.lock();
+		try {
+			stopAnimation();
+			if (!sl) {
 				const ctx = canvas?.getContext("2d");
 				if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
 				if (active) await invoke("update_image", { context, image: null });
-			} finally {
-				unlock();
-			}
-		} else {
-			const unlock = await lock.lock();
-			try {
+			} else {
 				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
-				if (state) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, $settings?.rotation);
-			} finally {
-				unlock();
+				if (state) {
+					const result = await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, $settings?.rotation);
+					if (typeof result === "function") {
+						animationCleanup = result;
+					}
+				}
 			}
+		} finally {
+			unlock();
 		}
 	})();
 
