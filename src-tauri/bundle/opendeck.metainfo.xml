@@ -53,6 +53,30 @@
 	</branding>
 
 	<releases>
+		<release version="2.11.0" date="2026-04-02">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.11.0</url>
+			<description>
+				<ul>
+					<li>feat: add controls for customising image scale (#268)</li>
+					<li>feat: add keyboard focusability and accessible labels to items in the device view (#257)</li>
+					<li>feat: trigger virtual button press when double-clicking key (#267)</li>
+					<li>feat: support putting devices to sleep after a configurable period of inactivity (#264)</li>
+					<li>fix: prevent further processing of input events that wake device from sleep to prevent unwanted triggers</li>
+					<li>feat: support navigating the device view using the arrow keys for accessibility (#276)</li>
+					<li>chore: sync formatting changes introduced by a Deno formatter update</li>
+					<li>fix: ensure the focused slot is always visibly outlined, in part by enabling selection of empty slots</li>
+					<li>feat: support keyboard shortcuts for delete, copy, and paste actions on the focused slot</li>
+					<li>fix: don't hide focus outlines on interactive elements when using keyboard navigation</li>
+					<li>feat: make the action list keyboard accessible (#285)</li>
+					<li>feat: make the slot context menu keyboard accessible</li>
+					<li>feat: enhance accessibility by adding labels and titles to form elements in the instance editor</li>
+					<li>feat: support copying and pasting actions from the action list using keyboard shortcuts to create new instances</li>
+					<li>feat: make the parent action view keyboard accessible (#290)</li>
+					<li>feat: add accessible labels to elements in the settings view, profile manager, and instance editor (#291)</li>
+					<li>feat: add dialog semantics and accessible labels to popups and the plugin manager (#294)</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.10.1" date="2026-03-21">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.10.1</url>
 			<description>
