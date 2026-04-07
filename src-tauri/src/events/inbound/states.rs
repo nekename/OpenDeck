@@ -3,7 +3,29 @@ use super::ContextAndPayloadEvent;
 use crate::events::frontend::instances::update_state;
 use crate::store::profiles::{acquire_locks_mut, get_instance_mut, save_profile};
 
+use std::collections::HashMap;
+use std::sync::{LazyLock, Mutex};
+
 use serde::Deserialize;
+use tokio::task::JoinHandle;
+
+static SAVE_DEBOUNCE: LazyLock<Mutex<HashMap<String, JoinHandle<()>>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+
+fn debounce_save_profile(device: String) {
+	let mut pending = SAVE_DEBOUNCE.lock().unwrap();
+	if let Some(handle) = pending.remove(&device) {
+		handle.abort();
+	}
+	pending.insert(
+		device.clone(),
+		tokio::spawn(async move {
+			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+			let mut locks = acquire_locks_mut().await;
+			let _ = save_profile(&device, &mut locks).await;
+			SAVE_DEBOUNCE.lock().unwrap().remove(&device);
+		}),
+	);
+}
 
 #[derive(Deserialize)]
 pub struct SetTitlePayload {
@@ -75,7 +97,7 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 		}
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
-	save_profile(&event.context.device, &mut locks).await?;
+	debounce_save_profile(event.context.device.clone());
 
 	Ok(())
 }
