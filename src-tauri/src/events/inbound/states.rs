@@ -9,19 +9,19 @@ use dashmap::DashMap;
 use serde::Deserialize;
 use tokio::task::JoinHandle;
 
-static SAVE_DEBOUNCE: LazyLock<DashMap<String, JoinHandle<()>>> = LazyLock::new(DashMap::new);
+static PROFILE_SAVE_DEBOUNCE: LazyLock<DashMap<String, JoinHandle<()>>> = LazyLock::new(DashMap::new);
 
-fn debounce_save_profile(device: String) {
-	if let Some((_, handle)) = SAVE_DEBOUNCE.remove(&device) {
+fn debounce_profile_save(device: String) {
+	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&device) {
 		handle.abort();
 	}
-	SAVE_DEBOUNCE.insert(
+	PROFILE_SAVE_DEBOUNCE.insert(
 		device.clone(),
 		tokio::spawn(async move {
 			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 			let mut locks = acquire_locks_mut().await;
 			let _ = save_profile(&device, &mut locks).await;
-			SAVE_DEBOUNCE.remove(&device);
+			PROFILE_SAVE_DEBOUNCE.remove(&device);
 		}),
 	);
 }
@@ -96,7 +96,7 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 		}
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
-	debounce_save_profile(event.context.device.clone());
+	debounce_profile_save(event.context.device);
 
 	Ok(())
 }
