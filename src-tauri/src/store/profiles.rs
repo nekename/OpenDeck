@@ -342,7 +342,7 @@ pub async fn get_instance_mut<'a>(context: &crate::shared::ActionContext, locks:
 
 pub async fn save_profile(device: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
 	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let device = DEVICES.get(device).unwrap();
+	let device = DEVICES.get(device).ok_or_else(|| anyhow!("device not found"))?;
 	let store = locks.profile_stores.get_profile_store(&device, &selected_profile)?;
 	store.save()
 }
