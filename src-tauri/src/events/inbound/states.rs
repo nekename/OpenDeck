@@ -67,7 +67,7 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 			if state as usize >= instance.states.len() {
 				return Err(anyhow::anyhow!("State index out of bounds ({} > {})", state, instance.states.len() - 1));
 			}
-			instance.states[state as usize].image = event.payload.image.unwrap_or(instance.action.states[state as usize].image.clone());
+			instance.states[state as usize].image = event.payload.image.clone().unwrap_or(instance.action.states[state as usize].image.clone());
 		} else {
 			for (index, state) in instance.states.iter_mut().enumerate() {
 				state.image = event.payload.image.clone().unwrap_or(instance.action.states[index].image.clone());
@@ -75,7 +75,14 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 		}
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
-	debounce_profile_save(event.context.device);
+
+	if let Some(image) = &event.payload.image
+		&& image.trim().starts_with("data:")
+	{
+		debounce_profile_save(event.context.device);
+	} else {
+		save_profile(&event.context.device, &mut locks).await?;
+	}
 
 	Ok(())
 }
