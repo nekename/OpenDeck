@@ -1,7 +1,7 @@
 use super::Error;
 
 use crate::shared::DEVICES;
-use crate::store::profiles::{PROFILE_STORES, acquire_locks_mut, get_device_profiles};
+use crate::store::profiles::{PROFILE_SAVE_DEBOUNCE, PROFILE_STORES, acquire_locks_mut, get_device_profiles, save_profile};
 
 use tauri::{AppHandle, Emitter, Manager, command};
 
@@ -29,6 +29,12 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 	let mut locks = acquire_locks_mut().await;
 	if !DEVICES.contains_key(&device) {
 		return Err(Error::new(format!("device {device} not found")));
+	}
+
+	// If a profile save is pending for this device, save it immediately to prevent losing profile data
+	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&device) {
+		handle.abort();
+		let _ = save_profile(&device, &mut locks).await;
 	}
 
 	let selected_profile = locks.device_stores.get_selected_profile(&device)?;
