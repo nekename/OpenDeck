@@ -357,7 +357,9 @@ pub fn debounce_profile_save(device: String) {
 		tokio::spawn(async move {
 			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 			let mut locks = acquire_locks_mut().await;
-			let _ = save_profile(&device, &mut locks).await;
+			if let Err(error) = save_profile(&device, &mut locks).await {
+				log::error!("Failed to save profile for device {device}: {error}");
+			}
 			PROFILE_SAVE_DEBOUNCE.remove(&device);
 		}),
 	);
