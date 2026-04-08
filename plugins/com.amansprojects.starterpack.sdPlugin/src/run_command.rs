@@ -68,9 +68,15 @@ async fn run_command(
 
 	let (mut reader, writer) = os_pipe::pipe()?;
 	let mut command = Command::new(command);
+	command.args(extra_args);
+	#[cfg(not(windows))]
+	command.arg(value);
+	#[cfg(windows)]
+	{
+		use std::os::windows::process::CommandExt;
+		command.raw_arg(value);
+	}
 	command
-		.args(extra_args)
-		.arg(value)
 		.stdout(Stdio::from(writer.try_clone()?))
 		.stderr(Stdio::from(writer));
 	if let Some(home_dir) = std::env::home_dir() {
