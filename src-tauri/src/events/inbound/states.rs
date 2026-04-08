@@ -3,26 +3,25 @@ use super::ContextAndPayloadEvent;
 use crate::events::frontend::instances::update_state;
 use crate::store::profiles::{acquire_locks_mut, get_instance_mut, save_profile};
 
-use std::collections::HashMap;
-use std::sync::{LazyLock, Mutex};
+use std::sync::LazyLock;
 
+use dashmap::DashMap;
 use serde::Deserialize;
 use tokio::task::JoinHandle;
 
-static SAVE_DEBOUNCE: LazyLock<Mutex<HashMap<String, JoinHandle<()>>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+static SAVE_DEBOUNCE: LazyLock<DashMap<String, JoinHandle<()>>> = LazyLock::new(DashMap::new);
 
 fn debounce_save_profile(device: String) {
-	let mut pending = SAVE_DEBOUNCE.lock().unwrap();
-	if let Some(handle) = pending.remove(&device) {
+	if let Some((_, handle)) = SAVE_DEBOUNCE.remove(&device) {
 		handle.abort();
 	}
-	pending.insert(
+	SAVE_DEBOUNCE.insert(
 		device.clone(),
 		tokio::spawn(async move {
 			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 			let mut locks = acquire_locks_mut().await;
 			let _ = save_profile(&device, &mut locks).await;
-			SAVE_DEBOUNCE.lock().unwrap().remove(&device);
+			SAVE_DEBOUNCE.remove(&device);
 		}),
 	);
 }
