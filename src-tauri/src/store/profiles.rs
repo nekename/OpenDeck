@@ -8,8 +8,10 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 
 use anyhow::{Context, anyhow};
+use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::task::JoinHandle;
 
 pub struct ProfileStores {
 	stores: HashMap<String, Store<Profile>>,
@@ -343,4 +345,20 @@ pub async fn save_profile(device: &str, locks: &mut LocksMut<'_>) -> Result<(), 
 	let device = DEVICES.get(device).unwrap();
 	let store = locks.profile_stores.get_profile_store(&device, &selected_profile)?;
 	store.save()
+}
+
+pub static PROFILE_SAVE_DEBOUNCE: LazyLock<DashMap<String, JoinHandle<()>>> = LazyLock::new(DashMap::new);
+pub fn debounce_profile_save(device: String) {
+	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&device) {
+		handle.abort();
+	}
+	PROFILE_SAVE_DEBOUNCE.insert(
+		device.clone(),
+		tokio::spawn(async move {
+			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+			let mut locks = acquire_locks_mut().await;
+			let _ = save_profile(&device, &mut locks).await;
+			PROFILE_SAVE_DEBOUNCE.remove(&device);
+		}),
+	);
 }

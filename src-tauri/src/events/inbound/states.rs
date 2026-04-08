@@ -1,30 +1,9 @@
 use super::ContextAndPayloadEvent;
 
 use crate::events::frontend::instances::update_state;
-use crate::store::profiles::{acquire_locks_mut, get_instance_mut, save_profile};
+use crate::store::profiles::{acquire_locks_mut, debounce_profile_save, get_instance_mut, save_profile};
 
-use std::sync::LazyLock;
-
-use dashmap::DashMap;
 use serde::Deserialize;
-use tokio::task::JoinHandle;
-
-static PROFILE_SAVE_DEBOUNCE: LazyLock<DashMap<String, JoinHandle<()>>> = LazyLock::new(DashMap::new);
-
-fn debounce_profile_save(device: String) {
-	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&device) {
-		handle.abort();
-	}
-	PROFILE_SAVE_DEBOUNCE.insert(
-		device.clone(),
-		tokio::spawn(async move {
-			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-			let mut locks = acquire_locks_mut().await;
-			let _ = save_profile(&device, &mut locks).await;
-			PROFILE_SAVE_DEBOUNCE.remove(&device);
-		}),
-	);
-}
 
 #[derive(Deserialize)]
 pub struct SetTitlePayload {
