@@ -30,8 +30,22 @@ pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result
 			if state as usize >= instance.states.len() {
 				return Err(anyhow::anyhow!("State index out of bounds ({} > {})", state, instance.states.len() - 1));
 			}
-			instance.states[state as usize].text = event.payload.title.unwrap_or(instance.action.states[state as usize].text.clone());
+
+			let text = event.payload.title.unwrap_or(instance.action.states[state as usize].text.clone());
+			if instance.states[state as usize].text == text {
+				return Ok(());
+			}
+			instance.states[state as usize].text = text;
 		} else {
+			if instance
+				.states
+				.iter()
+				.enumerate()
+				.all(|(index, state)| state.text == event.payload.title.clone().unwrap_or(instance.action.states[index].text.clone()))
+			{
+				return Ok(());
+			}
+
 			for (index, state) in instance.states.iter_mut().enumerate() {
 				state.text = event.payload.title.clone().unwrap_or(instance.action.states[index].text.clone());
 			}
