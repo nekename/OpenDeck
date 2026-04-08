@@ -8,8 +8,10 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 
 use anyhow::{Context, anyhow};
+use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::task::JoinHandle;
 
 pub struct ProfileStores {
 	stores: HashMap<String, Store<Profile>>,
@@ -340,7 +342,25 @@ pub async fn get_instance_mut<'a>(context: &crate::shared::ActionContext, locks:
 
 pub async fn save_profile(device: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
 	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let device = DEVICES.get(device).unwrap();
+	let device = DEVICES.get(device).ok_or_else(|| anyhow!("device not found"))?;
 	let store = locks.profile_stores.get_profile_store(&device, &selected_profile)?;
 	store.save()
+}
+
+pub static PROFILE_SAVE_DEBOUNCE: LazyLock<DashMap<String, JoinHandle<()>>> = LazyLock::new(DashMap::new);
+pub fn debounce_profile_save(device: String) {
+	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&device) {
+		handle.abort();
+	}
+	PROFILE_SAVE_DEBOUNCE.insert(
+		device.clone(),
+		tokio::spawn(async move {
+			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+			let mut locks = acquire_locks_mut().await;
+			if let Err(error) = save_profile(&device, &mut locks).await {
+				log::error!("Failed to save profile for device {device}: {error}");
+			}
+			PROFILE_SAVE_DEBOUNCE.remove(&device);
+		}),
+	);
 }
