@@ -347,20 +347,20 @@ pub async fn save_profile(device: &str, locks: &mut LocksMut<'_>) -> Result<(), 
 	store.save()
 }
 
-pub static PROFILE_SAVE_DEBOUNCE: LazyLock<DashMap<String, JoinHandle<()>>> = LazyLock::new(DashMap::new);
-pub fn debounce_profile_save(device: String) {
-	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&device) {
+pub static PROFILE_SAVE_DEBOUNCE: LazyLock<DashMap<crate::shared::ActionContext, JoinHandle<()>>> = LazyLock::new(DashMap::new);
+pub fn debounce_profile_save(context: crate::shared::ActionContext) {
+	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&context) {
 		handle.abort();
 	}
 	PROFILE_SAVE_DEBOUNCE.insert(
-		device.clone(),
+		context.clone(),
 		tokio::spawn(async move {
 			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 			let mut locks = acquire_locks_mut().await;
-			if let Err(error) = save_profile(&device, &mut locks).await {
-				log::error!("Failed to save profile for device {device}: {error}");
+			if let Err(error) = save_profile(&context.device, &mut locks).await {
+				log::error!("Failed to save profile for device {}: {error}", context.device);
 			}
-			PROFILE_SAVE_DEBOUNCE.remove(&device);
+			PROFILE_SAVE_DEBOUNCE.remove(&context);
 		}),
 	);
 }

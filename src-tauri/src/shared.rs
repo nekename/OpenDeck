@@ -230,7 +230,7 @@ pub struct Context {
 }
 
 /// Information about the slot and index an instance is located in.
-#[derive(Clone, PartialEq, Eq, serde_with::SerializeDisplay, serde_with::DeserializeFromStr)]
+#[derive(Clone, PartialEq, Eq, Hash, serde_with::SerializeDisplay, serde_with::DeserializeFromStr)]
 pub struct ActionContext {
 	pub device: String,
 	pub profile: String,

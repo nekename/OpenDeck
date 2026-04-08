@@ -32,8 +32,17 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 	}
 
 	// If a profile save is pending for this device, save it immediately to prevent losing profile data
-	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&device) {
-		handle.abort();
+	let entries = PROFILE_SAVE_DEBOUNCE
+		.iter()
+		.filter(|entry| entry.key().device == device)
+		.map(|entry| entry.key().clone())
+		.collect::<Vec<_>>();
+	if !entries.is_empty() {
+		for context in &entries {
+			if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(context) {
+				handle.abort();
+			}
+		}
 		if let Err(error) = save_profile(&device, &mut locks).await {
 			log::error!("Failed to save profile for device {device}: {error}");
 		}

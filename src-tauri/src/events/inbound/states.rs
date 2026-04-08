@@ -93,7 +93,7 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 	if let Some(image) = &event.payload.image
 		&& image.trim().starts_with("data:")
 	{
-		debounce_profile_save(event.context.device);
+		debounce_profile_save(event.context);
 	} else {
 		save_profile(&event.context.device, &mut locks).await?;
 	}
