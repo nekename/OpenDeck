@@ -53,6 +53,19 @@
 	</branding>
 
 	<releases>
+		<release version="2.11.1" date="2026-04-09">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.11.1</url>
+			<description>
+				<ul>
+					<li>fix: replace usage of Tauri currentMonitor method with window.screen API to avoid GNOME X11 crash (#301)</li>
+					<li>fix: debounce profile saves for data URL image updates to prevent excessive disk writes (#302)</li>
+					<li>perf: return early from setTitle handler if text was unchanged</li>
+					<li>fix: debounce profile saves on the action instance level to prevent delaying a single change to one instance due to another constantly updating instance</li>
+					<li>fix: advertise ESD v7.1 to satisfy compatibility checks for message identifiers support</li>
+					<li>fix: preserve quoting and escaping for Run Command action values on Windows</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.11.0" date="2026-04-02">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.11.0</url>
 			<description>
