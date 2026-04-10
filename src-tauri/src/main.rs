@@ -202,9 +202,10 @@ If you have already donated, thank you so much for your support!"#,
 				.build(app)?;
 			let show = MenuItemBuilder::with_id("show", "Show").build(app)?;
 			let hide = MenuItemBuilder::with_id("hide", "Hide").build(app)?;
+			let restart = MenuItemBuilder::with_id("restart", "Restart").build(app)?;
 			let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
 			let separator = PredefinedMenuItem::separator(app)?;
-			let menu = MenuBuilder::new(app).items(&[&label, &separator, &show, &hide, &separator, &quit]).build()?;
+			let menu = MenuBuilder::new(app).items(&[&label, &separator, &show, &hide, &separator, &restart, &quit]).build()?;
 			let _tray = TrayIconBuilder::with_id("opendeck")
 				.menu(&menu)
 				.icon(app.default_window_icon().unwrap().clone())
@@ -224,6 +225,7 @@ If you have already donated, thank you so much for your support!"#,
 					let _ = match event.id().as_ref() {
 						"show" => show_window(app),
 						"hide" => hide_window(app),
+						"restart" => app.restart(),
 						"quit" => {
 							app.exit(0);
 							Ok(())
