@@ -40,6 +40,12 @@ pub fn deregister_device(device: &str) {
 	SLEEPING_DEVICES.remove(device);
 }
 
+pub async fn sleep_device(device: String) -> Result<(), anyhow::Error> {
+	crate::events::outbound::devices::set_device_brightness(&device, 0).await?;
+	SLEEPING_DEVICES.insert(device, ());
+	Ok(())
+}
+
 async fn sleep_idle_devices() -> Result<(), anyhow::Error> {
 	let timeout = SLEEP_TIMEOUT_MINUTES.load(Ordering::Relaxed);
 	if timeout == 0 {
@@ -56,8 +62,7 @@ async fn sleep_idle_devices() -> Result<(), anyhow::Error> {
 			continue;
 		}
 
-		crate::events::outbound::devices::set_device_brightness(&device, 0).await?;
-		SLEEPING_DEVICES.insert(device, ());
+		sleep_device(device).await?;
 	}
 
 	Ok(())

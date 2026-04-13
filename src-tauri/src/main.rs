@@ -317,6 +317,15 @@ If you have already donated, thank you so much for your support!"#,
 								tauri::async_runtime::block_on(frontend::plugins::reload_plugin(app, plugin_id));
 							});
 						}
+					} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--sleep-device") {
+						if args.len() > pos + 1 {
+							let device_id = args[pos + 1].clone();
+							std::thread::spawn(move || {
+								if let Err(error) = tauri::async_runtime::block_on(device_sleep::sleep_device(device_id)) {
+									log::error!("Failed to sleep device: {error}");
+								}
+							});
+						}
 					} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--process-message") {
 						if args.len() > pos + 1 {
 							let message = args[pos + 1].clone();
