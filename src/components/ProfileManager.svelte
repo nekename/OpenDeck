@@ -258,7 +258,7 @@
 			{/if}
 			{#each profiles.sort() as profile}
 				<div class="flex flex-row items-center py-2 space-x-2" class:ml-6={id} class:pl-2={id}>
-					<input type="radio" bind:group={value} value={profile} disabled={renamingProfile == profile} aria-label={id ? profile.split("/")[1] : profile} />
+					<input type="radio" bind:group={value} value={profile} disabled={renamingProfile == profile} id={`profile-${encodeURIComponent(profile)}`} aria-label={id ? profile.split("/")[1] : profile} />
 					{#if profile == renamingProfile}
 						<input
 							bind:this={renameInput}
@@ -274,7 +274,7 @@
 							<FloppyDisk size="20" class="text-green-500" />
 						</button>
 					{:else}
-						<span class="grow text-neutral-400">{id ? profile.split("/")[1] : profile}</span>
+						<label class="grow text-neutral-400" for={`profile-${encodeURIComponent(profile)}`}>{id ? profile.split("/")[1] : profile}</label>
 						<button on:click={() => duplicateProfile(profile)} title="Duplicate" aria-label="Duplicate">
 							<Copy size="20" class="text-neutral-400" />
 						</button>
