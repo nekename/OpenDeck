@@ -1,6 +1,6 @@
 use super::Store;
 
-use crate::shared::{ActionInstance, DEVICES, DeviceInfo, Profile, config_dir};
+use crate::shared::{ActionInstance, DEVICES, DeviceInfo, Profile, config_dir, copy_dir};
 
 use std::collections::HashMap;
 use std::fs;
@@ -86,9 +86,11 @@ impl ProfileStores {
 		let _ = fs::remove_dir_all(images_path);
 	}
 
-	pub async fn rename_profile(&mut self, device: &DeviceInfo, old_id: &str, new_id: &str) -> Result<(), anyhow::Error> {
-		// Remove from the store but don't delete the file
-		self.remove_profile(&device.id, old_id);
+	pub async fn rename_profile(&mut self, device: &DeviceInfo, old_id: &str, new_id: &str, retain: bool) -> Result<(), anyhow::Error> {
+		if !retain {
+			// Remove from the store but don't delete the file
+			self.remove_profile(&device.id, old_id);
+		}
 
 		let config_dir = config_dir();
 
@@ -112,12 +114,16 @@ impl ProfileStores {
 		}
 
 		// Rename the profile file
-		fs::rename(&old_path, &new_path)?;
+		if !retain {
+			fs::rename(&old_path, &new_path)?;
 
-		// Clean up empty old directory if profile was in a folder
-		if let Some(parent) = old_path.parent() {
-			// This is safe as `remove_dir` errors if the directory is not empty.
-			let _ = fs::remove_dir(parent);
+			// Clean up empty old directory if profile was in a folder
+			if let Some(parent) = old_path.parent() {
+				// This is safe as `remove_dir` errors if the directory is not empty.
+				let _ = fs::remove_dir(parent);
+			}
+		} else {
+			fs::copy(&old_path, &new_path)?;
 		}
 
 		// Rename images directory if it exists
@@ -128,12 +134,17 @@ impl ProfileStores {
 			if let Some(parent) = new_images_path.parent() {
 				fs::create_dir_all(parent)?;
 			}
-			fs::rename(&old_images_path, &new_images_path)?;
 
-			// Clean up empty old images directory
-			if let Some(parent) = old_images_path.parent() {
-				// This is safe as `remove_dir` errors if the directory is not empty.
-				let _ = fs::remove_dir(parent);
+			if !retain {
+				fs::rename(&old_images_path, &new_images_path)?;
+
+				// Clean up empty old images directory
+				if let Some(parent) = old_images_path.parent() {
+					// This is safe as `remove_dir` errors if the directory is not empty.
+					let _ = fs::remove_dir(parent);
+				}
+			} else {
+				copy_dir(&old_images_path, &new_images_path)?;
 			}
 		}
 
