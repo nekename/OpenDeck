@@ -326,6 +326,15 @@ If you have already donated, thank you so much for your support!"#,
 								}
 							});
 						}
+					} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--wake-device") {
+						if args.len() > pos + 1 {
+							let device_id = args[pos + 1].clone();
+							std::thread::spawn(move || {
+								if let Err(error) = tauri::async_runtime::block_on(device_sleep::note_activity(&device_id)) {
+									log::error!("Failed to wake device: {error}");
+								}
+							});
+						}
 					} else if let Some(pos) = args.iter().position(|x| x.to_lowercase().trim() == "--process-message") {
 						if args.len() > pos + 1 {
 							let message = args[pos + 1].clone();
