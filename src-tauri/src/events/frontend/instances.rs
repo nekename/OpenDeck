@@ -29,6 +29,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			current_state: 0,
 			settings: serde_json::Value::Object(serde_json::Map::new()),
 			children: None,
+			skip_persistence: None,
 		};
 		children.push(instance.clone());
 
@@ -59,6 +60,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			} else {
 				None
 			},
+			skip_persistence: None,
 		};
 
 		*slot = Some(instance.clone());
@@ -254,6 +256,24 @@ pub async fn trigger_virtual_press(context: Context) -> Result<(), Error> {
 	}
 
 	Ok(())
+}
+
+#[command]
+pub async fn toggle_skip_persistence(context: Context) -> Result<Option<bool>, Error> {
+	let mut locks = acquire_locks_mut().await;
+	let global_default = crate::store::get_settings().map(|s| s.value.skip_persistence_default).unwrap_or(false);
+	let slot = get_slot_mut(&context, &mut locks).await?;
+	if let Some(instance) = slot {
+		instance.skip_persistence = match instance.skip_persistence {
+			None => Some(!global_default),
+			Some(_) => None,
+		};
+		let new_value = instance.skip_persistence;
+		save_profile(&context.device, &mut locks).await?;
+		Ok(new_value)
+	} else {
+		Ok(None)
+	}
 }
 
 #[derive(Clone, serde::Serialize)]

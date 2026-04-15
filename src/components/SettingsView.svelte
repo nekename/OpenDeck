@@ -137,6 +137,14 @@
 			<input type="checkbox" bind:checked={$settings.disableelgato} id="settings-disableelgato" />
 			<Tooltip> This option disables discovery of Elgato devices so that they can be managed by other software. </Tooltip>
 		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-skip_persistence_default" class="text-neutral-400">Skip image persistence by default:</label>
+			<input type="checkbox" bind:checked={$settings.skip_persistence_default} id="settings-skip_persistence_default" />
+			<Tooltip>
+				When enabled, dynamic images and titles are not written to disk by default. This reduces disk I/O for plugins that update frequently. On restart, plugins re-push their images automatically. You can override this per-slot by right-clicking any button and toggling "Skip disk writes". When disabled, all images are persisted normally and you can opt individual slots out via the same right-click menu.
+			</Tooltip>
+		</div>
 	{/if}
 
 	<div class="ml-2">

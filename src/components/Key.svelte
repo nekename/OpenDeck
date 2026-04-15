@@ -114,6 +114,12 @@
 		$inspectedInstance = `${context.device}.${context.profile}.${context.controller}.${context.position}.0`;
 	}
 
+	async function toggleSkipPersistence() {
+		if (!slot || !context) return;
+		const newValue: boolean | null = await invoke("toggle_skip_persistence", { context });
+		slot.skip_persistence = newValue;
+	}
+
 	async function clear() {
 		$openContextMenu = null;
 		if (!slot) return;
@@ -257,12 +263,24 @@
 				<span class="ml-2"> Copy </span>
 			</button>
 			<button
-				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-b-lg cursor-pointer"
+				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors cursor-pointer"
 				on:click|stopPropagation={clear}
 			>
 				<Trash size="18" class="text-red-400" />
 				<span class="ml-2"> Delete </span>
 			</button>
+			<label
+				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-b-lg cursor-pointer"
+				on:click|stopPropagation
+			>
+				<input
+					type="checkbox"
+					checked={slot.skip_persistence != null ? slot.skip_persistence : ($settings?.skip_persistence_default || false)}
+					on:change|stopPropagation={toggleSkipPersistence}
+					class="w-4 h-4 accent-blue-500 cursor-pointer"
+				/>
+				<span class="ml-2"> Skip disk writes </span>
+			</label>
 		{/if}
 	</div>
 {/if}

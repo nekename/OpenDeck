@@ -24,8 +24,12 @@ pub struct SetStatePayload {
 
 pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
+	let mut skip = false;
 
 	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
+		let global_default = crate::store::get_settings().map(|s| s.value.skip_persistence_default).unwrap_or(false);
+		skip = instance.skip_persistence.unwrap_or(global_default);
+
 		if let Some(state) = event.payload.state {
 			if state as usize >= instance.states.len() {
 				return Err(anyhow::anyhow!("State index out of bounds ({} > {})", state, instance.states.len() - 1));
@@ -52,15 +56,21 @@ pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result
 		}
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
-	save_profile(&event.context.device, &mut locks).await?;
+	if !skip {
+		save_profile(&event.context.device, &mut locks).await?;
+	}
 
 	Ok(())
 }
 
 pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
+	let mut skip = false;
 
 	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
+		let global_default = crate::store::get_settings().map(|s| s.value.skip_persistence_default).unwrap_or(false);
+		skip = instance.skip_persistence.unwrap_or(global_default);
+
 		if let Some(image) = &event.payload.image {
 			if image.trim().is_empty() {
 				event.payload.image = None;
@@ -90,12 +100,14 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
 
-	if let Some(image) = &event.payload.image
-		&& image.trim().starts_with("data:")
-	{
-		debounce_profile_save(event.context);
-	} else {
-		save_profile(&event.context.device, &mut locks).await?;
+	if !skip {
+		if let Some(image) = &event.payload.image
+			&& image.trim().starts_with("data:")
+		{
+			debounce_profile_save(event.context);
+		} else {
+			save_profile(&event.context.device, &mut locks).await?;
+		}
 	}
 
 	Ok(())

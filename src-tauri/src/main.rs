@@ -81,6 +81,7 @@ async fn main() {
 			frontend::instances::set_state,
 			frontend::instances::update_image,
 			frontend::instances::trigger_virtual_press,
+			frontend::instances::toggle_skip_persistence,
 			frontend::profiles::get_profiles,
 			frontend::profiles::get_selected_profile,
 			frontend::profiles::set_selected_profile,

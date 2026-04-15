@@ -305,6 +305,8 @@ pub struct ActionInstance {
 	pub current_state: u16,
 	pub settings: serde_json::Value,
 	pub children: Option<Vec<ActionInstance>>,
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub skip_persistence: Option<bool>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
