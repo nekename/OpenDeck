@@ -96,7 +96,7 @@ pub async fn key_up(event: PayloadEvent<PressPayload>) -> Result<(), anyhow::Err
 	crate::events::outbound::keypad::key_up(&event.payload.device, event.payload.position).await
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, serde::Serialize, Clone)]
 pub struct TicksPayload {
 	pub device: String,
 	pub position: u8,
@@ -106,6 +106,11 @@ pub struct TicksPayload {
 pub async fn encoder_change(event: PayloadEvent<TicksPayload>) -> Result<(), anyhow::Error> {
 	if crate::device_sleep::note_activity(&event.payload.device).await.unwrap_or(false) {
 		return Ok(());
+	}
+	{
+		use tauri::{Emitter, Manager};
+		let app = crate::APP_HANDLE.get().unwrap();
+		app.get_webview_window("main").unwrap().emit("encoder_rotated", event.payload.clone()).unwrap_or(());
 	}
 	crate::events::outbound::encoder::dial_rotate(&event.payload.device, event.payload.position, event.payload.ticks).await
 }

@@ -5,6 +5,7 @@
 	import type { Profile } from "$lib/Profile";
 	import type { CopiedItem } from "$lib/propertyInspector";
 
+	import EncoderDial from "./EncoderDial.svelte";
 	import Key from "./Key.svelte";
 
 	import { inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
@@ -226,6 +227,11 @@
 							label="Encoder {i + 1}"
 							tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
 						/>
+					{/each}
+				</div>
+				<div class="flex flex-row" style="width: {device.columns <= 8 ? (device.columns * 132) : (device.columns * 144)}px;">
+					{#each { length: device.encoders } as _, i}
+						<EncoderDial context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }} />
 					{/each}
 				</div>
 			</div>

@@ -260,6 +260,69 @@ pub async fn trigger_virtual_press(context: Context) -> Result<(), Error> {
 	Ok(())
 }
 
+#[command]
+pub async fn trigger_virtual_rotate(context: Context, ticks: i16) -> Result<(), Error> {
+	if context.controller != "Encoder" {
+		return Ok(());
+	}
+	crate::events::inbound::devices::encoder_change(crate::events::inbound::PayloadEvent {
+		payload: crate::events::inbound::devices::TicksPayload {
+			device: context.device.clone(),
+			position: context.position,
+			ticks,
+		},
+	})
+	.await?;
+	Ok(())
+}
+
+#[command]
+pub async fn trigger_virtual_encoder_down(context: Context) -> Result<(), Error> {
+	if context.controller != "Encoder" {
+		return Ok(());
+	}
+	crate::events::inbound::devices::encoder_down(crate::events::inbound::PayloadEvent {
+		payload: crate::events::inbound::devices::PressPayload {
+			device: context.device.clone(),
+			position: context.position,
+		},
+	})
+	.await?;
+	Ok(())
+}
+
+#[command]
+pub async fn trigger_virtual_encoder_up(context: Context) -> Result<(), Error> {
+	if context.controller != "Encoder" {
+		return Ok(());
+	}
+	crate::events::inbound::devices::encoder_up(crate::events::inbound::PayloadEvent {
+		payload: crate::events::inbound::devices::PressPayload {
+			device: context.device.clone(),
+			position: context.position,
+		},
+	})
+	.await?;
+	Ok(())
+}
+
+#[command]
+pub async fn trigger_virtual_touch(context: Context, hold: bool) -> Result<(), Error> {
+	if context.controller != "Encoder" {
+		return Ok(());
+	}
+	crate::events::inbound::devices::touch_tap(crate::events::inbound::PayloadEvent {
+		payload: crate::events::inbound::devices::TouchPayload {
+			device: context.device.clone(),
+			position: context.position,
+			tap_pos: (100, 50),
+			hold,
+		},
+	})
+	.await?;
+	Ok(())
+}
+
 #[derive(Clone, serde::Serialize)]
 struct KeyMovedEvent {
 	context: Context,
