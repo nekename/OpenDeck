@@ -29,6 +29,8 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			current_state: 0,
 			settings: serde_json::Value::Object(serde_json::Map::new()),
 			children: None,
+			feedback_layout: action.encoder.as_ref().and_then(|e| e.layout.clone()),
+			feedback: serde_json::Value::Null,
 		};
 		children.push(instance.clone());
 
@@ -59,6 +61,8 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			} else {
 				None
 			},
+			feedback_layout: action.encoder.as_ref().and_then(|e| e.layout.clone()),
+			feedback: serde_json::Value::Null,
 		};
 
 		*slot = Some(instance.clone());

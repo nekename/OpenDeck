@@ -174,3 +174,32 @@ pub async fn show_settings_interface(plugin: String) -> Result<(), Error> {
 	crate::events::outbound::settings::show_settings_interface(&plugin).await?;
 	Ok(())
 }
+
+/// Return the parsed custom layout JSON for a plugin-shipped feedback layout.
+/// Built-in layouts (`$X1` etc.) are resolved client-side and not handled here.
+/// The layout path is relative to the plugin folder, as documented at
+/// https://docs.elgato.com/streamdeck/sdk/guides/dials/#custom-layouts.
+#[command]
+pub async fn get_feedback_layout(plugin: String, layout: String) -> Result<serde_json::Value, Error> {
+	if plugin.is_empty() || layout.is_empty() {
+		return Err(anyhow::anyhow!("plugin and layout are required").into());
+	}
+	if layout.starts_with('$') {
+		return Err(anyhow::anyhow!("built-in layouts are resolved client-side").into());
+	}
+
+	let plugin_root = config_dir().join("plugins").join(&plugin);
+	let requested = plugin_root.join(&layout);
+
+	// Guard against path traversal: the resolved file must stay inside the
+	// plugin's folder. We compare canonical paths to catch `..` segments.
+	let canonical_root = tokio::fs::canonicalize(&plugin_root).await.map_err(anyhow::Error::from)?;
+	let canonical_file = tokio::fs::canonicalize(&requested).await.map_err(anyhow::Error::from)?;
+	if !canonical_file.starts_with(&canonical_root) {
+		return Err(anyhow::anyhow!("layout path escapes plugin folder").into());
+	}
+
+	let bytes = tokio::fs::read(&canonical_file).await.map_err(anyhow::Error::from)?;
+	let parsed: serde_json::Value = serde_json::from_slice(&bytes).map_err(anyhow::Error::from)?;
+	Ok(parsed)
+}
