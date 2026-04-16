@@ -111,6 +111,41 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<serde_json::Value>) -> R
 		merge_feedback(&mut instance.feedback, event.payload);
 		let snapshot = instance.clone();
 		drop(locks);
+		// Fast path for plugins that pre-render full-screen 200x100 PNGs.
+		// When the accumulated feedback contains a `full-canvas` data URI,
+		// the image is already device-ready and doesn't need the webview
+		// compositor (which adds a round-trip through the frontend canvas
+		// and back). Push it straight to the device in parallel with the
+		// frontend notification so the preview still updates but the LCD
+		// doesn't wait on the slower compose+encode+IPC cycle.
+		//
+		// Plugins that push partial updates (title, bar, indicator, icon)
+		// still rely on the frontend compositor to merge layout items.
+		if let Some(full_canvas) = snapshot.feedback.get("full-canvas").and_then(|v| v.as_str())
+			&& full_canvas.starts_with("data:")
+		{
+			let ctx_str = snapshot.context.to_string();
+			// Skip the fast path for the first setFeedback after willAppear.
+			// The plugin may be re-sending stale cached state before it
+			// generates fresh content, and pushing that stale frame races
+			// with the profile switch's clear_screen.
+			let was_warming = crate::events::outbound::will_appear::clear_warming_up(&ctx_str).await;
+			if !was_warming {
+				let context = snapshot.context.clone();
+				let image = full_canvas.to_owned();
+				tokio::spawn(async move {
+					let ctx: crate::shared::Context = context.into();
+					let selected = crate::store::profiles::DEVICE_STORES.write().await
+						.get_selected_profile(&ctx.device).ok();
+					if selected.as_deref() != Some(&ctx.profile) {
+						return;
+					}
+					if let Err(error) = crate::events::outbound::devices::update_image(ctx, Some(image)).await {
+						log::warn!("Failed to fast-path full-canvas image: {}", error);
+					}
+				});
+			}
+		}
 		emit_feedback_changed(&snapshot);
 
 		// Fast path: when the plugin sends a full-canvas data URI via

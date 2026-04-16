@@ -79,7 +79,11 @@
 			return null;
 		}
 	}
-	// $X1 "Icon" layout so the LCD shows title+icon unstretched.
+	// Per the Elgato SDK, encoder actions render feedback via a layout.
+	// When the slot has no layout set (plugin manifest omitted
+	// Encoder.layout or a key action was placed on an encoder slot),
+	// fall back to $X1 ("Icon" layout: title + centered icon) so the
+	// LCD renders unstretched content instead of a blank screen.
 	$: if (slot && context?.controller === "Encoder" && (slot.feedback_layout ?? "$X1") !== resolvedLayoutId) {
 		const pluginId = slot.action.plugin;
 		const layoutId = slot.feedback_layout ?? "$X1";
@@ -193,9 +197,9 @@
 			try {
 				const ctx = canvas?.getContext("2d");
 				if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-				// Encoder slots: skip null pushes. The plugin will push real
-				// content via setFeedback; individual null pushes here are
-				// redundant and cause flashing during profile switches.
+				// Encoder slots: profile switch already calls clear_screen
+				// on the backend. Individual null pushes here are redundant
+				// and race with the plugin's fast-path image pushes.
 				if (active && context?.controller !== "Encoder") {
 					await invoke("update_image", { context, image: null });
 				}
@@ -203,11 +207,11 @@
 				unlock();
 			}
 		} else if (context?.controller === "Encoder" && resolvedLayout) {
-			// Encoder slot with a feedback layout: composite the layout items and
-			// push the rendered 200x100 pixmap to the device. The layout's icon
-			// slot falls back to the action's state image when the plugin hasn't
-			// provided its own `icon`, matching Elgato's default behaviour where
-			// the user-assigned icon takes precedence (guides_dials.md line 440).
+			// Encoder slot with a feedback layout: composite the layout
+			// items and push the rendered 200x100 pixmap to the device.
+			// The $X1 "icon" slot falls back to the action's state image
+			// when the plugin hasn't pushed its own, matching Elgato's
+			// default rendering of the user-assigned icon.
 			const unlock = await lock.lock();
 			try {
 				const feedback = { ...(sl.feedback ?? {}) } as Record<string, unknown>;
@@ -216,30 +220,35 @@
 					if (fallback) feedback.icon = fallback;
 				}
 				if (feedback.title == null && state?.text) feedback.title = state.text;
-
-				// Detect full-canvas fast path: the backend already pushed the
-				// image directly to the device, so only update the preview.
+				// Detect full-canvas data URI pushes. The backend fast path
+				// has already sent these directly to the device, so we only
+				// need to render the preview (offscreen compose to avoid
+				// visible flicker during the async pixmap decode).
 				const isFullCanvasFastPath =
 					typeof feedback["full-canvas"] === "string" &&
 					(feedback["full-canvas"] as string).startsWith("data:");
-				const shouldPushDevice = active && !isFullCanvasFastPath;
-
-				// Render to an offscreen canvas first, then blit atomically
-				// to prevent flash during async decode.
-				if (!previewComposeCanvas) previewComposeCanvas = document.createElement("canvas");
-				await renderFeedback(previewComposeCanvas, resolvedLayout, feedback);
-				const ctx = canvas?.getContext("2d");
-				if (ctx) {
-					ctx.clearRect(0, 0, canvas.width, canvas.height);
-					ctx.drawImage(previewComposeCanvas, 0, 0, canvas.width, canvas.height);
-				}
-				if (shouldPushDevice) {
-					await invoke("update_image", { context, image: canvas.toDataURL("image/png") });
+				if (isFullCanvasFastPath) {
+					if (!previewComposeCanvas) previewComposeCanvas = document.createElement("canvas");
+					await renderFeedback(previewComposeCanvas, resolvedLayout, feedback);
+					const ctx = canvas?.getContext("2d");
+					if (ctx) {
+						ctx.clearRect(0, 0, canvas.width, canvas.height);
+						ctx.drawImage(previewComposeCanvas, 0, 0, canvas.width, canvas.height);
+					}
+				} else {
+					await renderFeedback(canvas, resolvedLayout, feedback);
+					if (active) {
+						await invoke("update_image", { context, image: canvas.toDataURL("image/png") });
+					}
 				}
 			} finally {
 				unlock();
 			}
 		} else if (context?.controller !== "Encoder") {
+			// Non-encoder slots: render via renderImage (key-style square).
+			// Encoder slots skip this -- they wait for layout resolution
+			// before rendering. The backend fast path handles device updates
+			// in the meantime so the encoder LCD isn't blank.
 			const unlock = await lock.lock();
 			try {
 				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
