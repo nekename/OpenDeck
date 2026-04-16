@@ -5,4 +5,6 @@ export type Profile = {
 	id: string;
 	keys: (ActionInstance | null)[];
 	sliders: (ActionInstance | null)[];
+	swipe_left?: string | null;
+	swipe_right?: string | null;
 };

@@ -180,7 +180,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				DeviceStateUpdate::EncoderUp(dial) => inbound::devices::encoder_up(press(dial)).await,
 				DeviceStateUpdate::TouchScreenPress(x, y) => inbound::devices::touch_tap(touch(x, y, false)).await,
 				DeviceStateUpdate::TouchScreenLongPress(x, y) => inbound::devices::touch_tap(touch(x, y, true)).await,
-				DeviceStateUpdate::TouchScreenSwipe(_from, _to) => Ok(()), // Swipe not mapped to SDK event yet
+				DeviceStateUpdate::TouchScreenSwipe(from, to) => inbound::devices::touch_swipe(device_id.clone(), from, to).await,
 			} {
 				Ok(_) => (),
 				Err(error) => log::warn!("Failed to process device event {update:?}: {error}"),

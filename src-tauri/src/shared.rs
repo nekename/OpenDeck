@@ -336,6 +336,12 @@ pub struct Profile {
 	pub id: String,
 	pub keys: Vec<Option<ActionInstance>>,
 	pub sliders: Vec<Option<ActionInstance>>,
+	/// Profile to switch to on touch strip swipe left. None = previous alphabetically.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub swipe_left: Option<String>,
+	/// Profile to switch to on touch strip swipe right. None = next alphabetically.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub swipe_right: Option<String>,
 }
 
 /// A map of category names to a list of actions in that category.

@@ -198,6 +198,10 @@ impl DiskActionInstance {
 pub struct DiskProfile {
 	pub keys: Vec<Option<DiskActionInstance>>,
 	pub sliders: Vec<Option<DiskActionInstance>>,
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub swipe_left: Option<String>,
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub swipe_right: Option<String>,
 }
 
 impl From<&Profile> for DiskProfile {
@@ -205,6 +209,8 @@ impl From<&Profile> for DiskProfile {
 		Self {
 			keys: value.keys.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
 			sliders: value.sliders.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
+			swipe_left: value.swipe_left.clone(),
+			swipe_right: value.swipe_right.clone(),
 		}
 	}
 }
@@ -220,6 +226,8 @@ impl DiskProfile {
 			id,
 			keys: self.keys.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
 			sliders: self.sliders.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
+			swipe_left: self.swipe_left,
+			swipe_right: self.swipe_right,
 		}
 	}
 }
