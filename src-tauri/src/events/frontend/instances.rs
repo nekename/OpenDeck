@@ -226,6 +226,13 @@ pub async fn set_state(context: ActionContext, index: u16, state: ActionState) -
 
 #[command]
 pub async fn update_image(context: Context, image: Option<String>) {
+	// Encoder slots: drop null pushes. Plugins push real content via
+	// setFeedback; null pushes from the frontend during profile switches
+	// race with real images and cause flashing on the LCD.
+	if context.controller == "Encoder" && image.is_none() {
+		return;
+	}
+
 	if Some(&context.profile) != crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(&context.device).ok().as_ref() {
 		return;
 	}

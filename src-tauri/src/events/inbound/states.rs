@@ -112,6 +112,28 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<serde_json::Value>) -> R
 		let snapshot = instance.clone();
 		drop(locks);
 		emit_feedback_changed(&snapshot);
+
+		// Fast path: when the plugin sends a full-canvas data URI via
+		// setFeedback, push it directly to the device LCD. This bypasses
+		// the frontend render loop and eliminates webview latency for
+		// plugins that composite their own 200x100 image.
+		if let Some(full_canvas) = snapshot.feedback.get("full-canvas").and_then(|v| v.as_str()) {
+			if full_canvas.starts_with("data:") {
+				let context = snapshot.context.clone();
+				let image = full_canvas.to_owned();
+				tokio::spawn(async move {
+					let ctx: crate::shared::Context = (&context).into();
+					if let Ok(selected) = crate::store::profiles::DEVICE_STORES.write().await
+						.get_selected_profile(&ctx.device)
+					{
+						if selected != ctx.profile {
+							return;
+						}
+					}
+					let _ = crate::events::outbound::devices::update_image(ctx, Some(image)).await;
+				});
+			}
+		}
 	}
 	Ok(())
 }

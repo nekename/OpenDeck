@@ -79,9 +79,10 @@
 			return null;
 		}
 	}
-	$: if (slot && context?.controller === "Encoder" && slot.feedback_layout !== resolvedLayoutId) {
+	// $X1 "Icon" layout so the LCD shows title+icon unstretched.
+	$: if (slot && context?.controller === "Encoder" && (slot.feedback_layout ?? "$X1") !== resolvedLayoutId) {
 		const pluginId = slot.action.plugin;
-		const layoutId = slot.feedback_layout ?? null;
+		const layoutId = slot.feedback_layout ?? "$X1";
 		resolvedLayoutId = layoutId;
 		resolveLayout(pluginId, layoutId).then((layout) => {
 			if (resolvedLayoutId === layoutId) resolvedLayout = layout;
@@ -182,6 +183,7 @@
 	});
 
 	let canvas: HTMLCanvasElement;
+	let previewComposeCanvas: HTMLCanvasElement | undefined;
 	let lock = new CanvasLock();
 	export let size = 144;
 	$: (async () => {
@@ -191,7 +193,12 @@
 			try {
 				const ctx = canvas?.getContext("2d");
 				if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-				if (active) await invoke("update_image", { context, image: null });
+				// Encoder slots: skip null pushes. The plugin will push real
+				// content via setFeedback; individual null pushes here are
+				// redundant and cause flashing during profile switches.
+				if (active && context?.controller !== "Encoder") {
+					await invoke("update_image", { context, image: null });
+				}
 			} finally {
 				unlock();
 			}
@@ -209,14 +216,31 @@
 					if (fallback) feedback.icon = fallback;
 				}
 				if (feedback.title == null && state?.text) feedback.title = state.text;
-				await renderFeedback(canvas, resolvedLayout, feedback);
-				if (active) {
+
+				// Detect full-canvas fast path: the backend already pushed the
+				// image directly to the device, so only update the preview.
+				const isFullCanvasFastPath =
+					typeof feedback["full-canvas"] === "string" &&
+					(feedback["full-canvas"] as string).startsWith("data:");
+				const shouldPushDevice = active && !isFullCanvasFastPath;
+
+				// Render to an offscreen canvas first, then blit atomically
+				// to prevent flash during async decode.
+				if (!previewComposeCanvas) previewComposeCanvas = document.createElement("canvas");
+				await renderFeedback(previewComposeCanvas, resolvedLayout, feedback);
+				const ctx = canvas?.getContext("2d");
+				if (ctx) {
+					canvas.width = previewComposeCanvas.width;
+					canvas.height = previewComposeCanvas.height;
+					ctx.drawImage(previewComposeCanvas, 0, 0);
+				}
+				if (shouldPushDevice) {
 					await invoke("update_image", { context, image: canvas.toDataURL("image/png") });
 				}
 			} finally {
 				unlock();
 			}
-		} else {
+		} else if (context?.controller !== "Encoder") {
 			const unlock = await lock.lock();
 			try {
 				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
