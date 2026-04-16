@@ -4,7 +4,8 @@
 	import MagnifyingGlass from "phosphor-svelte/lib/MagnifyingGlass";
 
 	import { getWebserverUrl } from "$lib/ports";
-	import { copiedItem } from "$lib/propertyInspector";
+	import { copiedItem, inspectedInstance } from "$lib/propertyInspector";
+	import { dragAction } from "$lib/dragState";
 	import { localisations } from "$lib/settings";
 	import { PRODUCT_NAME } from "$lib/singletons";
 
@@ -122,7 +123,13 @@
 								if (!event.dataTransfer) return;
 								event.dataTransfer.effectAllowed = "copy";
 								event.dataTransfer.setData("action", JSON.stringify(action));
+								// Show just the icon as drag ghost instead of the full card
+								const img = event.currentTarget.querySelector("img");
+								if (img) event.dataTransfer.setDragImage(img, 22, 22);
+								dragAction.set({ controllers: action.controllers });
+								$inspectedInstance = null;
 							}}
+							on:dragend={() => dragAction.set(null)}
 							on:keydown={(event) => {
 								if ((event.ctrlKey || event.metaKey) && event.key == "c") {
 									copiedItem.set({ type: "action", action });

@@ -38,6 +38,7 @@
 	export let scale: number = 1;
 	export let isTouchPoint: boolean = false;
 	export let encoderStrip: boolean = false;
+	export let dragHighlight: "empty" | "occupied" | "hovered" | "incompatible" | null = null;
 	export let encoderPosition: number = 0;
 	export let encoderCount: number = 4;
 	let pressed: boolean = false;
@@ -280,7 +281,11 @@
 	<div class="flex-1 relative" style="aspect-ratio: 2 / 1; z-index: {slot && $inspectedInstance == slot.context ? 10 : 0};">
 		<canvas
 			bind:this={canvas}
-			class="absolute inset-0 w-full h-full border-neutral-700 outline-none outline-offset-2 outline-blue-500"
+			class="absolute inset-0 w-full h-full outline-none outline-offset-2 outline-blue-500 transition-colors duration-150"
+			class:border-neutral-700={!dragHighlight || dragHighlight === "incompatible"}
+			class:border-green-500={dragHighlight === "empty"}
+			class:border-orange-500={dragHighlight === "occupied"}
+			class:border-blue-400={dragHighlight === "hovered"}
 			class:border-y-3={true}
 			class:border-l-3={encoderPosition === 0}
 			class:border-r-3={encoderPosition === encoderCount - 1}
@@ -298,6 +303,7 @@
 			aria-label={accessibleLabel}
 			on:dragstart
 			on:dragover
+			on:dragleave
 			on:drop
 			on:click|stopPropagation={select}
 			on:dblclick|stopPropagation={triggerVirtualPress}
@@ -320,14 +326,23 @@
 	</div>
 {:else}
 	<div
-		class="relative"
+		class="relative transition-all duration-150"
+		class:opacity-30={dragHighlight === "incompatible"}
+		class:brightness-125={dragHighlight === "hovered"}
+		class:scale-110={dragHighlight === "hovered"}
 		style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}
 	>
 		<canvas
 			bind:this={canvas}
-			class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
+			class="relative border-3 rounded-3xl outline-none transition-colors duration-150"
+			class:border-neutral-700={!dragHighlight || dragHighlight === "incompatible"}
+			class:border-green-500={dragHighlight === "empty"}
+			class:border-orange-500={dragHighlight === "occupied"}
+			class:border-blue-400={dragHighlight === "hovered"}
 			style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
-			class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
+			class:outline-solid={active && !dragHighlight && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
+			class:outline-offset-2={true}
+			class:outline-blue-500={!dragHighlight}
 			class:rounded-full!={context?.controller == "Encoder"}
 			class:bg-black={slot != null}
 			width={size}
@@ -338,6 +353,7 @@
 			aria-label={accessibleLabel}
 			on:dragstart
 			on:dragover
+			on:dragleave
 			on:drop
 			on:click|stopPropagation={select}
 			on:dblclick|stopPropagation={triggerVirtualPress}

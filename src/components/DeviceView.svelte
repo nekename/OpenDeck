@@ -8,6 +8,7 @@
 	import Key from "./Key.svelte";
 
 	import { inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
+	import { dragAction, hoveredSlot } from "$lib/dragState";
 
 	import { invoke } from "@tauri-apps/api/core";
 
@@ -23,20 +24,24 @@
 		dataTransfer.setData("position", position.toString());
 	}
 
-	function handleDragOver(event: DragEvent) {
+	function handleDragOver(event: DragEvent, controller?: string, position?: number) {
 		event.preventDefault();
 		if (!event.dataTransfer) return;
 		if (event.dataTransfer.types.includes("action")) event.dataTransfer.dropEffect = "copy";
 		else if (event.dataTransfer.types.includes("controller")) event.dataTransfer.dropEffect = "move";
+		if (controller != null && position != null) hoveredSlot.set({ controller, position });
 	}
 
 	async function handleDrop({ dataTransfer }: DragEvent, controller: string, position: number) {
+		hoveredSlot.set(null);
 		let context = { device: device.id, profile: profile.id, controller, position };
 		let array = controller == "Encoder" ? profile.sliders : profile.keys;
 		if (dataTransfer?.getData("action")) {
 			let action = JSON.parse(dataTransfer?.getData("action"));
+			// Allow dropping on occupied slots by removing the existing action first
 			if (array[position]) {
-				return;
+				await invoke("remove_instance", { context: array[position].context });
+				array[position] = null;
 			}
 			array[position] = await invoke("create_instance", { context, action });
 			profile = profile;
@@ -193,16 +198,22 @@
 			{#each { length: device.rows } as _, r}
 				<div class="flex flex-row" role="row">
 					{#each { length: device.columns } as _, c}
+						{@const pos = (r * device.columns) + c}
+						{@const isCompat = $dragAction ? $dragAction.controllers.includes("Keypad") : false}
+						{@const isHovered = $hoveredSlot?.controller === "Keypad" && $hoveredSlot?.position === pos}
+						{@const isEmpty = !profile.keys[pos]}
 						<Key
-							context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (r * device.columns) + c }}
-							bind:inslot={profile.keys[(r * device.columns) + c]}
-							on:dragover={handleDragOver}
-							on:drop={(event) => handleDrop(event, "Keypad", (r * device.columns) + c)}
-							on:dragstart={(event) => handleDragStart(event, "Keypad", (r * device.columns) + c)}
+							context={{ device: device.id, profile: profile.id, controller: "Keypad", position: pos }}
+							bind:inslot={profile.keys[pos]}
+							on:dragover={(event) => handleDragOver(event, "Keypad", pos)}
+							on:dragleave={() => hoveredSlot.set(null)}
+							on:drop={(event) => handleDrop(event, "Keypad", pos)}
+							on:dragstart={(event) => handleDragStart(event, "Keypad", pos)}
 							{handlePaste}
 							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 							label="Key {String.fromCharCode(65 + r)}{c + 1}"
 							tabindex={focusedRow === r && focusedCol === c ? 0 : -1}
+							dragHighlight={$dragAction ? (isCompat ? (isHovered ? "hovered" : (isEmpty ? "empty" : "occupied")) : "incompatible") : null}
 						/>
 					{/each}
 				</div>
@@ -210,14 +221,24 @@
 		</div>
 
 		{#if device.encoders > 0}
-			<div class="flex flex-col items-center mt-2" role="row">
-				<div class="encoder-strip flex flex-row" style="width: {device.columns <= 8 ? (device.columns * 132) : (device.columns * 144)}px;">
-					{#each { length: device.encoders } as _, i}
+			<div class="flex flex-row items-start justify-center mt-2 gap-0" role="row" style="width: {device.columns <= 8 ? (device.columns * 132) : (device.columns * 144)}px; margin: 0 auto;">
+				{#each { length: device.encoders } as _, i}
+					{@const isCompat = $dragAction ? $dragAction.controllers.includes("Encoder") : false}
+					{@const isHovered = $hoveredSlot?.controller === "Encoder" && $hoveredSlot?.position === i}
+					{@const isEmpty = !profile.sliders[i]}
+					{@const encHighlight = $dragAction ? (isCompat ? (isHovered ? "hovered" : (isEmpty ? "empty" : "occupied")) : "incompatible") : null}
+					<div
+						class="flex flex-col items-center transition-all duration-150"
+						class:opacity-30={$dragAction && !isCompat}
+						class:brightness-125={isHovered}
+						style="flex: 1;"
+						on:dragover|preventDefault={(event) => handleDragOver(event, "Encoder", i)}
+						on:dragleave={() => hoveredSlot.set(null)}
+						on:drop={(event) => handleDrop(event, "Encoder", i)}
+					>
 						<Key
 							context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
 							bind:inslot={profile.sliders[i]}
-							on:dragover={handleDragOver}
-							on:drop={(event) => handleDrop(event, "Encoder", i)}
 							on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
 							{handlePaste}
 							encoderStrip
@@ -225,20 +246,27 @@
 							encoderCount={device.encoders}
 							label="Encoder {i + 1}"
 							tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
+							dragHighlight={encHighlight}
 						/>
-					{/each}
-				</div>
+					</div>
+				{/each}
 			</div>
 		{/if}
 
 		<div class="flex flex-row" role="row">
 			{#each { length: device.touchpoints } as _, i}
+				{@const tpos = (device.rows * device.columns) + i}
+				{@const isCompat = $dragAction ? $dragAction.controllers.includes("Keypad") : false}
+				{@const isHovered = $hoveredSlot?.controller === "Keypad" && $hoveredSlot?.position === tpos}
+				{@const isEmpty = !profile.keys[tpos]}
 				<Key
-					context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (device.rows * device.columns) + i }}
-					bind:inslot={profile.keys[(device.rows * device.columns) + i]}
-					on:dragover={handleDragOver}
-					on:drop={(event) => handleDrop(event, "Keypad", (device.rows * device.columns) + i)}
-					on:dragstart={(event) => handleDragStart(event, "Keypad", (device.rows * device.columns) + i)}
+					context={{ device: device.id, profile: profile.id, controller: "Keypad", position: tpos }}
+					bind:inslot={profile.keys[tpos]}
+					on:dragover={(event) => handleDragOver(event, "Keypad", tpos)}
+					on:dragleave={() => hoveredSlot.set(null)}
+					on:drop={(event) => handleDrop(event, "Keypad", tpos)}
+					on:dragstart={(event) => handleDragStart(event, "Keypad", tpos)}
+					dragHighlight={$dragAction ? (isCompat ? (isHovered ? "hovered" : (isEmpty ? "empty" : "occupied")) : "incompatible") : null}
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					isTouchPoint
