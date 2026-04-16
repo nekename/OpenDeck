@@ -352,8 +352,18 @@ pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow
 				}
 			}
 			PluginInstance::Node(mut child) | PluginInstance::Wine(mut child) | PluginInstance::Native(mut child) => {
-				child.kill()?;
-				child.wait()?;
+				// Send SIGTERM first to allow graceful shutdown (plugins may
+				// need to reset hardware or flush state). Fall back to SIGKILL
+				// if the process doesn't exit within 3 seconds.
+				let pid = child.id();
+				let _ = std::process::Command::new("kill").arg("-TERM").arg(pid.to_string()).output();
+				let exited = tokio::time::timeout(
+					std::time::Duration::from_secs(3),
+					tokio::task::spawn_blocking(move || child.wait()),
+				).await;
+				if exited.is_err() {
+					let _ = std::process::Command::new("kill").arg("-KILL").arg(pid.to_string()).output();
+				}
 			}
 		}
 		Ok(())
