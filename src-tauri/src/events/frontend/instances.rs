@@ -12,6 +12,22 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 		return Ok(None);
 	}
 
+	// Per the Elgato SDK, encoder actions render feedback via layouts.
+	// Default to $X1 ("Icon" layout: title + centered icon) when the
+	// manifest omits Encoder.layout or a key action is placed on an
+	// encoder slot, so the LCD renders unstretched instead of drawing
+	// the action's image at full 200x100 resolution.
+	let default_encoder_layout = |action: &Action| -> Option<String> {
+		let explicit = action.encoder.as_ref().and_then(|e| e.layout.clone());
+		if explicit.is_some() {
+			explicit
+		} else if context.controller == "Encoder" {
+			Some("$X1".to_owned())
+		} else {
+			None
+		}
+	};
+
 	let mut locks = acquire_locks_mut().await;
 	let slot = get_slot_mut(&context, &mut locks).await?;
 
@@ -29,7 +45,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			current_state: 0,
 			settings: serde_json::Value::Object(serde_json::Map::new()),
 			children: None,
-			feedback_layout: action.encoder.as_ref().and_then(|e| e.layout.clone()),
+			feedback_layout: default_encoder_layout(&action),
 			feedback: serde_json::Value::Null,
 		};
 		children.push(instance.clone());
@@ -61,7 +77,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			} else {
 				None
 			},
-			feedback_layout: action.encoder.as_ref().and_then(|e| e.layout.clone()),
+			feedback_layout: default_encoder_layout(&action),
 			feedback: serde_json::Value::Null,
 		};
 
@@ -226,6 +242,13 @@ pub async fn set_state(context: ActionContext, index: u16, state: ActionState) -
 
 #[command]
 pub async fn update_image(context: Context, image: Option<String>) {
+	// Encoder LCD slots are driven by the backend fast path (setFeedback)
+	// and clear_screen (profile switch). The frontend must never push null
+	// to encoder slots -- doing so races with the fast path and causes
+	// visible flashing as the device alternates between null and real frames.
+	if context.controller == "Encoder" && image.is_none() {
+		return;
+	}
 	if Some(&context.profile) != crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(&context.device).ok().as_ref() {
 		return;
 	}
