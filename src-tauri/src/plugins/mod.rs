@@ -362,7 +362,8 @@ pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow
 	}
 }
 
-#[cfg(windows)]
+/// Terminate all running plugin child processes. Called on application exit
+/// to prevent orphaned Node.js / Wine / native processes from accumulating.
 pub async fn deactivate_plugins() {
 	let uuids = {
 		let instances = INSTANCES.lock().await;

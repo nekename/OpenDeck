@@ -364,7 +364,9 @@ If you have already donated, thank you so much for your support!"#,
 
 	app.run(|app, event| {
 		if let tauri::RunEvent::Exit = event {
-			#[cfg(windows)]
+			// Kill plugin child processes on exit. Without this, every Node.js /
+			// Wine / native plugin process becomes an orphan when OpenDeck shuts
+			// down on Linux and macOS, accumulating across restarts.
 			futures::executor::block_on(plugins::deactivate_plugins());
 			tokio::spawn(elgato::reset_devices());
 			use tauri_plugin_aptabase::EventTracker;
