@@ -230,9 +230,8 @@
 				await renderFeedback(previewComposeCanvas, resolvedLayout, feedback);
 				const ctx = canvas?.getContext("2d");
 				if (ctx) {
-					canvas.width = previewComposeCanvas.width;
-					canvas.height = previewComposeCanvas.height;
-					ctx.drawImage(previewComposeCanvas, 0, 0);
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+					ctx.drawImage(previewComposeCanvas, 0, 0, canvas.width, canvas.height);
 				}
 				if (shouldPushDevice) {
 					await invoke("update_image", { context, image: canvas.toDataURL("image/png") });
