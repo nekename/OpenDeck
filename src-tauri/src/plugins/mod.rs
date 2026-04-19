@@ -45,6 +45,21 @@ pub static PORT_BASE: LazyLock<u16> = LazyLock::new(|| {
 	base
 });
 
+/// Attach a kernel-enforced "die when parent dies" signal to a plugin child process.
+#[cfg(target_os = "linux")]
+fn attach_parent_death_signal(command: &mut Command) {
+	use std::os::unix::process::CommandExt;
+	// SAFETY: `libc::prctl` is async-signal-safe.
+	unsafe {
+		command.pre_exec(move || {
+			if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM as libc::c_ulong) != 0 {
+				return Err(std::io::Error::last_os_error());
+			}
+			Ok(())
+		});
+	}
+}
+
 /// Initialise a plugin from a given directory.
 pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 	let plugin_uuid = path.file_name().unwrap().to_str().unwrap();
@@ -232,15 +247,18 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 
 		#[cfg(not(target_os = "windows"))]
 		{
-			let child = Command::new(command)
+			let mut command = Command::new(command);
+			command
 				.current_dir(path)
 				.args(extra_args)
 				.arg(code_path)
 				.args(args)
 				.arg(serde_json::to_string(&info)?)
 				.stdout(Stdio::from(log_file.try_clone()?))
-				.stderr(Stdio::from(log_file))
-				.spawn()?;
+				.stderr(Stdio::from(log_file));
+			#[cfg(target_os = "linux")]
+			attach_parent_death_signal(&mut command);
+			let child = command.spawn()?;
 
 			INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Node(child));
 		}
@@ -276,6 +294,8 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		} else {
 			let _ = fs::remove_dir_all(path.join("wineprefix"));
 		}
+		#[cfg(target_os = "linux")]
+		attach_parent_death_signal(&mut command);
 		let child = command.spawn()?;
 
 		INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Wine(child));
@@ -306,13 +326,16 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 
 		#[cfg(not(target_os = "windows"))]
 		{
-			let child = Command::new(path.join(code_path))
+			let mut command = Command::new(path.join(code_path));
+			command
 				.current_dir(path)
 				.args(args)
 				.arg(serde_json::to_string(&info)?)
 				.stdout(Stdio::from(log_file.try_clone()?))
-				.stderr(Stdio::from(log_file))
-				.spawn()?;
+				.stderr(Stdio::from(log_file));
+			#[cfg(target_os = "linux")]
+			attach_parent_death_signal(&mut command);
+			let child = command.spawn()?;
 
 			INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Native(child));
 		}

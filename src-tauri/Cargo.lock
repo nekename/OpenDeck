@@ -3375,6 +3375,7 @@ dependencies = [
  "hidapi",
  "image",
  "json-patch 4.1.0",
+ "libc",
  "log",
  "log-panics",
  "open",
