@@ -31,6 +31,184 @@ enum PluginInstance {
 pub static DEVICE_NAMESPACES: LazyLock<RwLock<HashMap<String, String>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
 static INSTANCES: LazyLock<Mutex<HashMap<String, PluginInstance>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
+/// UUIDs currently in-flight through the spawn path — between the
+/// "we decided to spawn" point and the `INSTANCES.insert` at the end.
+/// Prevents duplicate subprocesses when the startup parallel-spawn loop
+/// races against a device register or profile switch that both reach for
+/// the same plugin. `std::sync::Mutex` so the claim can be released from
+/// `Drop` (no async await in Drop).
+static SPAWNING_UUIDS: LazyLock<std::sync::Mutex<std::collections::HashSet<String>>> = LazyLock::new(|| std::sync::Mutex::new(std::collections::HashSet::new()));
+
+fn try_claim_spawn(uuid: &str) -> bool {
+	// HashSet::insert returns true iff the value was newly added — matches
+	// "succeeded if we claimed it first" in one lookup.
+	SPAWNING_UUIDS.lock().unwrap().insert(uuid.to_owned())
+}
+
+/// RAII guard: releases the SPAWNING_UUIDS claim on drop. Apply after a
+/// successful `try_claim_spawn` so every exit path from the spawn code
+/// (return, `?`, panic unwind) releases the claim.
+struct SpawnClaimGuard<'a>(&'a str);
+impl Drop for SpawnClaimGuard<'_> {
+	fn drop(&mut self) {
+		SPAWNING_UUIDS.lock().unwrap().remove(self.0);
+	}
+}
+
+/// Debounce window for the post-settle deactivation sweep. Rapid profile
+/// flipping or device connect/disconnect events cancel and restart the
+/// timer, so plugins only get deactivated once the user has genuinely
+/// settled on a configuration.
+const DEACTIVATION_SETTLE_SECS: u64 = 30;
+
+static DEACTIVATION_SWEEP: LazyLock<std::sync::Mutex<Option<tokio::task::JoinHandle<()>>>> = LazyLock::new(|| std::sync::Mutex::new(None));
+
+/// Schedule a delayed deactivation sweep. Any pending sweep is cancelled
+/// and replaced — the new timer starts from zero. Call from profile
+/// switch, device connect, and device disconnect; the set of "needed"
+/// plugins only changes on those events. Synchronous so callers aren't
+/// pulled into the sweep's Send bounds.
+pub fn schedule_deactivation_sweep() {
+	let new_handle = tokio::spawn(async {
+		tokio::time::sleep(std::time::Duration::from_secs(DEACTIVATION_SETTLE_SECS)).await;
+		run_deactivation_sweep().await;
+	});
+	let mut guard = DEACTIVATION_SWEEP.lock().unwrap();
+	let old = guard.replace(new_handle);
+	drop(guard);
+	if let Some(h) = old {
+		h.abort();
+	}
+}
+
+/// Walk the profiles directory and return the set of plugin UUIDs
+/// referenced by any profile on disk. Used at startup by
+/// `initialise_plugins` to decide which plugins to spawn. Plugins not in
+/// this set have their metadata registered (so their actions appear in
+/// the profile editor UI) but their subprocess is never started, avoiding
+/// the memory pressure of idle plugins running forever. Startup-only —
+/// lazy spawn during normal operation is driven by the in-memory profile
+/// state via `ensure_plugin_spawned`.
+fn compute_referenced_plugin_uuids() -> std::collections::HashSet<String> {
+	use serde_json::Value;
+	fn collect(v: &Value, out: &mut std::collections::HashSet<String>) {
+		match v {
+			Value::Object(map) => {
+				if let Some(Value::String(s)) = map.get("plugin") {
+					out.insert(s.clone());
+				}
+				for (_, child) in map {
+					collect(child, out);
+				}
+			}
+			Value::Array(arr) => {
+				for item in arr {
+					collect(item, out);
+				}
+			}
+			_ => {}
+		}
+	}
+	fn walk(p: &path::Path, out: &mut std::collections::HashSet<String>) {
+		let Ok(entries) = fs::read_dir(p) else { return };
+		for entry in entries.flatten() {
+			let ep = entry.path();
+			if ep.is_dir() {
+				walk(&ep, out);
+			} else if ep.extension().and_then(|e| e.to_str()) == Some("json") {
+				let bytes = match fs::read(&ep) {
+					Ok(b) => b,
+					Err(error) => {
+						warn!("Skipping profile file {} (read failed): {}", ep.display(), error);
+						continue;
+					}
+				};
+				match serde_json::from_slice::<Value>(&bytes) {
+					Ok(v) => collect(&v, out),
+					Err(error) => {
+						warn!("Skipping profile file {} (malformed JSON): {}. Plugins referenced only by this profile will not be spawned at startup.", ep.display(), error);
+					}
+				}
+			}
+		}
+	}
+	let mut uuids = std::collections::HashSet::new();
+	walk(&config_dir().join("profiles"), &mut uuids);
+	uuids
+}
+
+/// Spawn a plugin's subprocess if it isn't already running. Idempotent;
+/// safe to call from the profile-switch path when a newly-selected
+/// profile references a plugin whose process wasn't started at boot.
+/// Also checks SPAWNING_UUIDS so a concurrent startup spawn of the same
+/// UUID isn't duplicated.
+pub async fn ensure_plugin_spawned(uuid: &str) {
+	if INSTANCES.lock().await.contains_key(uuid) {
+		return;
+	}
+	if SPAWNING_UUIDS.lock().unwrap().contains(uuid) {
+		return;
+	}
+	let path = config_dir().join("plugins").join(uuid);
+	if !path.exists() {
+		return;
+	}
+	if let Err(error) = initialise_plugin(&path, true).await {
+		warn!("Failed to lazily spawn plugin {}: {:#}", uuid, error);
+	}
+}
+
+/// Compute the set of plugin UUIDs referenced by the currently-selected
+/// profile of each connected device. Used by the deactivation sweep to
+/// decide what stays running. Copies out owned DeviceInfo values before
+/// any await so DashMap Refs don't span await points (they aren't Send).
+async fn compute_active_plugin_uuids() -> std::collections::HashSet<String> {
+	use crate::shared::DEVICES;
+	let mut needed = std::collections::HashSet::new();
+	let devices: Vec<(String, crate::shared::DeviceInfo)> = DEVICES.iter().map(|e| (e.key().clone(), e.value().clone())).collect();
+	if devices.is_empty() {
+		return needed;
+	}
+	let mut locks = crate::store::profiles::acquire_locks_mut().await;
+	for (device_id, device_info) in &devices {
+		let Ok(profile_id) = locks.device_stores.get_selected_profile(device_id) else { continue };
+		let Ok(store) = locks.profile_stores.get_profile_store(device_info, &profile_id) else { continue };
+		for instance in store.value.keys.iter().flatten().chain(store.value.sliders.iter().flatten()) {
+			needed.insert(instance.action.plugin.clone());
+			if let Some(children) = &instance.children {
+				for child in children {
+					needed.insert(child.action.plugin.clone());
+				}
+			}
+		}
+	}
+	needed
+}
+
+async fn run_deactivation_sweep() {
+	let needed = compute_active_plugin_uuids().await;
+	if needed.is_empty() {
+		log::debug!("Deactivation sweep: no connected devices — skipping");
+		return;
+	}
+	let to_remove: Vec<String> = {
+		let instances = INSTANCES.lock().await;
+		instances.keys().filter(|uuid| !needed.contains(uuid.as_str())).cloned().collect()
+	};
+	if to_remove.is_empty() {
+		log::debug!("Deactivation sweep: {} plugins needed, nothing to remove", needed.len());
+		return;
+	}
+	log::info!("Deactivation sweep: removing {} unused plugin(s), keeping {} needed", to_remove.len(), needed.len());
+	let Some(app) = APP_HANDLE.get() else { return };
+	for uuid in &to_remove {
+		log::info!("Deactivation sweep: stopping unused plugin {}", uuid);
+		if let Err(error) = deactivate_plugin(app, uuid).await {
+			warn!("Deactivation sweep failed to stop {}: {:#}", uuid, error);
+		}
+	}
+}
+
 pub static PORT_BASE: LazyLock<u16> = LazyLock::new(|| {
 	let mut base = 57116;
 	loop {
@@ -45,8 +223,19 @@ pub static PORT_BASE: LazyLock<u16> = LazyLock::new(|| {
 	base
 });
 
-/// Initialise a plugin from a given directory.
-pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
+/// Register a plugin's actions, categories, and device namespaces in
+/// OpenDeck's in-memory maps, and optionally spawn its subprocess.
+///
+/// When `spawn_process` is `false`, only the metadata is registered —
+/// the plugin's actions appear in the profile-editor UI but no
+/// subprocess is started. This is used at startup for plugins not
+/// referenced by any profile on disk, and matches the lazy-activation
+/// behavior of the real Elgato Stream Deck. When `spawn_process` is
+/// `true`, the full path runs: platform detection, code_path resolution,
+/// subprocess spawn, registration in `INSTANCES`. Call sites in user
+/// actions (install, reload) always pass `true`; the startup loop
+/// passes `true` only for referenced plugins.
+pub async fn initialise_plugin(path: &path::Path, spawn_process: bool) -> anyhow::Result<()> {
 	let plugin_uuid = path.file_name().unwrap().to_str().unwrap();
 
 	let mut manifest = manifest::read_manifest(path)?;
@@ -118,6 +307,32 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 	if let Some(namespace) = manifest.device_namespace {
 		DEVICE_NAMESPACES.write().await.insert(namespace, plugin_uuid.to_owned());
 	}
+
+	// Metadata-only path: the caller isn't asking us to spawn the plugin's
+	// subprocess (startup filter for unreferenced plugins). Actions are in
+	// CATEGORIES so the UI can still show them; the plugin will be spawned
+	// lazily by ensure_plugin_spawned when a profile that references it is
+	// activated.
+	if !spawn_process {
+		return Ok(());
+	}
+
+	// Race guard: if this plugin is already running OR another invocation
+	// is mid-spawn for the same UUID, bail out. Startup does N parallel
+	// tokio::spawn(initialise_plugin) — if a device register fires during
+	// that window, it would call ensure_plugin_spawned → initialise_plugin
+	// for an in-flight UUID and we'd end up with two subprocesses, one of
+	// which becomes orphaned when its Child handle is dropped (dropping
+	// Child does NOT kill the process on Unix). The atomic claim below
+	// prevents it.
+	if INSTANCES.lock().await.contains_key(plugin_uuid) {
+		return Ok(());
+	}
+	if !try_claim_spawn(plugin_uuid) {
+		log::debug!("Plugin {} spawn already in progress — skipping duplicate", plugin_uuid);
+		return Ok(());
+	}
+	let _claim = SpawnClaimGuard(plugin_uuid);
 
 	#[cfg(target_os = "windows")]
 	let platform = "windows";
@@ -328,7 +543,12 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 }
 
 pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow::Error> {
-	{
+	// Namespace + virtual-device cleanup. Errors here MUST NOT short-circuit
+	// the INSTANCES removal below — if a deregister_device failure propagated
+	// with `?`, the plugin's subprocess would stay running while its
+	// namespace is already gone, and subsequent sweeps couldn't find it
+	// cleanly. Log any error and continue to the process-kill path.
+	let namespace_cleanup: Result<(), anyhow::Error> = async {
 		let mut namespaces = DEVICE_NAMESPACES.write().await;
 		if let Some((namespace, _)) = namespaces.clone().iter().find(|(_, plugin)| uuid == **plugin) {
 			namespaces.remove(namespace);
@@ -339,6 +559,11 @@ pub async fn deactivate_plugin(app: &AppHandle, uuid: &str) -> Result<(), anyhow
 			}
 			crate::events::frontend::update_devices().await;
 		}
+		Ok(())
+	}
+	.await;
+	if let Err(error) = namespace_cleanup {
+		warn!("deactivate_plugin({}): namespace cleanup failed, continuing to kill subprocess: {:#}", uuid, error);
 	}
 
 	crate::application_watcher::stop_monitoring(uuid).await;
@@ -422,6 +647,16 @@ pub fn initialise_plugins() {
 		}
 	};
 
+	// Compute the set of plugins actually referenced by any profile on
+	// disk. Plugins NOT in this set have metadata registered but their
+	// process is not spawned — matches the lazy-activation behavior of
+	// the real Elgato Stream Deck and stops OpenDeck from eagerly
+	// launching every installed plugin regardless of whether it's used.
+	// Plugins required by a profile activated later (profile switch or
+	// new device connect) are spawned lazily via ensure_plugin_spawned.
+	let referenced = std::sync::Arc::new(compute_referenced_plugin_uuids());
+	log::info!("Startup: {} plugins referenced by profiles on disk", referenced.len());
+
 	// Iterate through all directory entries in the plugins folder and initialise them as plugins if appropriate
 	for entry in entries {
 		if let Ok(entry) = entry {
@@ -431,8 +666,14 @@ pub fn initialise_plugins() {
 			};
 			let metadata = fs::metadata(&path).unwrap();
 			if metadata.is_dir() {
+				let referenced = referenced.clone();
 				tokio::spawn(async move {
-					if let Err(error) = initialise_plugin(&path).await {
+					let uuid = path.file_name().and_then(|n| n.to_str()).map(String::from).unwrap_or_default();
+					let spawn_process = referenced.contains(&uuid);
+					if !spawn_process {
+						log::info!("Registering {} metadata only (not referenced by any profile)", uuid);
+					}
+					if let Err(error) = initialise_plugin(&path, spawn_process).await {
 						warn!("Failed to initialise plugin at {}: {:#}", path.display(), error);
 					}
 				});

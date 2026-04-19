@@ -105,14 +105,14 @@ pub async fn install_plugin(app: AppHandle, url: Option<String>, file: Option<St
 	if let Err(error) = crate::zip_extract::extract(std::io::Cursor::new(bytes), &config_dir.join("plugins")) {
 		log::error!("Failed to unzip file: {}", error);
 		let _ = fs::rename(&temp, &actual).await;
-		let _ = crate::plugins::initialise_plugin(&actual).await;
+		let _ = crate::plugins::initialise_plugin(&actual, true).await;
 		return Err(anyhow::Error::from(error).into());
 	}
-	if let Err(error) = crate::plugins::initialise_plugin(&actual).await {
+	if let Err(error) = crate::plugins::initialise_plugin(&actual, true).await {
 		log::warn!("Failed to initialise plugin at {}: {}", actual.display(), error);
 		let _ = fs::remove_dir_all(&actual).await;
 		let _ = fs::rename(&temp, &actual).await;
-		let _ = crate::plugins::initialise_plugin(&actual).await;
+		let _ = crate::plugins::initialise_plugin(&actual, true).await;
 		return Err(error.into());
 	}
 	let _ = fs::remove_dir_all(config_dir.join("temp")).await;
@@ -153,7 +153,7 @@ pub async fn remove_plugin(app: AppHandle, id: String) -> Result<(), Error> {
 #[command]
 pub async fn reload_plugin(app: AppHandle, id: String) {
 	let _ = crate::plugins::deactivate_plugin(&app, &id).await;
-	let _ = crate::plugins::initialise_plugin(&config_dir().join("plugins").join(&id)).await;
+	let _ = crate::plugins::initialise_plugin(&config_dir().join("plugins").join(&id), true).await;
 
 	let locks = acquire_locks().await;
 	let all = locks.profile_stores.all_from_plugin(&id);

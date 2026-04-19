@@ -27,9 +27,29 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 		let mut locks = crate::store::profiles::acquire_locks_mut().await;
 		let selected_profile = locks.device_stores.get_selected_profile(&event.payload.id)?;
 		let profile = locks.profile_stores.get_profile_store(&DEVICES.get(&event.payload.id).unwrap(), &selected_profile)?;
+
+		// Lazy plugin activation on device connect: ensure plugins
+		// referenced by this device's active profile are spawned before
+		// firing will_appear events.
+		let mut needed_plugins = std::collections::HashSet::<String>::new();
+		for instance in profile.value.keys.iter().flatten().chain(profile.value.sliders.iter().flatten()) {
+			needed_plugins.insert(instance.action.plugin.clone());
+			if let Some(children) = &instance.children {
+				for child in children {
+					needed_plugins.insert(child.action.plugin.clone());
+				}
+			}
+		}
+		for uuid in &needed_plugins {
+			crate::plugins::ensure_plugin_spawned(uuid).await;
+		}
+
 		for instance in profile.value.keys.iter().flatten().chain(profile.value.sliders.iter().flatten()) {
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		}
+
+		drop(locks);
+		crate::plugins::schedule_deactivation_sweep();
 
 		use tauri_plugin_aptabase::EventTracker;
 		let _ = crate::APP_HANDLE
@@ -69,6 +89,8 @@ pub async fn deregister_device(uuid: &str, event: PayloadEvent<String>) -> Resul
 		DEVICES.remove(&event.payload);
 		crate::device_sleep::deregister_device(&event.payload);
 		crate::events::frontend::update_devices().await;
+
+		crate::plugins::schedule_deactivation_sweep();
 
 		Ok(())
 	} else {
