@@ -191,9 +191,14 @@ async fn run_deactivation_sweep() {
 		log::debug!("Deactivation sweep: no connected devices — skipping");
 		return;
 	}
+	// Device plugins serve devices (not per-profile actions) and must stay
+	// resident to detect hotplug and keep connected devices alive — never
+	// sweep them regardless of whether the current profile references any
+	// of their actions.
+	let device_plugin_uuids: std::collections::HashSet<String> = DEVICE_NAMESPACES.read().await.values().cloned().collect();
 	let to_remove: Vec<String> = {
 		let instances = INSTANCES.lock().await;
-		instances.keys().filter(|uuid| !needed.contains(uuid.as_str())).cloned().collect()
+		instances.keys().filter(|uuid| !needed.contains(uuid.as_str()) && !device_plugin_uuids.contains(uuid.as_str())).cloned().collect()
 	};
 	if to_remove.is_empty() {
 		log::debug!("Deactivation sweep: {} plugins needed, nothing to remove", needed.len());
@@ -669,9 +674,16 @@ pub fn initialise_plugins() {
 				let referenced = referenced.clone();
 				tokio::spawn(async move {
 					let uuid = path.file_name().and_then(|n| n.to_str()).map(String::from).unwrap_or_default();
-					let spawn_process = referenced.contains(&uuid);
+					// Device plugins declare a DeviceNamespace and serve a class of
+					// devices (not per-profile actions). They must stay resident to
+					// detect hotplug and keep connected devices alive, so lazy
+					// activation is scoped to action plugins only.
+					let is_device_plugin = manifest::read_manifest(&path).map(|m| m.device_namespace.is_some()).unwrap_or(false);
+					let spawn_process = is_device_plugin || referenced.contains(&uuid);
 					if !spawn_process {
 						log::info!("Registering {} metadata only (not referenced by any profile)", uuid);
+					} else if is_device_plugin && !referenced.contains(&uuid) {
+						log::info!("Spawning {} unconditionally (device plugin)", uuid);
 					}
 					if let Err(error) = initialise_plugin(&path, spawn_process).await {
 						warn!("Failed to initialise plugin at {}: {:#}", path.display(), error);
