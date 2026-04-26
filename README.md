@@ -29,11 +29,11 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 ### Linux
 
 > [!TIP]
-> If you're using a Debian, Ubuntu, Fedora, Fedora Atomic, openSUSE or Arch-based distribution, you can try the new automated installation script:
+> If you're using a Debian, Ubuntu, Fedora, Fedora Atomic, openSUSE or Arch-based distribution, you can try the automated installation script:
 > ```bash
-> bash <(curl -sSL https://raw.githubusercontent.com/nekename/OpenDeck/main/install_opendeck.sh)
+> curl -sSL https://raw.githubusercontent.com/nekename/OpenDeck/main/install_opendeck.sh | bash
 > ```
-> The script installs OpenDeck from a released .deb or .rpm file, the AUR, or Flathub, appropriately, and also installs and reloads the appropriate udev subsystem rules. Additionally, you can choose to install Wine from your distribution during the process.
+> The script installs OpenDeck from a released .deb or .rpm file, the AUR, or Flathub, appropriately, and also installs and reloads the appropriate udev subsystem rules. Additionally, you can choose to install Wine and/or Node.js from your distribution during the process.
 
 - Download the latest release from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
 	- You should avoid AppImage releases of OpenDeck as they tend to have problems (you should also just avoid AppImages in general).

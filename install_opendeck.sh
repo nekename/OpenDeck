@@ -17,6 +17,7 @@ else
     GREEN=""
     YELLOW=""
     BLUE=""
+    BOLD=""
     RESET=""
 fi
 
@@ -31,11 +32,24 @@ has_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 confirm() {
     printf "%b$1 [y/N]: %b" "$YELLOW$BOLD" "$RESET"
-    read -r ans
+    local ans
+    if [ -r /dev/tty ]; then
+        read -r ans </dev/tty
+    else
+        read -r ans
+    fi
     case "$ans" in
     [yY] | [yY][eE][sS]) return 0 ;;
     *) return 1 ;;
     esac
+}
+
+tty_stdin() {
+    if [ -r /dev/tty ]; then
+        "$@" </dev/tty
+    else
+        "$@"
+    fi
 }
 
 detect_family() {
@@ -124,13 +138,13 @@ install_flatpak() {
             msg_error "Flathub remote not found; please add Flathub before running this script"
             exit 1
         fi
-        flatpak install flathub "${FLATHUB_APP_ID}"
+        tty_stdin flatpak install flathub "${FLATHUB_APP_ID}"
     else
         if ! flatpak remote-list --user | grep -q flathub; then
             msg_error "Flathub remote not found; please add Flathub before running this script or try installing system-wide"
             exit 1
         fi
-        flatpak install --user flathub "${FLATHUB_APP_ID}"
+        tty_stdin flatpak install --user flathub "${FLATHUB_APP_ID}"
     fi
     msg_ok "Installed ${FLATHUB_APP_ID} from Flathub"
 
@@ -153,7 +167,7 @@ install_deb() {
     msg_ok "Downloaded ${dl##*/}"
 
     msg_info "Installing .deb package"
-    sudo apt-get install --fix-broken "$tmpf"
+    tty_stdin sudo apt-get install --fix-broken "$tmpf"
     rm -f "$tmpf"
     msg_ok "Installed .deb package"
 
@@ -170,11 +184,11 @@ install_rpm() {
 
     msg_info "Installing .rpm package"
     if has_cmd zypper; then
-        sudo zypper install --allow-unsigned-rpm "$tmpf"
+        tty_stdin sudo zypper install --allow-unsigned-rpm "$tmpf"
     elif has_cmd dnf; then
-        sudo dnf install --nogpgcheck "$tmpf"
+        tty_stdin sudo dnf install --nogpgcheck "$tmpf"
     else
-        sudo rpm -i --nosignature "$tmpf"
+        tty_stdin sudo rpm -i --nosignature "$tmpf"
     fi
     rm -f "$tmpf"
     msg_ok "Installed .rpm package"
@@ -188,15 +202,15 @@ install_aur() {
     confirm "If you use another AUR helper, you should install OpenDeck manually. Continue?"
 
     if has_cmd yay; then
-        yay -Sy opendeck
+        tty_stdin yay -Sy opendeck
     elif has_cmd paru; then
-        paru -Sy opendeck
+        tty_stdin paru -Sy opendeck
     elif has_cmd aura; then
-        aura -Ak opendeck
+        tty_stdin aura -Ak opendeck
     elif has_cmd pikaur; then
-        pikaur -Sy opendeck
+        tty_stdin pikaur -Sy opendeck
     elif has_cmd trizen; then
-        trizen -Sy opendeck
+        tty_stdin trizen -Sy opendeck
     else
         msg_error "No AUR helper found; install yay, paru, aura, pikaur, or trizen, or install manually"
         return 1
@@ -216,21 +230,22 @@ install_wine_if_needed() {
         msg_info "Installing Wine"
         case "$PKG_FAMILY" in
         debian)
-            sudo apt-get update && sudo apt-get install wine
+            tty_stdin sudo apt-get update
+            tty_stdin sudo apt-get install wine
             ;;
         rpm | ublue)
             if has_cmd rpm-ostree; then
-                sudo rpm-ostree install wine wine-mono
+                tty_stdin sudo rpm-ostree install wine wine-mono
             elif has_cmd zypper; then
-                sudo zypper install wine wine-mono
+                tty_stdin sudo zypper install wine wine-mono
             elif has_cmd dnf; then
-                sudo dnf install wine wine-mono
+                tty_stdin sudo dnf install wine wine-mono
             else
                 msg_error "No supported package manager found to install Wine; please install it manually"
             fi
             ;;
         arch)
-            sudo pacman -Sy wine wine-mono
+            tty_stdin sudo pacman -Sy wine wine-mono
             ;;
         *)
             msg_error "No supported package manager found to install Wine; please install it manually"
@@ -252,21 +267,22 @@ install_node_if_needed() {
         msg_info "Installing Node.js"
         case "$PKG_FAMILY" in
         debian)
-            sudo apt-get update && sudo apt-get install nodejs npm
+            tty_stdin sudo apt-get update
+            tty_stdin sudo apt-get install nodejs npm
             ;;
         rpm | ublue)
             if has_cmd rpm-ostree; then
-                sudo rpm-ostree install nodejs npm
+                tty_stdin sudo rpm-ostree install nodejs npm
             elif has_cmd zypper; then
-                sudo zypper install nodejs npm
+                tty_stdin sudo zypper install nodejs npm
             elif has_cmd dnf; then
-                sudo dnf install nodejs npm
+                tty_stdin sudo dnf install nodejs npm
             else
                 msg_error "No supported package manager found to install Node.js; please install it manually"
             fi
             ;;
         arch)
-            sudo pacman -Sy nodejs npm
+            tty_stdin sudo pacman -Sy nodejs npm
             ;;
         *)
             msg_error "No supported package manager found to install Node.js; please install it manually"
