@@ -25,7 +25,7 @@
 		<p>Please note that you will need to install udev subsystem rules for your device to be detected. For more information, see the Installation section of the project README on GitHub.</p>
 		<p>Some compiled plugins are not compiled for Linux, so you may need to have Wine (and Wine Mono) installed on your system (natively, as the Wine Flatpak is not supported). Similarly, for using plugins made with Node.js, the Node.js Flatpak is not supported.</p>
 		<p>From Multi Actions and Toggle Actions to switching profiles when you switch apps and brightness control, OpenDeck has all the features you'd expect from stream controller software.</p>
-		<p>Consider that the power of your Stream Deck actually comes from the software you use with it, then remember how much you paid for it. To support OpenDeck's development, please consider donating to me on GitHub Sponsors.</p>
+		<p>Consider that the power of your Stream Deck actually comes from the software you use with it, then remember how much you paid for it. To support OpenDeck's development, please consider donating to me on GitHub Sponsors, Ko-fi or Liberapay.</p>
 	</description>
 
 	<screenshots>
