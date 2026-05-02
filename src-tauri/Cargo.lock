@@ -3367,6 +3367,7 @@ dependencies = [
  "anyhow",
  "base64 0.22.1",
  "built",
+ "chrono",
  "dashmap",
  "elgato-streamdeck",
  "fix-path-env",

@@ -1,5 +1,9 @@
 <script lang="ts">
+	import ClockClockwise from "phosphor-svelte/lib/ClockClockwise";
+	import ClockCounterClockwise from "phosphor-svelte/lib/ClockCounterClockwise";
+	import Gear from "phosphor-svelte/lib/Gear";
 	import Heart from "phosphor-svelte/lib/Heart";
+	import Scroll from "phosphor-svelte/lib/Scroll";
 	import Star from "phosphor-svelte/lib/Star";
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
@@ -9,6 +13,7 @@
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
+	import { message } from "@tauri-apps/plugin-dialog";
 
 	let showPopup: boolean;
 	let buildInfo: string;
@@ -30,6 +35,28 @@
 		}
 		$settings.brightness = Math.max(0, Math.min(100, value));
 	});
+
+	async function backupConfig() {
+		await message(
+			"You will be prompted to select a location to save the backup to. The config directory will be compressed and saved there. This may take a while if you have many plugins or profiles.",
+			{ title: "Backing up configuration" },
+		);
+		if (await invoke("backup_config_directory")) {
+			await message(
+				"Successfully backed up the config directory.",
+				{ title: "Backup complete" },
+			);
+		}
+	}
+
+	async function restoreConfig() {
+		await message(
+			"You will be prompted to select a location to restore the backup from. This may take a while if you have many plugins or profiles. The application will restart after the restoration is complete.\n\n" +
+				"You may encounter issues if you attempt to restore a backup from a different operating system or architecture.",
+			{ title: "Restoring configuration" },
+		);
+		await invoke("restore_config_directory");
+	}
 </script>
 
 <button
@@ -140,21 +167,41 @@
 	{/if}
 
 	<div class="ml-2">
-		<button
-			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
-			on:click={() => invoke("open_config_directory")}
-		>
-			Open config directory
-		</button>
-		<button
-			class="mt-2 mb-4 px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
-			on:click={() => invoke("open_log_directory")}
-		>
-			Open log directory
-		</button>
+		<div class="flex flex-row my-3 space-x-2">
+			<button
+				class="flex flex-row items-center px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
+				on:click={() => backupConfig()}
+			>
+				<ClockCounterClockwise class="mr-1" />
+				Back up config
+			</button>
+			<button
+				class="flex flex-row items-center px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
+				on:click={() => restoreConfig()}
+			>
+				<ClockClockwise class="mr-1" />
+				Restore config
+			</button>
+			<button
+				class="flex flex-row items-center px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
+				on:click={() => invoke("open_config_directory")}
+			>
+				<Gear class="mr-1" />
+				Open config
+			</button>
+			<button
+				class="flex flex-row items-center px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
+				on:click={() => invoke("open_log_directory")}
+			>
+				<Scroll class="mr-1" />
+				Open logs
+			</button>
+		</div>
+
 		<span class="text-xs text-neutral-400">
 			{@html buildInfo}
 		</span>
+
 		<div class="absolute bottom-6 flex flex-row items-center text-sm text-neutral-400">
 			<span class="mr-1">
 				Please leave a

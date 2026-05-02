@@ -98,7 +98,9 @@ async fn main() {
 			frontend::settings::set_settings,
 			frontend::settings::open_config_directory,
 			frontend::settings::open_log_directory,
-			frontend::settings::get_build_info
+			frontend::settings::get_build_info,
+			frontend::settings::backup_config_directory,
+			frontend::settings::restore_config_directory,
 		])
 		.setup(|app| {
 			APP_HANDLE.set(app.handle().clone()).unwrap();
