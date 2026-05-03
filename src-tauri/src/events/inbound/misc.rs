@@ -44,8 +44,14 @@ pub async fn show_ok(event: ContextEvent) -> Result<(), anyhow::Error> {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SwitchProfileEvent {
-	device: String,
-	profile: String,
+	pub device: String,
+	pub profile: String,
+}
+
+impl SwitchProfileEvent {
+	pub fn new(device: String, profile: String) -> Self {
+		Self { device, profile }
+	}
 }
 
 pub async fn switch_profile(event: SwitchProfileEvent) -> Result<(), anyhow::Error> {

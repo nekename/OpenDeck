@@ -101,6 +101,49 @@ pub async fn rename_profile(device: String, old_id: String, new_id: String, reta
 	Ok(())
 }
 
+/// Set one swipe neighbor with bidirectional enforcement.
+/// direction = "left" or "right". target = profile to link to.
+/// When profile X sets swipe_right = Y, profile Y's swipe_left is
+/// automatically set to X. The old neighbor's reciprocal is cleared.
+#[command]
+pub async fn set_swipe_neighbor(device: String, profile: String, direction: String, target: String) -> Result<(), Error> {
+	let mut locks = acquire_locks_mut().await;
+	if !DEVICES.contains_key(&device) {
+		return Err(Error::new(format!("device {device} not found")));
+	}
+	let device_info = DEVICES.get(&device).unwrap();
+	let is_left = direction == "left";
+
+	let store = locks.profile_stores.get_profile_store_mut(&device_info, &profile).await?;
+	let old_target = if is_left { store.value.swipe_left.clone() } else { store.value.swipe_right.clone() };
+
+	if is_left { store.value.swipe_left = Some(target.clone()); }
+	else { store.value.swipe_right = Some(target.clone()); }
+	store.save()?;
+
+	// Clear old neighbor's reciprocal (if it pointed back to us)
+	if let Some(ref old) = old_target {
+		if *old != target {
+			if let Ok(neighbor) = locks.profile_stores.get_profile_store_mut(&device_info, old).await {
+				let recip = if is_left { &mut neighbor.value.swipe_right } else { &mut neighbor.value.swipe_left };
+				if recip.as_ref() == Some(&profile) {
+					*recip = None;
+					let _ = neighbor.save();
+				}
+			}
+		}
+	}
+
+	// Set new neighbor's reciprocal
+	if let Ok(neighbor) = locks.profile_stores.get_profile_store_mut(&device_info, &target).await {
+		let recip = if is_left { &mut neighbor.value.swipe_right } else { &mut neighbor.value.swipe_left };
+		*recip = Some(profile.clone());
+		let _ = neighbor.save();
+	}
+
+	Ok(())
+}
+
 pub async fn rerender_images(app: &AppHandle) -> Result<(), anyhow::Error> {
 	let window = app.get_webview_window("main").unwrap();
 	window.emit("rerender_images", ())?;

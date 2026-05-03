@@ -16,6 +16,35 @@
 
 	export let selectedDevice: string;
 
+	let allProfileIds: string[] = [];
+	$: if (device) {
+		invoke<string[]>("get_profiles", { device: device.id }).then(ids => allProfileIds = ids);
+	}
+
+	function resolveSwipeNeighbor(direction: "left" | "right"): string {
+		const explicit = direction === "left" ? profile.swipe_left : profile.swipe_right;
+		if (explicit) return explicit;
+		if (allProfileIds.length < 2) return profile.id;
+		const sorted = [...allProfileIds].sort();
+		const idx = sorted.indexOf(profile.id);
+		if (idx === -1) return sorted[0];
+		if (direction === "left") return sorted[(idx + sorted.length - 1) % sorted.length];
+		return sorted[(idx + 1) % sorted.length];
+	}
+	$: resolvedLeft = resolveSwipeNeighbor("left");
+	$: resolvedRight = resolveSwipeNeighbor("right");
+
+	async function setSwipeNeighbor(direction: "left" | "right", value: string) {
+		if (direction === "left") profile.swipe_left = value;
+		else profile.swipe_right = value;
+		await invoke("set_swipe_neighbor", {
+			device: device.id,
+			profile: profile.id,
+			direction,
+			target: value,
+		});
+	}
+
 	function handleDragStart({ dataTransfer }: DragEvent, controller: string, position: number) {
 		if (!dataTransfer) return;
 		dataTransfer.effectAllowed = "move";
@@ -209,21 +238,58 @@
 			{/each}
 		</div>
 
-		<div class="flex flex-row" role="row">
-			{#each { length: device.encoders } as _, i}
-				<Key
-					context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
-					bind:inslot={profile.sliders[i]}
-					on:dragover={handleDragOver}
-					on:drop={(event) => handleDrop(event, "Encoder", i)}
-					on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
-					{handlePaste}
-					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-					label="Encoder {i + 1}"
-					tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
-				/>
-			{/each}
-		</div>
+		{#if device.encoders > 0}
+			{#if allProfileIds.length > 1}
+				<div class="flex justify-between items-center mx-auto mt-1 mb-0.5" style="width: {device.columns <= 8 ? (device.columns * 132) : (device.columns * 144)}px;">
+					<label class="flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer hover:bg-neutral-800 transition-colors">
+						<span class="text-sm text-neutral-500">&#x2190;</span>
+						<div class="select-profile-wrapper" style="padding-right: 12px;">
+							<select
+								value={profile.swipe_left || resolvedLeft}
+								on:change={(e) => setSwipeNeighbor("left", e.currentTarget.value)}
+							>
+								{#each allProfileIds.filter(p => p !== profile.id) as pid}
+									<option value={pid}>{pid}</option>
+								{/each}
+							</select>
+						</div>
+					</label>
+					<span class="text-[10px] text-neutral-500 uppercase tracking-wider">Swipe to profile</span>
+					<label class="flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer hover:bg-neutral-800 transition-colors">
+						<div class="select-profile-wrapper" style="padding-right: 12px;">
+							<select
+								value={profile.swipe_right || resolvedRight}
+								on:change={(e) => setSwipeNeighbor("right", e.currentTarget.value)}
+							>
+								{#each allProfileIds.filter(p => p !== profile.id) as pid}
+									<option value={pid}>{pid}</option>
+								{/each}
+							</select>
+						</div>
+						<span class="text-sm text-neutral-500">&#x2192;</span>
+					</label>
+				</div>
+			{/if}
+			<div class="flex flex-col items-center mt-1" role="row">
+				<div class="encoder-strip flex flex-row" style="width: {device.columns <= 8 ? (device.columns * 132) : (device.columns * 144)}px;">
+					{#each { length: device.encoders } as _, i}
+						<Key
+							context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
+							bind:inslot={profile.sliders[i]}
+							on:dragover={handleDragOver}
+							on:drop={(event) => handleDrop(event, "Encoder", i)}
+							on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
+							{handlePaste}
+							encoderStrip
+							encoderPosition={i}
+							encoderCount={device.encoders}
+							label="Encoder {i + 1}"
+							tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
+						/>
+					{/each}
+				</div>
+			</div>
+		{/if}
 
 		<div class="flex flex-row" role="row">
 			{#each { length: device.touchpoints } as _, i}

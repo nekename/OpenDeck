@@ -75,6 +75,11 @@ pub async fn init_webserver(prefix: PathBuf) {
 
 			let mut content = tokio::fs::read_to_string(path).await.unwrap_or_default();
 			content += r#"
+				<style>
+				select{-webkit-appearance:none;appearance:none;background:#2a2a2a;color:#e0e0e0;border:1px solid #555;border-radius:4px;padding:4px 24px 4px 8px;font-size:13px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;cursor:pointer}
+				select:focus{border-color:#0078d4;outline:none}
+				select option{background:#2a2a2a;color:#e0e0e0}
+				</style>
 				<div id="opendeck_iframe_container" style="position: absolute; z-index: 100; top: 0; left: 0; width: 100%; height: 100%; display: none;"></div>
 				<script>
 					const opendeck_window_open = window.open;
