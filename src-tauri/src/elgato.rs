@@ -38,13 +38,13 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
 			if context.controller == "Encoder" {
-				device
-					.write_lcd(
-						(context.position as u16 * 200) + 64,
-						14,
-						&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
-					)
-					.await?;
+				let img = image::load_from_memory(&bytes)?;
+				let final_img = if img.width() == 200 && img.height() == 100 {
+					img // Already correct size -- skip resize to preserve pixel-perfect rendering
+				} else {
+					img.resize_exact(200, 100, image::imageops::FilterType::Lanczos3)
+				};
+				device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(final_img)?).await?;
 			} else if is_touch_point {
 				let (r, g, b) = extract_average_colour(&image::load_from_memory(&bytes)?);
 				device.set_touchpoint_color(context.position - key_count, r, g, b).await?;
@@ -150,6 +150,20 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 			ticks: ticks.into(),
 		},
 	};
+	// Each encoder slot is 200px wide on the touch strip
+	let encoder_width: u16 = if kind.encoder_count() > 0 { 800 / kind.encoder_count() as u16 } else { 200 };
+	let touch = |x: u16, y: u16, hold: bool| {
+		let slot = (x / encoder_width).min(kind.encoder_count().saturating_sub(1) as u16) as u8;
+		let local_x = x - (slot as u16 * encoder_width);
+		inbound::PayloadEvent {
+			payload: inbound::devices::TouchPayload {
+				device: device_id.clone(),
+				position: slot,
+				tap_pos: (local_x, y),
+				hold,
+			},
+		}
+	};
 	loop {
 		let updates = match reader.read(100.0).await {
 			Ok(updates) => updates,
@@ -164,7 +178,9 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				DeviceStateUpdate::EncoderTwist(dial, ticks) => inbound::devices::encoder_change(encoder(dial, ticks)).await,
 				DeviceStateUpdate::EncoderDown(dial) => inbound::devices::encoder_down(press(dial)).await,
 				DeviceStateUpdate::EncoderUp(dial) => inbound::devices::encoder_up(press(dial)).await,
-				_ => Ok(()),
+				DeviceStateUpdate::TouchScreenPress(x, y) => inbound::devices::touch_tap(touch(x, y, false)).await,
+				DeviceStateUpdate::TouchScreenLongPress(x, y) => inbound::devices::touch_tap(touch(x, y, true)).await,
+				DeviceStateUpdate::TouchScreenSwipe(_from, _to) => Ok(()), // Swipe not mapped to SDK event yet
 			} {
 				Ok(_) => (),
 				Err(error) => log::warn!("Failed to process device event {update:?}: {error}"),
