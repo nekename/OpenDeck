@@ -68,6 +68,10 @@ pub struct DiskActionInstance {
 	pub current_state: u16,
 	pub settings: serde_json::Value,
 	pub children: Option<Vec<DiskActionInstance>>,
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub feedback_layout: Option<String>,
+	#[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
+	pub feedback: serde_json::Value,
 }
 
 impl From<ActionInstance> for DiskActionInstance {
@@ -133,6 +137,8 @@ impl From<ActionInstance> for DiskActionInstance {
 			current_state: value.current_state,
 			settings: value.settings,
 			children: value.children.map(|c| c.into_iter().map(|v| v.into()).collect()),
+			feedback_layout: value.feedback_layout,
+			feedback: value.feedback,
 		}
 	}
 }
@@ -182,6 +188,8 @@ impl DiskActionInstance {
 			current_state: self.current_state,
 			settings: self.settings,
 			children: self.children.map(|c| c.into_iter().map(|v| v.into_action_instance(path)).collect()),
+			feedback_layout: self.feedback_layout,
+			feedback: self.feedback,
 		}
 	}
 }

@@ -12,6 +12,8 @@
 
 	import { copiedItem, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
 	import { CanvasLock, renderImage } from "$lib/rendererHelper";
+	import { getBuiltIn, type Layout } from "$lib/feedbackLayouts";
+	import { renderFeedback } from "$lib/feedbackRenderer";
 	import { settings } from "$lib/settings";
 
 	import { invoke } from "@tauri-apps/api/core";
@@ -35,6 +37,9 @@
 	export let active: boolean = true;
 	export let scale: number = 1;
 	export let isTouchPoint: boolean = false;
+	export let encoderStrip: boolean = false;
+	export let encoderPosition: number = 0;
+	export let encoderCount: number = 4;
 	let pressed: boolean = false;
 
 	let state: ActionState | undefined;
@@ -49,6 +54,40 @@
 	listen("update_state", ({ payload }: { payload: { context: string; contents: ActionInstance | null } }) => {
 		if (payload.context == slot?.context) slot = payload.contents;
 	});
+
+	// Plugin updates to setFeedback / setFeedbackLayout are broadcast from the
+	// backend so any encoder slot listening for its own context can re-render
+	// the layout and push the resulting pixmap to the device.
+	type FeedbackEvent = { context: string; plugin: string; layout: string | null; feedback: Record<string, unknown> | null };
+	listen("feedback_changed", async ({ payload }: { payload: FeedbackEvent }) => {
+		if (!slot || payload.context !== slot.context) return;
+		slot = { ...slot, feedback_layout: payload.layout ?? slot.feedback_layout, feedback: payload.feedback ?? undefined };
+	});
+
+	// Resolve the current layout definition. Built-ins are defined client-side;
+	// custom layouts are loaded from the plugin folder via a Tauri command.
+	let resolvedLayout: Layout | null = null;
+	let resolvedLayoutId: string | null = null;
+	async function resolveLayout(plugin: string, layoutId: string | null | undefined): Promise<Layout | null> {
+		if (!layoutId) return null;
+		if (layoutId.startsWith("$")) return getBuiltIn(layoutId) ?? null;
+		try {
+			const raw = await invoke<Layout>("get_feedback_layout", { plugin, layout: layoutId });
+			return raw ?? null;
+		} catch (err) {
+			console.warn(`[OpenDeck] failed to load custom layout ${layoutId} for ${plugin}:`, err);
+			return null;
+		}
+	}
+	// $X1 "Icon" layout so the LCD shows title+icon unstretched.
+	$: if (slot && context?.controller === "Encoder" && (slot.feedback_layout ?? "$X1") !== resolvedLayoutId) {
+		const pluginId = slot.action.plugin;
+		const layoutId = slot.feedback_layout ?? "$X1";
+		resolvedLayoutId = layoutId;
+		resolveLayout(pluginId, layoutId).then((layout) => {
+			if (resolvedLayoutId === layoutId) resolvedLayout = layout;
+		});
+	}
 
 	listen("key_moved", ({ payload }: { payload: { context: Context; pressed: boolean } }) => {
 		if (JSON.stringify(context) == JSON.stringify(payload.context)) pressed = payload.pressed;
@@ -144,6 +183,7 @@
 	});
 
 	let canvas: HTMLCanvasElement;
+	let previewComposeCanvas: HTMLCanvasElement | undefined;
 	let lock = new CanvasLock();
 	export let size = 144;
 	$: (async () => {
@@ -153,11 +193,53 @@
 			try {
 				const ctx = canvas?.getContext("2d");
 				if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-				if (active) await invoke("update_image", { context, image: null });
+				// Encoder slots: skip null pushes. The plugin will push real
+				// content via setFeedback; individual null pushes here are
+				// redundant and cause flashing during profile switches.
+				if (active && context?.controller !== "Encoder") {
+					await invoke("update_image", { context, image: null });
+				}
 			} finally {
 				unlock();
 			}
-		} else {
+		} else if (context?.controller === "Encoder" && resolvedLayout) {
+			// Encoder slot with a feedback layout: composite the layout items and
+			// push the rendered 200x100 pixmap to the device. The layout's icon
+			// slot falls back to the action's state image when the plugin hasn't
+			// provided its own `icon`, matching Elgato's default behaviour where
+			// the user-assigned icon takes precedence (guides_dials.md line 440).
+			const unlock = await lock.lock();
+			try {
+				const feedback = { ...(sl.feedback ?? {}) } as Record<string, unknown>;
+				if (feedback.icon == null) {
+					const fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
+					if (fallback) feedback.icon = fallback;
+				}
+				if (feedback.title == null && state?.text) feedback.title = state.text;
+
+				// Detect full-canvas fast path: the backend already pushed the
+				// image directly to the device, so only update the preview.
+				const isFullCanvasFastPath =
+					typeof feedback["full-canvas"] === "string" &&
+					(feedback["full-canvas"] as string).startsWith("data:");
+				const shouldPushDevice = active && !isFullCanvasFastPath;
+
+				// Render to an offscreen canvas first, then blit atomically
+				// to prevent flash during async decode.
+				if (!previewComposeCanvas) previewComposeCanvas = document.createElement("canvas");
+				await renderFeedback(previewComposeCanvas, resolvedLayout, feedback);
+				const ctx = canvas?.getContext("2d");
+				if (ctx) {
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+					ctx.drawImage(previewComposeCanvas, 0, 0, canvas.width, canvas.height);
+				}
+				if (shouldPushDevice) {
+					await invoke("update_image", { context, image: canvas.toDataURL("image/png") });
+				}
+			} finally {
+				unlock();
+			}
+		} else if (context?.controller !== "Encoder") {
 			const unlock = await lock.lock();
 			try {
 				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
@@ -184,48 +266,92 @@
 	$: accessibleLabel = label + (slot ? ": " + slot.action.name + (state?.show && state?.text ? " - " + state.text : "") : "");
 </script>
 
-<div
-	class="relative"
-	style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}
->
-	<canvas
-		bind:this={canvas}
-		class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
-		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
-		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
-		class:rounded-full!={context?.controller == "Encoder"}
-		class:bg-black={slot != null}
-		width={size}
-		height={size}
-		draggable={slot != null}
-		{tabindex}
-		{role}
-		aria-label={accessibleLabel}
-		on:dragstart
-		on:dragover
-		on:drop
-		on:click|stopPropagation={select}
-		on:dblclick|stopPropagation={triggerVirtualPress}
-		on:keydown={(e) => {
-			if (!active || !context) return;
-			if (e.key == "Enter") select(e);
-			else if (e.key == "F2") edit();
-			else if ((e.ctrlKey || e.metaKey) && e.key == "c") copy();
-			else if ((e.ctrlKey || e.metaKey) && e.key == "v") paste();
-			else if (e.key == "Delete") clear();
-			else if (e.key == "ContextMenu" || (e.shiftKey && e.key == "F10")) contextMenu(e);
-		}}
-		on:keyup|stopPropagation={(e) => {
-			if (!active || !context) return;
-			if (e.key == " ") select(e);
-		}}
-		on:focus={onfocus}
-		on:contextmenu={contextMenu}
-	/>
-	{#if isTouchPoint && !slot}
-		<div class="absolute left-1/4 top-1/2 w-1/2 border-t-4 border-neutral-700 pointer-events-none"></div>
-	{/if}
-</div>
+{#if encoderStrip}
+	<div class="flex-1 relative" style="aspect-ratio: 2 / 1; z-index: {slot && $inspectedInstance == slot.context ? 10 : 0};">
+		<canvas
+			bind:this={canvas}
+			class="absolute inset-0 w-full h-full border-neutral-700 outline-none outline-offset-2 outline-blue-500"
+			class:border-y-3={true}
+			class:border-l-3={encoderPosition === 0}
+			class:border-r-3={encoderPosition === encoderCount - 1}
+			class:border-l-[1.5px]={encoderPosition > 0}
+			class:border-r-[1.5px]={encoderPosition < encoderCount - 1}
+			class:rounded-l-xl={encoderPosition === 0}
+			class:rounded-r-xl={encoderPosition === encoderCount - 1}
+			class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
+			class:bg-black={slot != null}
+			width={200}
+			height={100}
+			draggable={slot != null}
+			{tabindex}
+			{role}
+			aria-label={accessibleLabel}
+			on:dragstart
+			on:dragover
+			on:drop
+			on:click|stopPropagation={select}
+			on:dblclick|stopPropagation={triggerVirtualPress}
+			on:keydown={(e) => {
+				if (!active || !context) return;
+				if (e.key == "Enter") select(e);
+				else if (e.key == "F2") edit();
+				else if ((e.ctrlKey || e.metaKey) && e.key == "c") copy();
+				else if ((e.ctrlKey || e.metaKey) && e.key == "v") paste();
+				else if (e.key == "Delete") clear();
+				else if (e.key == "ContextMenu" || (e.shiftKey && e.key == "F10")) contextMenu(e);
+			}}
+			on:keyup|stopPropagation={(e) => {
+				if (!active || !context) return;
+				if (e.key == " ") select(e);
+			}}
+			on:focus={onfocus}
+			on:contextmenu={contextMenu}
+		/>
+	</div>
+{:else}
+	<div
+		class="relative"
+		style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}
+	>
+		<canvas
+			bind:this={canvas}
+			class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
+			style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
+			class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
+			class:rounded-full!={context?.controller == "Encoder"}
+			class:bg-black={slot != null}
+			width={size}
+			height={size}
+			draggable={slot != null}
+			{tabindex}
+			{role}
+			aria-label={accessibleLabel}
+			on:dragstart
+			on:dragover
+			on:drop
+			on:click|stopPropagation={select}
+			on:dblclick|stopPropagation={triggerVirtualPress}
+			on:keydown={(e) => {
+				if (!active || !context) return;
+				if (e.key == "Enter") select(e);
+				else if (e.key == "F2") edit();
+				else if ((e.ctrlKey || e.metaKey) && e.key == "c") copy();
+				else if ((e.ctrlKey || e.metaKey) && e.key == "v") paste();
+				else if (e.key == "Delete") clear();
+				else if (e.key == "ContextMenu" || (e.shiftKey && e.key == "F10")) contextMenu(e);
+			}}
+			on:keyup|stopPropagation={(e) => {
+				if (!active || !context) return;
+				if (e.key == " ") select(e);
+			}}
+			on:focus={onfocus}
+			on:contextmenu={contextMenu}
+		/>
+		{#if isTouchPoint && !slot}
+			<div class="absolute left-1/4 top-1/2 w-1/2 border-t-4 border-neutral-700 pointer-events-none"></div>
+		{/if}
+	</div>
+{/if}
 
 {#if $openContextMenu && $openContextMenu?.context == context}
 	<div

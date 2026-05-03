@@ -101,6 +101,92 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 	Ok(())
 }
 
+/// Merge a setFeedback payload into the instance's persistent feedback state
+/// and notify the frontend to re-render the layout. Keys not present in the
+/// current layout are still stored (they have no visual effect, but the spec
+/// says unrecognised keys are ignored rather than an error).
+pub async fn set_feedback(event: ContextAndPayloadEvent<serde_json::Value>) -> Result<(), anyhow::Error> {
+	let mut locks = acquire_locks_mut().await;
+	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
+		merge_feedback(&mut instance.feedback, event.payload);
+		let snapshot = instance.clone();
+		drop(locks);
+		emit_feedback_changed(&snapshot);
+
+		// Fast path: when the plugin sends a full-canvas data URI via
+		// setFeedback, push it directly to the device LCD. This bypasses
+		// the frontend render loop and eliminates webview latency for
+		// plugins that composite their own 200x100 image.
+		if let Some(full_canvas) = snapshot.feedback.get("full-canvas").and_then(|v| v.as_str()) {
+			if full_canvas.starts_with("data:") {
+				let context = snapshot.context.clone();
+				let image = full_canvas.to_owned();
+				tokio::spawn(async move {
+					let ctx: crate::shared::Context = (&context).into();
+					if let Ok(selected) = crate::store::profiles::DEVICE_STORES.write().await
+						.get_selected_profile(&ctx.device)
+					{
+						if selected != ctx.profile {
+							return;
+						}
+					}
+					let _ = crate::events::outbound::devices::update_image(ctx, Some(image)).await;
+				});
+			}
+		}
+	}
+	Ok(())
+}
+
+/// Handle setFeedbackLayout: record the new layout, reset accumulated feedback
+/// state (spec-level keys differ per layout so stale state would be wrong),
+/// and notify the frontend.
+pub async fn set_feedback_layout(event: ContextAndPayloadEvent<serde_json::Value>) -> Result<(), anyhow::Error> {
+	let layout_id = match &event.payload {
+		serde_json::Value::String(s) => s.clone(),
+		serde_json::Value::Object(obj) => obj.get("layout").and_then(|v| v.as_str()).map(str::to_owned).unwrap_or_default(),
+		_ => return Ok(()),
+	};
+	if layout_id.is_empty() {
+		return Ok(());
+	}
+	let mut locks = acquire_locks_mut().await;
+	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
+		instance.feedback_layout = Some(layout_id);
+		instance.feedback = serde_json::Value::Null;
+		let snapshot = instance.clone();
+		drop(locks);
+		emit_feedback_changed(&snapshot);
+	}
+	Ok(())
+}
+
+fn merge_feedback(target: &mut serde_json::Value, patch: serde_json::Value) {
+	if target.is_null() {
+		*target = serde_json::Value::Object(serde_json::Map::new());
+	}
+	let serde_json::Value::Object(target_obj) = target else { return };
+	let serde_json::Value::Object(patch_obj) = patch else { return };
+	for (key, value) in patch_obj {
+		target_obj.insert(key, value);
+	}
+}
+
+fn emit_feedback_changed(instance: &crate::shared::ActionInstance) {
+	use tauri::{Emitter, Manager};
+	let Some(app) = crate::APP_HANDLE.get() else { return };
+	let Some(window) = app.get_webview_window("main") else { return };
+	let _ = window.emit(
+		"feedback_changed",
+		serde_json::json!({
+			"context": instance.context.to_string(),
+			"plugin": instance.action.plugin,
+			"layout": instance.feedback_layout,
+			"feedback": instance.feedback,
+		}),
+	);
+}
+
 pub async fn set_state(event: ContextAndPayloadEvent<SetStatePayload>) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
 

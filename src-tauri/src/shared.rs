@@ -218,6 +218,19 @@ pub struct Action {
 
 	#[serde(alias = "States")]
 	pub states: Vec<ActionState>,
+
+	#[serde(default, alias = "Encoder", skip_serializing_if = "Option::is_none")]
+	pub encoder: Option<EncoderManifest>,
+}
+
+/// `Actions[].Encoder` block from a plugin manifest.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct EncoderManifest {
+	/// Default feedback layout (`$X1` etc.) or a path to a custom layout JSON
+	/// file relative to the plugin folder. Applied when an instance is
+	/// first created; can be overridden at runtime via setFeedbackLayout.
+	#[serde(default, alias = "layout", alias = "Layout", skip_serializing_if = "Option::is_none")]
+	pub layout: Option<String>,
 }
 
 /// Location metadata of a slot.
@@ -305,6 +318,17 @@ pub struct ActionInstance {
 	pub current_state: u16,
 	pub settings: serde_json::Value,
 	pub children: Option<Vec<ActionInstance>>,
+	/// Encoder-only: layout ID currently selected via setFeedbackLayout.
+	/// `$X1`, `$A0`, `$A1`, `$B1`, `$B2`, `$C1` are built-ins; anything else
+	/// is a custom layout JSON path relative to the plugin folder.
+	/// Falls back to the manifest's `Actions[].Encoder.layout` then `$X1`.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub feedback_layout: Option<String>,
+	/// Encoder-only: merged feedback state from setFeedback calls, keyed by
+	/// layout item key. Values may be scalars (shorthand for `.value`) or
+	/// objects with properties from the layout spec.
+	#[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
+	pub feedback: serde_json::Value,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
