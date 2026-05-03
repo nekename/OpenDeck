@@ -53,6 +53,26 @@
 	</branding>
 
 	<releases>
+		<release version="2.12.0" date="2026-05-03">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.12.0</url>
+			<description>
+				<ul>
+					<li>docs: update issue and pull request preflight checklists to require higher quality submissions</li>
+					<li>feat: add an application restart item to the tray menu</li>
+					<li>chore: remove repository FUNDING.yml file to centralise under user-wide file</li>
+					<li>feat: implement sleeping devices from the CLI</li>
+					<li>feat: implement support for duplicating profiles from the profile manager</li>
+					<li>fix: make profile labels in the profile manager clickable to make switching profiles easier</li>
+					<li>feat: implement waking devices from the CLI</li>
+					<li>feat: update active-win-pos-rs to support KDE Wayland window detection (#273)</li>
+					<li>fix: avoid process substitution in automated installation script one-liner to ensure it works across non-POSIX shells like fish</li>
+					<li>docs: update sponsorship information to highlight Ko-fi and Liberapay options</li>
+					<li>fix: prevent plugin children from orphaning on Linux by using PR_SET_PDEATHSIG (#318)</li>
+					<li>feat: implement backing up and restoring the config directory from the settings view</li>
+					<li>feat: use a Deno script to streamline the process of bumping the project version</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.11.1" date="2026-04-09">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.11.1</url>
 			<description>
