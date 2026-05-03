@@ -3,8 +3,18 @@ use super::Error;
 use crate::shared::{Action, ActionContext, ActionInstance, ActionState, Context, config_dir};
 use crate::store::profiles::{LocksMut, acquire_locks, acquire_locks_mut, get_instance_mut, get_slot, get_slot_mut, save_profile};
 
+use std::collections::HashMap;
+use std::sync::LazyLock;
+
 use tauri::{AppHandle, Emitter, Manager, command};
 use tokio::fs::remove_dir_all;
+use tokio::sync::RwLock;
+
+static LAST_RENDER_SEQUENCES: LazyLock<RwLock<HashMap<String, u64>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
+
+fn context_sequence_key(context: &Context) -> String {
+	format!("{}.{}.{}.{}", context.device, context.profile, context.controller, context.position)
+}
 
 #[command]
 pub async fn create_instance(app: AppHandle, action: Action, context: Context) -> Result<Option<ActionInstance>, Error> {
@@ -221,9 +231,32 @@ pub async fn set_state(context: ActionContext, index: u16, state: ActionState) -
 }
 
 #[command]
-pub async fn update_image(context: Context, image: Option<String>) {
+pub async fn update_image(context: Context, image: Option<String>, render_sequence: Option<u64>) {
 	if Some(&context.profile) != crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(&context.device).ok().as_ref() {
 		return;
+	}
+
+	// Ignore image writes for slots that no longer have an instance (e.g. after move/remove).
+	if image.is_some() {
+		let locks = acquire_locks().await;
+		let Ok(slot) = get_slot(&context, &locks).await else { return; };
+		if slot.is_none() {
+			return;
+		}
+	}
+
+	if let Some(sequence) = render_sequence {
+		let mut sequences = LAST_RENDER_SEQUENCES.write().await;
+		let key = context_sequence_key(&context);
+		if let Some(previous) = sequences.get(&key)
+			&& sequence < *previous {
+			return;
+		}
+		sequences.insert(key, sequence);
+	} else if image.is_none() {
+		// Clearing a slot invalidates any prior sequencing state for this context.
+		let mut sequences = LAST_RENDER_SEQUENCES.write().await;
+		sequences.remove(&context_sequence_key(&context));
 	}
 
 	if let Err(error) = crate::events::outbound::devices::update_image(context, image).await {

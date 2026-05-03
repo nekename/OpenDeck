@@ -22,7 +22,7 @@ tokio-tungstenite = "0.28"
 tiny_http = "0.12"
 elgato-streamdeck = { version = "0.12", default-features = false, features = ["async"] }
 hidapi = "2.6"
-image = { version = "0.25", default-features = false, features = ["bmp", "jpeg"] }
+image = { version = "0.25", default-features = false, features = ["bmp", "jpeg", "gif", "webp"] }
 # Smaller utility libraries
 dashmap = { version = "6.1", features = ["serde"] }
 futures = "0.3"

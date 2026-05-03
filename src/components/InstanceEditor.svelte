@@ -90,14 +90,14 @@
 				title="Click to select an image, or right-click to reset to the default image."
 				aria-label="Click to select an image, or right-click to reset to the default image."
 			>
-				{#await renderImage(null, null, instance.states[state], instance.action.states[state]?.image ?? instance.action.icon, false, false, true, false, false, 0, true)}
-					<div class="w-32 min-w-32 h-32 bg-neutral-800 animate-pulse border border-neutral-600 rounded-xl"></div>
-				{:then resolvedSrc}
-					<img
-						src={resolvedSrc}
-						class="my-auto w-32 min-w-32 h-min aspect-square bg-black border border-neutral-600 rounded-xl cursor-pointer"
-						alt="State {state + 1} image"
-					/>
+				{#await renderImage(null, null, instance.states[state], instance.action.states[state]?.image ?? instance.action.icon, false, false, true, false, false, 0, true) then resolvedSrc}
+					{#if typeof resolvedSrc === "string"}
+						<img
+							src={resolvedSrc}
+							class="my-auto w-32 min-w-32 h-min aspect-square bg-black border border-neutral-600 rounded-xl cursor-pointer"
+							alt="State {state + 1} image"
+						/>
+					{/if}
 				{/await}
 			</button>
 			<div class="flex flex-row items-center justify-center mt-1 space-x-1 text-neutral-300">

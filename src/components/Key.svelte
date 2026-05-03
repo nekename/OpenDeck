@@ -11,12 +11,12 @@
 	import InstanceEditor from "./InstanceEditor.svelte";
 
 	import { copiedItem, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
-	import { CanvasLock, renderImage } from "$lib/rendererHelper";
+	import { CanvasLock, invalidateRenderContext, renderImage } from "$lib/rendererHelper";
 	import { settings } from "$lib/settings";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
-	import { tick } from "svelte";
+	import { onDestroy, tick } from "svelte";
 
 	export let context: Context | null;
 	export let label: string = "";
@@ -145,36 +145,49 @@
 
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
+	let animationCleanup: (() => void) | undefined;
+	let renderVersion = 0;
 	export let size = 144;
+
+	function stopAnimation() {
+		if (animationCleanup) {
+			animationCleanup();
+			animationCleanup = undefined;
+		}
+	}
+
+	onDestroy(stopAnimation);
+
 	$: (async () => {
+		const version = ++renderVersion;
 		const sl = structuredClone(slot);
-		if (!sl) {
-			const unlock = await lock.lock();
-			try {
+		// Stop previous loop immediately so moved animated keys cannot keep pushing old frames.
+		stopAnimation();
+		const unlock = await lock.lock();
+		try {
+			if (version !== renderVersion) return;
+			if (!sl) {
+				invalidateRenderContext(context);
 				const ctx = canvas?.getContext("2d");
 				if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
 				if (active) await invoke("update_image", { context, image: null });
-			} finally {
-				unlock();
-			}
-		} else {
-			const unlock = await lock.lock();
-			try {
+			} else {
 				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
-				if (state) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, $settings?.rotation);
-			} finally {
-				unlock();
+				if (state) {
+					const result = await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, $settings?.rotation);
+					if (version !== renderVersion) {
+						if (typeof result === "function") result();
+						return;
+					}
+					if (typeof result === "function") {
+						animationCleanup = result;
+					}
+				}
 			}
+		} finally {
+			unlock();
 		}
 	})();
-
-	function clearAndRedraw() {
-		canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
-		slot = slot;
-	}
-	$: if ($settings?.rotation != undefined) {
-		clearAndRedraw();
-	}
 
 	async function triggerVirtualPress() {
 		if (!active || !context || !slot) return;
