@@ -5,6 +5,7 @@
 	import type { Profile } from "$lib/Profile";
 	import type { CopiedItem } from "$lib/propertyInspector";
 
+	import EncoderDial from "./EncoderDial.svelte";
 	import Key from "./Key.svelte";
 
 	import { inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
@@ -209,21 +210,32 @@
 			{/each}
 		</div>
 
-		<div class="flex flex-row" role="row">
-			{#each { length: device.encoders } as _, i}
-				<Key
-					context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
-					bind:inslot={profile.sliders[i]}
-					on:dragover={handleDragOver}
-					on:drop={(event) => handleDrop(event, "Encoder", i)}
-					on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
-					{handlePaste}
-					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-					label="Encoder {i + 1}"
-					tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
-				/>
-			{/each}
-		</div>
+		{#if device.encoders > 0}
+			<div class="flex flex-col items-center mt-2" role="row">
+				<div class="encoder-strip flex flex-row" style="width: {device.columns <= 8 ? (device.columns * 132) : (device.columns * 144)}px;">
+					{#each { length: device.encoders } as _, i}
+						<Key
+							context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
+							bind:inslot={profile.sliders[i]}
+							on:dragover={handleDragOver}
+							on:drop={(event) => handleDrop(event, "Encoder", i)}
+							on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
+							{handlePaste}
+							encoderStrip
+							encoderPosition={i}
+							encoderCount={device.encoders}
+							label="Encoder {i + 1}"
+							tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
+						/>
+					{/each}
+				</div>
+				<div class="flex flex-row" style="width: {device.columns <= 8 ? (device.columns * 132) : (device.columns * 144)}px;">
+					{#each { length: device.encoders } as _, i}
+						<EncoderDial context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }} />
+					{/each}
+				</div>
+			</div>
+		{/if}
 
 		<div class="flex flex-row" role="row">
 			{#each { length: device.touchpoints } as _, i}
