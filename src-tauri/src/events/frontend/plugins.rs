@@ -1,7 +1,10 @@
 use super::Error;
 
+use crate::plugins::{SpawnRequest, deactivate_plugin, initialise_plugin};
 use crate::shared::{config_dir, log_dir};
 use crate::store::profiles::{acquire_locks, get_instance};
+
+use std::sync::mpsc;
 
 use tauri::{AppHandle, Emitter, Manager, command};
 use tokio::fs;
@@ -91,7 +94,7 @@ pub async fn install_plugin(app: AppHandle, url: Option<String>, file: Option<St
 		},
 	};
 
-	let _ = crate::plugins::deactivate_plugin(&app, &id).await;
+	let _ = deactivate_plugin(&app, &id).await;
 
 	let config_dir = config_dir();
 	let actual = config_dir.join("plugins").join(&id);
@@ -102,17 +105,18 @@ pub async fn install_plugin(app: AppHandle, url: Option<String>, file: Option<St
 	let temp = config_dir.join("temp").join(&id);
 	let _ = fs::rename(&actual, &temp).await;
 
+	let tx = (*app.state::<mpsc::Sender<SpawnRequest>>()).clone();
 	if let Err(error) = crate::zip_extract::extract(std::io::Cursor::new(bytes), &config_dir.join("plugins")) {
 		log::error!("Failed to unzip file: {}", error);
 		let _ = fs::rename(&temp, &actual).await;
-		let _ = crate::plugins::initialise_plugin(&actual).await;
+		let _ = initialise_plugin(actual, tx).await;
 		return Err(anyhow::Error::from(error).into());
 	}
-	if let Err(error) = crate::plugins::initialise_plugin(&actual).await {
+	if let Err(error) = initialise_plugin(actual.clone(), tx.clone()).await {
 		log::warn!("Failed to initialise plugin at {}: {}", actual.display(), error);
 		let _ = fs::remove_dir_all(&actual).await;
 		let _ = fs::rename(&temp, &actual).await;
-		let _ = crate::plugins::initialise_plugin(&actual).await;
+		let _ = initialise_plugin(actual, tx).await;
 		return Err(error.into());
 	}
 	let _ = fs::remove_dir_all(config_dir.join("temp")).await;
@@ -133,7 +137,7 @@ pub async fn remove_plugin(app: AppHandle, id: String) -> Result<(), Error> {
 		super::instances::remove_instance(context).await?;
 	}
 
-	crate::plugins::deactivate_plugin(&app, &id).await?;
+	deactivate_plugin(&app, &id).await?;
 	if let Err(error) = fs::remove_dir_all(config_dir().join("plugins").join(&id)).await {
 		return Err(anyhow::Error::from(error).into());
 	}
@@ -152,8 +156,9 @@ pub async fn remove_plugin(app: AppHandle, id: String) -> Result<(), Error> {
 
 #[command]
 pub async fn reload_plugin(app: AppHandle, id: String) {
-	let _ = crate::plugins::deactivate_plugin(&app, &id).await;
-	let _ = crate::plugins::initialise_plugin(&config_dir().join("plugins").join(&id)).await;
+	let _ = deactivate_plugin(&app, &id).await;
+	let tx = (*app.state::<mpsc::Sender<SpawnRequest>>()).clone();
+	let _ = initialise_plugin(config_dir().join("plugins").join(&id), tx).await;
 
 	let locks = acquire_locks().await;
 	let all = locks.profile_stores.all_from_plugin(&id);
