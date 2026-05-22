@@ -48,6 +48,11 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 > [!NOTE]
 > If Flatpak is your only option, OpenDeck is [available from Flathub](https://flathub.org/apps/me.amankhanna.opendeck). Please note that you still need to install the udev subsystem rules as described above. To use Windows and Node.js plugins, you should have Wine or Node.js, respectively, installed natively (the Wine and Node.js Flatpaks are not supported).
 
+> [!NOTE]
+> To open opendeck from the background from the terminal or script use the '--hide' flag i.e:
+
+ ```opendeck --hide```
+
 ### Windows
 
 - Download the latest release (`.exe` or `.msi`) from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
