@@ -73,7 +73,23 @@ where
 		}
 	}
 
-	/// Save the relevant Store as a file
+	/// Create a new Store given an ID and storage directory, without removing the temporary and backup files that may be in use by another instance of Store
+	pub fn new_concurrent(id: &str, config_dir: &Path, default: T) -> Self {
+		let path = config_dir.join(format!("{}.json", id));
+		let temp_path = path.with_extension("json.temp");
+		let backup_path = path.with_extension("json.bak");
+
+		if let Ok(value) = Self::validate_file_contents(&path) {
+			Self { path, value }
+		} else if let Ok(value) = Self::validate_file_contents(&temp_path) {
+			Self { path, value }
+		} else if let Ok(value) = Self::validate_file_contents(&backup_path) {
+			Self { path, value }
+		} else {
+			Self { path, value: default }
+		}
+	}
+
 	pub fn save(&self) -> Result<(), anyhow::Error> {
 		fs::create_dir_all(self.path.parent().unwrap())?;
 
@@ -146,6 +162,9 @@ impl Default for Settings {
 
 impl NotProfile for Settings {}
 
-pub fn get_settings() -> Result<Store<Settings>, anyhow::Error> {
-	Store::new("settings", &crate::shared::config_dir(), Settings::default())
+pub fn get_settings() -> Store<Settings> {
+	Store::new_concurrent("settings", &crate::shared::config_dir(), Settings::default())
 }
+
+pub static SETTINGS_MUT: std::sync::LazyLock<tokio::sync::Mutex<Store<Settings>>> =
+	std::sync::LazyLock::new(|| tokio::sync::Mutex::new(Store::new_concurrent("settings", &crate::shared::config_dir(), Settings::default())));

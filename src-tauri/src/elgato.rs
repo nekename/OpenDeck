@@ -116,9 +116,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 	};
 	let _ = device.clear_all_button_images().await;
 	clear_all_touchpoints(&device).await;
-	if let Ok(settings) = crate::store::get_settings() {
-		let _ = device.set_brightness(settings.value.brightness).await;
-	}
+	let _ = device.set_brightness(crate::store::get_settings().value.brightness).await;
 	let _ = device.flush().await;
 	crate::events::inbound::devices::register_device(
 		"",
@@ -180,16 +178,14 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 
 /// Attempt to initialise all connected devices.
 pub async fn initialise_devices() {
-	if let Ok(settings) = crate::store::get_settings() {
-		if settings.value.disableelgato {
-			crate::plugins::DEVICE_NAMESPACES
-				.write()
-				.await
-				.insert("sd".to_owned(), "opendeck_alternative_elgato_implementation".to_owned());
-			return;
-		} else {
-			crate::plugins::DEVICE_NAMESPACES.write().await.remove("sd");
-		}
+	if crate::store::get_settings().value.disableelgato {
+		crate::plugins::DEVICE_NAMESPACES
+			.write()
+			.await
+			.insert("sd".to_owned(), "opendeck_alternative_elgato_implementation".to_owned());
+		return;
+	} else {
+		crate::plugins::DEVICE_NAMESPACES.write().await.remove("sd");
 	}
 
 	// Iterate through detected Elgato devices and attempt to register them.

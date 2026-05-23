@@ -15,12 +15,8 @@ use tauri_plugin_dialog::{DialogExt, FilePath};
 use zip::{ZipWriter, write::FileOptions};
 
 #[command]
-pub async fn get_settings() -> Result<crate::store::Settings, Error> {
-	let store = crate::store::get_settings();
-	match store {
-		Ok(store) => Ok(store.value),
-		Err(error) => Err(error.into()),
-	}
+pub async fn get_settings() -> crate::store::Settings {
+	crate::store::get_settings().value
 }
 
 #[command]
@@ -33,11 +29,8 @@ pub async fn set_settings(_app: AppHandle, settings: crate::store::Settings) -> 
 
 	crate::events::outbound::devices::set_brightness(settings.brightness).await?;
 	crate::device_sleep::update_timeout_minutes(settings.sleep_timeout_minutes);
-	let mut store = match crate::store::get_settings() {
-		Ok(store) => store,
-		Err(error) => return Err(error.into()),
-	};
 
+	let mut store = crate::store::SETTINGS_MUT.lock().await;
 	store.value = settings;
 	store.save()?;
 	Ok(())

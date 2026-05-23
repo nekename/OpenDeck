@@ -5,7 +5,6 @@ mod webserver;
 use crate::APP_HANDLE;
 use crate::built_info::TARGET;
 use crate::shared::{CATEGORIES, Category, config_dir, convert_icon, is_flatpak, log_dir};
-use crate::store::get_settings;
 
 use std::collections::HashMap;
 use std::process::{Child, Command, Stdio};
@@ -289,7 +288,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 			.arg(serde_json::to_string(&info)?)
 			.stdout(Stdio::from(log_file.try_clone()?))
 			.stderr(Stdio::from(log_file));
-		if get_settings()?.value.separatewine {
+		if crate::store::get_settings().value.separatewine {
 			command.env("WINEPREFIX", path.join("wineprefix").to_string_lossy().to_string());
 		} else {
 			let _ = fs::remove_dir_all(path.join("wineprefix"));

@@ -46,10 +46,7 @@ pub async fn init_webserver(prefix: PathBuf) {
 		}
 
 		// Ensure the requested path is within the config directory to prevent unrestricted access to the filesystem.
-		let developer = match crate::store::Store::new("settings", &prefix, crate::store::Settings::default()) {
-			Ok(store) => store.value.developer,
-			Err(_) => false,
-		};
+		let developer = crate::store::get_settings().value.developer;
 		if !developer && !path.canonicalize().is_ok_and(|p| p.starts_with(&prefix)) {
 			let _ = request.respond(Response::empty(403));
 			continue;

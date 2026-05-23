@@ -119,7 +119,7 @@ async fn main() {
 				let _ = std::fs::rename(old, app.path().app_config_dir().unwrap());
 			}
 
-			let mut settings = store::get_settings()?;
+			let mut settings = store::get_settings();
 			use std::cmp::Ordering;
 			use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 			let current_version = semver::Version::parse(built_info::PKG_VERSION)?;
@@ -359,7 +359,7 @@ If you have already donated, thank you so much for your support!"#,
 				return;
 			}
 			if let WindowEvent::CloseRequested { api, .. } = event {
-				if let Ok(true) = store::get_settings().map(|store| store.value.background) {
+				if store::get_settings().value.background {
 					let _ = hide_window(window.app_handle());
 					api.prevent_close();
 				} else {

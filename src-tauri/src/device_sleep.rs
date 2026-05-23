@@ -9,9 +9,7 @@ static LAST_ACTIVITY: LazyLock<DashMap<String, Instant>> = LazyLock::new(DashMap
 static SLEEPING_DEVICES: LazyLock<DashMap<String, ()>> = LazyLock::new(DashMap::new);
 
 pub fn init_device_sleep() {
-	if let Ok(settings) = crate::store::get_settings() {
-		SLEEP_TIMEOUT_MINUTES.store(settings.value.sleep_timeout_minutes, Ordering::Relaxed);
-	}
+	SLEEP_TIMEOUT_MINUTES.store(crate::store::get_settings().value.sleep_timeout_minutes, Ordering::Relaxed);
 
 	tokio::spawn(async {
 		loop {
@@ -70,7 +68,7 @@ async fn sleep_idle_devices() -> Result<(), anyhow::Error> {
 
 async fn wake_device(device: &str) -> Result<bool, anyhow::Error> {
 	if SLEEPING_DEVICES.remove(device).is_some() {
-		let brightness = crate::store::get_settings().map(|s| s.value.brightness).unwrap_or(50);
+		let brightness = crate::store::get_settings().value.brightness;
 		crate::events::outbound::devices::set_device_brightness(device, brightness).await?;
 		return Ok(true);
 	}
