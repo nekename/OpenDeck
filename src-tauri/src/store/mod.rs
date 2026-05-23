@@ -90,6 +90,7 @@ where
 		}
 	}
 
+	/// Save the relevant Store as a file
 	pub fn save(&self) -> Result<(), anyhow::Error> {
 		fs::create_dir_all(self.path.parent().unwrap())?;
 
