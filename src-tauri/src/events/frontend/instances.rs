@@ -26,6 +26,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			action: action.clone(),
 			context: ActionContext::from_context(context.clone(), index),
 			states: action.states.clone(),
+			persisted_states: action.states.clone(),
 			current_state: 0,
 			settings: serde_json::Value::Object(serde_json::Map::new()),
 			children: None,
@@ -33,10 +34,12 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 		children.push(instance.clone());
 
 		if parent.action.uuid == "opendeck.toggleaction" && parent.states.len() < children.len() {
-			parent.states.push(crate::shared::ActionState {
+			let state = crate::shared::ActionState {
 				image: "opendeck/toggle-action.png".to_owned(),
 				..Default::default()
-			});
+			};
+			parent.states.push(state.clone());
+			parent.persisted_states.push(state);
 			let _ = update_state(&app, parent.context.clone(), &mut locks).await;
 		}
 
@@ -52,6 +55,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			action: action.clone(),
 			context: ActionContext::from_context(context.clone(), 0),
 			states: action.states.clone(),
+			persisted_states: action.states.clone(),
 			current_state: 0,
 			settings: serde_json::Value::Object(serde_json::Map::new()),
 			children: if matches!(action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
@@ -110,6 +114,7 @@ pub async fn move_instance(source: Context, destination: Context, retain: bool) 
 					state.image = instance.action.icon.clone();
 				}
 			}
+			instance.persisted_states = instance.states.clone();
 		}
 	}
 
@@ -122,6 +127,12 @@ pub async fn move_instance(source: Context, destination: Context, retain: bool) 
 		}
 	}
 	for state in new.states.iter_mut() {
+		let path = std::path::Path::new(&state.image);
+		if path.starts_with(&old_dir) {
+			state.image = new_dir.join(path.strip_prefix(&old_dir).unwrap()).to_string_lossy().into_owned();
+		}
+	}
+	for state in new.persisted_states.iter_mut() {
 		let path = std::path::Path::new(&state.image);
 		if path.starts_with(&old_dir) {
 			state.image = new_dir.join(path.strip_prefix(&old_dir).unwrap()).to_string_lossy().into_owned();
@@ -181,6 +192,7 @@ pub async fn remove_instance(context: ActionContext) -> Result<(), Error> {
 			}
 			if !children.is_empty() {
 				instance.states.pop();
+				instance.persisted_states.pop();
 				let _ = update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await;
 			}
 		}
@@ -214,6 +226,7 @@ pub async fn set_state(context: ActionContext, index: u16, state: ActionState) -
 	let mut locks = acquire_locks_mut().await;
 	let reference = get_instance_mut(&context, &mut locks).await?.unwrap();
 	reference.states[index as usize] = state;
+	reference.persisted_states[index as usize] = reference.states[index as usize].clone();
 	let clone = reference.clone();
 	save_profile(&context.device, &mut locks).await?;
 	crate::events::outbound::states::title_parameters_did_change(&clone, index).await?;

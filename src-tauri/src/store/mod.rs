@@ -78,6 +78,9 @@ where
 		fs::create_dir_all(self.path.parent().unwrap())?;
 
 		let contents = serde_json::to_string_pretty(&T::into_value(&self.value)?)?;
+		if fs::read_to_string(&self.path).map(|existing| existing == contents).unwrap_or(false) {
+			return Ok(());
+		}
 
 		let temp_path = self.path.with_extension("json.temp");
 		let backup_path = self.path.with_extension("json.bak");

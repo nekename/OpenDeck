@@ -2,7 +2,7 @@ use super::{GenericInstancePayload, send_to_plugin};
 
 use crate::events::frontend::instances::{key_moved, update_state};
 use crate::shared::{ActionContext, Context};
-use crate::store::profiles::{acquire_locks_mut, get_slot_mut, save_profile};
+use crate::store::profiles::{acquire_locks_mut, debounce_profile_save, get_slot_mut};
 
 use std::sync::LazyLock;
 use std::time::Duration;
@@ -75,7 +75,7 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			let _ = update_state(crate::APP_HANDLE.get().unwrap(), child, &mut locks).await;
 		}
 
-		save_profile(device, &mut locks).await?;
+		debounce_profile_save(ActionContext::from_context(context, 0));
 	} else if instance.action.uuid == "opendeck.toggleaction" {
 		let children = instance.children.as_ref().unwrap();
 		if children.is_empty() {
@@ -167,8 +167,9 @@ pub async fn key_up(device: &str, key: u8) -> Result<(), anyhow::Error> {
 		.await?;
 	};
 
-	let _ = update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await;
-	save_profile(device, &mut locks).await?;
+	let instance_context = instance.context.clone();
+	let _ = update_state(crate::APP_HANDLE.get().unwrap(), instance_context.clone(), &mut locks).await;
+	debounce_profile_save(instance_context);
 
 	Ok(())
 }

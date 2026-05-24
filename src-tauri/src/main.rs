@@ -375,6 +375,7 @@ If you have already donated, thank you so much for your support!"#,
 
 	app.run(|app, event| {
 		if let tauri::RunEvent::Exit = event {
+			tauri::async_runtime::block_on(store::profiles::flush_pending_profile_saves());
 			#[cfg(windows)]
 			futures::executor::block_on(plugins::deactivate_plugins());
 			tokio::spawn(elgato::reset_devices());

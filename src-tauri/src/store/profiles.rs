@@ -2,7 +2,7 @@ use super::Store;
 
 use crate::shared::{ActionInstance, DEVICES, DeviceInfo, Profile, config_dir, copy_dir};
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::LazyLock;
@@ -359,6 +359,29 @@ pub async fn save_profile(device: &str, locks: &mut LocksMut<'_>) -> Result<(), 
 }
 
 pub static PROFILE_SAVE_DEBOUNCE: LazyLock<DashMap<crate::shared::ActionContext, JoinHandle<()>>> = LazyLock::new(DashMap::new);
+
+pub async fn flush_pending_profile_saves() {
+	let contexts = PROFILE_SAVE_DEBOUNCE.iter().map(|entry| entry.key().clone()).collect::<Vec<_>>();
+	if contexts.is_empty() {
+		return;
+	}
+
+	let mut devices = HashSet::new();
+	for context in contexts {
+		devices.insert(context.device.clone());
+		if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&context) {
+			handle.abort();
+		}
+	}
+
+	let mut locks = acquire_locks_mut().await;
+	for device in devices {
+		if let Err(error) = save_profile(&device, &mut locks).await {
+			log::error!("Failed to save profile for device {device}: {error}");
+		}
+	}
+}
+
 pub fn debounce_profile_save(context: crate::shared::ActionContext) {
 	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&context) {
 		handle.abort();

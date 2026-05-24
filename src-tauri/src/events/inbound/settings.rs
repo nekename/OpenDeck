@@ -1,6 +1,6 @@
 use crate::events::outbound::settings as outbound;
 use crate::shared::ActionContext;
-use crate::store::profiles::{acquire_locks, acquire_locks_mut, get_instance, get_instance_mut, save_profile};
+use crate::store::profiles::{acquire_locks, acquire_locks_mut, debounce_profile_save, get_instance, get_instance_mut};
 
 use std::io::Write;
 use std::str::FromStr;
@@ -9,9 +9,13 @@ pub async fn set_settings(event: super::ContextAndPayloadEvent<serde_json::Value
 	let mut locks = acquire_locks_mut().await;
 
 	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
+		if instance.settings == event.payload {
+			outbound::did_receive_settings(instance, !from_property_inspector).await?;
+			return Ok(());
+		}
 		instance.settings = event.payload;
 		outbound::did_receive_settings(instance, !from_property_inspector).await?;
-		save_profile(&event.context.device, &mut locks).await?;
+		debounce_profile_save(event.context);
 	}
 
 	Ok(())
@@ -41,12 +45,16 @@ pub async fn set_global_settings(event: super::ContextAndPayloadEvent<serde_json
 	{
 		let settings_dir = crate::shared::config_dir().join("settings");
 		tokio::fs::create_dir_all(&settings_dir).await?;
+		let path = settings_dir.join(uuid.clone() + ".json");
+		let contents = event.payload.to_string();
 
-		let mut file = std::fs::OpenOptions::new().write(true).truncate(true).create(true).open(settings_dir.join(uuid.clone() + ".json"))?;
-		file.lock()?;
-		file.write_all(event.payload.to_string().as_bytes())?;
-		file.sync_data()?;
-		file.unlock()?;
+		if !std::fs::read_to_string(&path).map(|existing| existing == contents).unwrap_or(false) {
+			let mut file = std::fs::OpenOptions::new().write(true).truncate(true).create(true).open(path)?;
+			file.lock()?;
+			file.write_all(contents.as_bytes())?;
+			file.sync_data()?;
+			file.unlock()?;
+		}
 	}
 
 	outbound::did_receive_global_settings(&uuid, !from_property_inspector).await?;

@@ -302,6 +302,8 @@ pub struct ActionInstance {
 	pub action: Action,
 	pub context: ActionContext,
 	pub states: Vec<ActionState>,
+	#[serde(skip)]
+	pub persisted_states: Vec<ActionState>,
 	pub current_state: u16,
 	pub settings: serde_json::Value,
 	pub children: Option<Vec<ActionInstance>>,

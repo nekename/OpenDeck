@@ -75,6 +75,7 @@ impl From<ActionInstance> for DiskActionInstance {
 		let disk_context: DiskActionContext = value.context.clone().into();
 		let config_dir = crate::shared::config_dir();
 		let image_dir = config_dir.join("images").join(&value.context.device).join(&value.context.profile).join(disk_context.to_string());
+		let mut states = value.persisted_states.clone();
 
 		let normalise_path = |value: &str| -> String {
 			let path = Path::new(value);
@@ -87,7 +88,7 @@ impl From<ActionInstance> for DiskActionInstance {
 			}
 		};
 
-		for (index, state) in value.states.iter_mut().enumerate() {
+		for (index, state) in states.iter_mut().enumerate() {
 			if state.image.trim() == "data:" {
 				state.image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==".to_owned();
 			}
@@ -112,7 +113,9 @@ impl From<ActionInstance> for DiskActionInstance {
 				};
 
 				let filename = format!("{}.{}", index, extension);
-				if fs::create_dir_all(&image_dir).is_err() || fs::write(image_dir.join(&filename), data).is_err() {
+				let path = image_dir.join(&filename);
+				let image_changed = fs::read(&path).map(|existing| existing.as_slice() != data.as_slice()).unwrap_or(true);
+				if fs::create_dir_all(&image_dir).is_err() || (image_changed && fs::write(path, data).is_err()) {
 					continue;
 				};
 				state.image = filename;
@@ -129,7 +132,7 @@ impl From<ActionInstance> for DiskActionInstance {
 		Self {
 			context: disk_context,
 			action: value.action,
-			states: value.states,
+			states,
 			current_state: value.current_state,
 			settings: value.settings,
 			children: value.children.map(|c| c.into_iter().map(|v| v.into()).collect()),
@@ -178,6 +181,7 @@ impl DiskActionInstance {
 		ActionInstance {
 			context: self.context.into_action_context(device, profile),
 			action,
+			persisted_states: states.clone(),
 			states,
 			current_state: self.current_state,
 			settings: self.settings,

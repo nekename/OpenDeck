@@ -1,7 +1,7 @@
 use super::ContextAndPayloadEvent;
 
 use crate::events::frontend::instances::update_state;
-use crate::store::profiles::{acquire_locks_mut, debounce_profile_save, get_instance_mut, save_profile};
+use crate::store::profiles::{acquire_locks_mut, debounce_profile_save, get_instance_mut};
 
 use serde::Deserialize;
 
@@ -52,7 +52,6 @@ pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result
 		}
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
-	save_profile(&event.context.device, &mut locks).await?;
 
 	Ok(())
 }
@@ -90,14 +89,6 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
 
-	if let Some(image) = &event.payload.image
-		&& image.trim().starts_with("data:")
-	{
-		debounce_profile_save(event.context);
-	} else {
-		save_profile(&event.context.device, &mut locks).await?;
-	}
-
 	Ok(())
 }
 
@@ -108,10 +99,13 @@ pub async fn set_state(event: ContextAndPayloadEvent<SetStatePayload>) -> Result
 		if event.payload.state >= instance.states.len() as u16 {
 			return Ok(());
 		}
+		if instance.current_state == event.payload.state {
+			return Ok(());
+		}
 		instance.current_state = event.payload.state;
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
+		debounce_profile_save(event.context);
 	}
-	save_profile(&event.context.device, &mut locks).await?;
 
 	Ok(())
 }
