@@ -8,7 +8,7 @@ use crate::shared::{CATEGORIES, Category, config_dir, convert_icon, is_flatpak, 
 
 use std::collections::HashMap;
 use std::process::{Child, Command, Stdio};
-use std::sync::LazyLock;
+use std::sync::{LazyLock, mpsc};
 use std::{fs, path};
 
 use tauri::{AppHandle, Manager};
@@ -19,6 +19,12 @@ use tokio::net::{TcpListener, TcpStream};
 use anyhow::anyhow;
 use log::{error, warn};
 use tokio::sync::{Mutex, RwLock};
+
+pub enum PluginChildType {
+	Wine,
+	Native,
+	Node,
+}
 
 enum PluginInstance {
 	Webview,
@@ -59,11 +65,14 @@ fn attach_parent_death_signal(command: &mut Command) {
 	}
 }
 
-/// Initialise a plugin from a given directory.
-pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
-	let plugin_uuid = path.file_name().unwrap().to_str().unwrap();
+pub type SpawnRequest = Box<dyn FnOnce() -> Result<(String, PluginChildType, Command), anyhow::Error> + Send>;
 
-	let mut manifest = manifest::read_manifest(path)?;
+/// Initialise a plugin from a given directory.
+pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<SpawnRequest>) -> anyhow::Result<()> {
+	let plugin_uuid = path.file_name().unwrap().to_str().unwrap().to_owned();
+	let plugin_uuid_2 = plugin_uuid.clone();
+
+	let mut manifest = manifest::read_manifest(&path)?;
 
 	if let Some(icon) = manifest.category_icon {
 		let category_icon_path = path.join(icon);
@@ -180,8 +189,15 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 	}
 
 	let code_path = code_path.unwrap();
-	let port_string = PORT_BASE.to_string();
-	let args = ["-port", port_string.as_str(), "-pluginUUID", plugin_uuid, "-registerEvent", "registerPlugin", "-info"];
+	let args = [
+		"-port".to_owned(),
+		PORT_BASE.to_string(),
+		"-pluginUUID".to_owned(),
+		plugin_uuid.clone(),
+		"-registerEvent".to_owned(),
+		"registerPlugin".to_owned(),
+		"-info".to_owned(),
+	];
 
 	if code_path.to_lowercase().ends_with(".html") || code_path.to_lowercase().ends_with(".htm") || code_path.to_lowercase().ends_with(".xhtml") {
 		let url = format!("http://localhost:{}/", *PORT_BASE + 2) + path.join(code_path).to_str().unwrap();
@@ -214,7 +230,7 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 			info = serde_json::to_string(&info)?
 		))?;
 
-		INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Webview);
+		INSTANCES.lock().await.insert(plugin_uuid, PluginInstance::Webview);
 	} else if code_path.to_lowercase().ends_with(".js") || code_path.to_lowercase().ends_with(".mjs") || code_path.to_lowercase().ends_with(".cjs") {
 		// Check for Node.js installation and version in one go.
 		let command = if is_flatpak() { "flatpak-spawn" } else { "node" };
@@ -227,40 +243,27 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		let info = info_param::make_info(plugin_uuid.to_owned(), manifest.version, true).await;
 		let log_file = fs::File::create(log_dir().join("plugins").join(format!("{plugin_uuid}.log")))?;
 
-		#[cfg(target_os = "windows")]
-		{
-			use std::os::windows::process::CommandExt;
-			let child = Command::new(command)
-				.current_dir(path)
-				.args(extra_args)
-				.arg(code_path)
-				.args(args)
-				.arg(serde_json::to_string(&info)?)
-				.stdout(Stdio::from(log_file.try_clone()?))
-				.stderr(Stdio::from(log_file))
-				.creation_flags(0x08000000)
-				.spawn()?;
-
-			INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Node(child));
-		}
-
-		#[cfg(not(target_os = "windows"))]
-		{
-			let mut command = Command::new(command);
-			command
-				.current_dir(path)
-				.args(extra_args)
-				.arg(code_path)
-				.args(args)
-				.arg(serde_json::to_string(&info)?)
-				.stdout(Stdio::from(log_file.try_clone()?))
-				.stderr(Stdio::from(log_file));
-			#[cfg(target_os = "linux")]
-			attach_parent_death_signal(&mut command);
-			let child = command.spawn()?;
-
-			INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Node(child));
-		}
+		spawner_tx
+			.send(Box::new(move || {
+				let mut command = Command::new(command);
+				command
+					.current_dir(path)
+					.args(extra_args)
+					.arg(code_path)
+					.args(args)
+					.arg(serde_json::to_string(&info)?)
+					.stdout(Stdio::from(log_file.try_clone()?))
+					.stderr(Stdio::from(log_file));
+				#[cfg(target_os = "linux")]
+				attach_parent_death_signal(&mut command);
+				#[cfg(target_os = "windows")]
+				{
+					use std::os::windows::process::CommandExt;
+					command.creation_flags(0x08000000);
+				}
+				Ok((plugin_uuid, PluginChildType::Node, command))
+			}))
+			.map_err(|e| anyhow!(e.to_string()))?;
 	} else if use_wine {
 		let command = if is_flatpak() { "flatpak-spawn" } else { "wine" };
 		let extra_args = if is_flatpak() { vec!["--host", "wine"] } else { vec![] };
@@ -279,43 +282,30 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 		let info = info_param::make_info(plugin_uuid.to_owned(), manifest.version, true).await;
 		let log_file = fs::File::create(log_dir().join("plugins").join(format!("{plugin_uuid}.log")))?;
 
-		let mut command = Command::new(command);
-		command
-			.current_dir(path)
-			.args(extra_args)
-			.arg(code_path)
-			.args(args)
-			.arg(serde_json::to_string(&info)?)
-			.stdout(Stdio::from(log_file.try_clone()?))
-			.stderr(Stdio::from(log_file));
-		if crate::store::get_settings().value.separatewine {
-			command.env("WINEPREFIX", path.join("wineprefix").to_string_lossy().to_string());
-		} else {
-			let _ = fs::remove_dir_all(path.join("wineprefix"));
-		}
-		#[cfg(target_os = "linux")]
-		attach_parent_death_signal(&mut command);
-		let child = command.spawn()?;
-
-		INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Wine(child));
+		spawner_tx
+			.send(Box::new(move || {
+				let mut command = Command::new(command);
+				command
+					.current_dir(&path)
+					.args(extra_args)
+					.arg(code_path)
+					.args(args)
+					.arg(serde_json::to_string(&info)?)
+					.stdout(Stdio::from(log_file.try_clone()?))
+					.stderr(Stdio::from(log_file));
+				if crate::store::get_settings().value.separatewine {
+					command.env("WINEPREFIX", path.join("wineprefix").to_string_lossy().to_string());
+				} else {
+					let _ = fs::remove_dir_all(path.join("wineprefix"));
+				}
+				#[cfg(target_os = "linux")]
+				attach_parent_death_signal(&mut command);
+				Ok((plugin_uuid, PluginChildType::Wine, command))
+			}))
+			.map_err(|e| anyhow!(e.to_string()))?;
 	} else {
 		let info = info_param::make_info(plugin_uuid.to_owned(), manifest.version, false).await;
 		let log_file = fs::File::create(log_dir().join("plugins").join(format!("{plugin_uuid}.log")))?;
-
-		#[cfg(target_os = "windows")]
-		{
-			use std::os::windows::process::CommandExt;
-			let child = Command::new(path.join(code_path))
-				.current_dir(path)
-				.args(args)
-				.arg(serde_json::to_string(&info)?)
-				.stdout(Stdio::from(log_file.try_clone()?))
-				.stderr(Stdio::from(log_file))
-				.creation_flags(0x08000000)
-				.spawn()?;
-
-			INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Native(child));
-		}
 
 		#[cfg(unix)]
 		{
@@ -323,27 +313,31 @@ pub async fn initialise_plugin(path: &path::Path) -> anyhow::Result<()> {
 			fs::set_permissions(path.join(&code_path), fs::Permissions::from_mode(0o755))?;
 		}
 
-		#[cfg(not(target_os = "windows"))]
-		{
-			let mut command = Command::new(path.join(code_path));
-			command
-				.current_dir(path)
-				.args(args)
-				.arg(serde_json::to_string(&info)?)
-				.stdout(Stdio::from(log_file.try_clone()?))
-				.stderr(Stdio::from(log_file));
-			#[cfg(target_os = "linux")]
-			attach_parent_death_signal(&mut command);
-			let child = command.spawn()?;
-
-			INSTANCES.lock().await.insert(plugin_uuid.to_owned(), PluginInstance::Native(child));
-		}
+		spawner_tx
+			.send(Box::new(move || {
+				let mut command = Command::new(path.join(code_path));
+				command
+					.current_dir(path)
+					.args(args)
+					.arg(serde_json::to_string(&info)?)
+					.stdout(Stdio::from(log_file.try_clone()?))
+					.stderr(Stdio::from(log_file));
+				#[cfg(target_os = "linux")]
+				attach_parent_death_signal(&mut command);
+				#[cfg(target_os = "windows")]
+				{
+					use std::os::windows::process::CommandExt;
+					command.creation_flags(0x08000000);
+				}
+				Ok((plugin_uuid, PluginChildType::Native, command))
+			}))
+			.map_err(|e| anyhow!(e.to_string()))?;
 	}
 
 	if let Some(applications) = manifest.applications_to_monitor
 		&& let Some(applications) = applications.get(platform)
 	{
-		crate::application_watcher::start_monitoring(plugin_uuid, applications).await;
+		crate::application_watcher::start_monitoring(&plugin_uuid_2, applications).await;
 	}
 
 	Ok(())
@@ -444,6 +438,31 @@ pub fn initialise_plugins() {
 		}
 	};
 
+	let (tx, rx) = mpsc::channel::<SpawnRequest>();
+	APP_HANDLE.get().unwrap().manage(tx.clone());
+
+	// Use a dedicated spawner thread so that plugin processes don't die due to PR_SET_PDEATHSIG when the parent Tokio worker exits
+	std::thread::spawn(|| {
+		for f in rx {
+			match f() {
+				Ok((plugin_uuid, child_type, mut command)) => match command.spawn() {
+					Ok(child) => {
+						INSTANCES.blocking_lock().insert(
+							plugin_uuid,
+							match child_type {
+								PluginChildType::Wine => PluginInstance::Wine(child),
+								PluginChildType::Native => PluginInstance::Native(child),
+								PluginChildType::Node => PluginInstance::Node(child),
+							},
+						);
+					}
+					Err(error) => warn!("Failed to initialise plugin {}: {}", plugin_uuid, error),
+				},
+				Err(error) => warn!("Failed to initialise plugin: {}", error),
+			}
+		}
+	});
+
 	// Iterate through all directory entries in the plugins folder and initialise them as plugins if appropriate
 	for entry in entries {
 		if let Ok(entry) = entry {
@@ -453,8 +472,9 @@ pub fn initialise_plugins() {
 			};
 			let metadata = fs::metadata(&path).unwrap();
 			if metadata.is_dir() {
+				let spawner_tx = tx.clone();
 				tokio::spawn(async move {
-					if let Err(error) = initialise_plugin(&path).await {
+					if let Err(error) = initialise_plugin(path.clone(), spawner_tx).await {
 						warn!("Failed to initialise plugin at {}: {:#}", path.display(), error);
 					}
 				});
