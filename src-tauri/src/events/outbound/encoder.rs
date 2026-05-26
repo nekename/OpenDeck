@@ -11,6 +11,7 @@ struct DialRotatePayload {
 	coordinates: Coordinates,
 	ticks: i16,
 	pressed: bool,
+	state: u16,
 }
 
 #[derive(Serialize)]
@@ -49,6 +50,7 @@ pub async fn dial_rotate(device: &str, index: u8, ticks: i16) -> Result<(), anyh
 				},
 				ticks,
 				pressed: false,
+				state: instance.current_state,
 			},
 		},
 	)
@@ -60,6 +62,7 @@ struct DialPressPayload {
 	controller: &'static str,
 	settings: serde_json::Value,
 	coordinates: Coordinates,
+	state: u16,
 }
 
 #[derive(Serialize)]
@@ -98,6 +101,7 @@ pub async fn dial_press(device: &str, event: &'static str, index: u8) -> Result<
 					row: instance.context.position / 3,
 					column: instance.context.position % 3,
 				},
+				state: instance.current_state,
 			},
 		},
 	)
