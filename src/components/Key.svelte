@@ -198,8 +198,8 @@
 		class:rounded-full!={context?.controller == "Encoder"}
 		class:rounded-lg!={isInfobar}
 		class:bg-black={slot != null}
-		width={isInfobar ? (deviceType === 9 ? 248 : 200) : size}
-		height={isInfobar ? (deviceType === 9 ? 58 : 100) : size}
+		width={isInfobar ? (deviceType === 9 ? 276 : 200) : size}
+		height={isInfobar ? (deviceType === 9 ? 65 : 100) : size}
 		draggable={slot != null}
 		{tabindex}
 		{role}

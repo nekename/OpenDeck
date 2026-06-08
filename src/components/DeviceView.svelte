@@ -229,24 +229,22 @@
 			{/each}
 		</div>
 
-		<div class="flex flex-row" role="row">
-			{#each { length: device.infobar } as _, i}
-				<Key
-					context={{ device: device.id, profile: profile.id, controller: "Infobar", position: i }}
-					bind:inslot={profile.infobar[i]}
-					on:dragover={handleDragOver}
-					on:drop={(event) => handleDrop(event, "Infobar", i)}
-					on:dragstart={(event) => handleDragStart(event, "Infobar", i)}
-					{handlePaste}
-					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-					isInfobar
-					deviceType={device.type}
-				/>
-			{/each}
-		</div>
-
-		<div class="flex flex-row" role="row">
+		<div class="flex flex-row items-center" role="row">
 			{#each { length: device.touchpoints } as _, i}
+				<!-- On the Neo the infobar display sits physically between the two touchpoints. -->
+				{#if device.infobar > 0 && i === 1}
+					<Key
+						context={{ device: device.id, profile: profile.id, controller: "Infobar", position: 0 }}
+						bind:inslot={profile.infobar[0]}
+						on:dragover={handleDragOver}
+						on:drop={(event) => handleDrop(event, "Infobar", 0)}
+						on:dragstart={(event) => handleDragStart(event, "Infobar", 0)}
+						{handlePaste}
+						size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+						isInfobar
+						deviceType={device.type}
+					/>
+				{/if}
 				<Key
 					context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (device.rows * device.columns) + i }}
 					bind:inslot={profile.keys[(device.rows * device.columns) + i]}
