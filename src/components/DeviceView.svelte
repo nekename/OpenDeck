@@ -16,6 +16,7 @@
 
 	export let selectedDevice: string;
 
+
 	function handleDragStart({ dataTransfer }: DragEvent, controller: string, position: number) {
 		if (!dataTransfer) return;
 		dataTransfer.effectAllowed = "move";
@@ -32,22 +33,25 @@
 
 	async function handleDrop({ dataTransfer }: DragEvent, controller: string, position: number) {
 		let context = { device: device.id, profile: profile.id, controller, position };
-		let array = controller == "Encoder" ? profile.sliders : profile.keys;
+		let array = controller == "Encoder" ? profile.sliders : controller == "Infobar" ? profile.infobar : profile.keys;
+		
 		if (dataTransfer?.getData("action")) {
 			let action = JSON.parse(dataTransfer?.getData("action"));
 			if (array[position]) {
 				return;
 			}
-			array[position] = await invoke("create_instance", { context, action });
+			let response = (await invoke("create_instance", { context, action })) as any;
+			array[position] = response;
 			profile = profile;
 		} else if (dataTransfer?.getData("controller")) {
-			let oldArray = dataTransfer?.getData("controller") == "Encoder" ? profile.sliders : profile.keys;
+			let oldController = dataTransfer?.getData("controller");
+			let oldArray = oldController == "Encoder" ? profile.sliders : oldController == "Infobar" ? profile.infobar : profile.keys;
 			let oldPosition = parseInt(dataTransfer?.getData("position"));
-			let response: ActionInstance = await invoke("move_instance", {
-				source: { device: device.id, profile: profile.id, controller: dataTransfer?.getData("controller"), position: oldPosition },
+			let response = (await invoke("move_instance", {
+				source: { device: device.id, profile: profile.id, controller: oldController, position: oldPosition },
 				destination: context,
 				retain: false,
-			});
+			})) as any;
 			if (response) {
 				array[position] = response;
 				oldArray[oldPosition] = null;
@@ -57,7 +61,7 @@
 	}
 
 	async function handlePaste(item: CopiedItem, destination: Context) {
-		let array = destination.controller == "Encoder" ? profile.sliders : profile.keys;
+		let array = destination.controller == "Encoder" ? profile.sliders : destination.controller == "Infobar" ? profile.infobar : profile.keys;
 
 		if (item.type == "action") {
 			if (array[destination.position]) return;
@@ -221,6 +225,22 @@
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					label="Encoder {i + 1}"
 					tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
+				/>
+			{/each}
+		</div>
+
+		<div class="flex flex-row" role="row">
+			{#each { length: device.infobar } as _, i}
+				<Key
+					context={{ device: device.id, profile: profile.id, controller: "Infobar", position: i }}
+					bind:inslot={profile.infobar[i]}
+					on:dragover={handleDragOver}
+					on:drop={(event) => handleDrop(event, "Infobar", i)}
+					on:dragstart={(event) => handleDragStart(event, "Infobar", i)}
+					{handlePaste}
+					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+					isInfobar
+					deviceType={device.type}
 				/>
 			{/each}
 		</div>

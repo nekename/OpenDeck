@@ -35,6 +35,8 @@
 	export let active: boolean = true;
 	export let scale: number = 1;
 	export let isTouchPoint: boolean = false;
+	export let isInfobar: boolean = false;
+	export let deviceType: number = 0;
 	let pressed: boolean = false;
 
 	let state: ActionState | undefined;
@@ -194,9 +196,10 @@
 		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
 		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
 		class:rounded-full!={context?.controller == "Encoder"}
+		class:rounded-lg!={isInfobar}
 		class:bg-black={slot != null}
-		width={size}
-		height={size}
+		width={isInfobar ? (deviceType === 9 ? 248 : 200) : size}
+		height={isInfobar ? (deviceType === 9 ? 58 : 100) : size}
 		draggable={slot != null}
 		{tabindex}
 		{role}
