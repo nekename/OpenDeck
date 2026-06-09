@@ -5,6 +5,6 @@ export type DeviceInfo = {
 	columns: number;
 	encoders: number;
 	touchpoints: number;
-	infobar: number;
+	infobars: number;
 	type: number;
 };

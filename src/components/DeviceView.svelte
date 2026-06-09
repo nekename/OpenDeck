@@ -16,7 +16,6 @@
 
 	export let selectedDevice: string;
 
-
 	function handleDragStart({ dataTransfer }: DragEvent, controller: string, position: number) {
 		if (!dataTransfer) return;
 		dataTransfer.effectAllowed = "move";
@@ -33,25 +32,23 @@
 
 	async function handleDrop({ dataTransfer }: DragEvent, controller: string, position: number) {
 		let context = { device: device.id, profile: profile.id, controller, position };
-		let array = controller == "Encoder" ? profile.sliders : controller == "Infobar" ? profile.infobar : profile.keys;
-		
+		let array = controller == "Encoder" ? profile.sliders : controller == "Infobar" ? profile.infobars : profile.keys;
 		if (dataTransfer?.getData("action")) {
 			let action = JSON.parse(dataTransfer?.getData("action"));
 			if (array[position]) {
 				return;
 			}
-			let response = (await invoke("create_instance", { context, action })) as any;
-			array[position] = response;
+			array[position] = await invoke("create_instance", { context, action });
 			profile = profile;
 		} else if (dataTransfer?.getData("controller")) {
 			let oldController = dataTransfer?.getData("controller");
-			let oldArray = oldController == "Encoder" ? profile.sliders : oldController == "Infobar" ? profile.infobar : profile.keys;
+			let oldArray = oldController == "Encoder" ? profile.sliders : oldController == "Infobar" ? profile.infobars : profile.keys;
 			let oldPosition = parseInt(dataTransfer?.getData("position"));
-			let response = (await invoke("move_instance", {
+			let response: ActionInstance = await invoke("move_instance", {
 				source: { device: device.id, profile: profile.id, controller: oldController, position: oldPosition },
 				destination: context,
 				retain: false,
-			})) as any;
+			});
 			if (response) {
 				array[position] = response;
 				oldArray[oldPosition] = null;
@@ -61,7 +58,7 @@
 	}
 
 	async function handlePaste(item: CopiedItem, destination: Context) {
-		let array = destination.controller == "Encoder" ? profile.sliders : destination.controller == "Infobar" ? profile.infobar : profile.keys;
+		let array = destination.controller == "Encoder" ? profile.sliders : destination.controller == "Infobar" ? profile.infobars : profile.keys;
 
 		if (item.type == "action") {
 			if (array[destination.position]) return;
@@ -212,7 +209,6 @@
 				</div>
 			{/each}
 		</div>
-
 		<div class="flex flex-row" role="row">
 			{#each { length: device.encoders } as _, i}
 				<Key
@@ -231,19 +227,21 @@
 
 		<div class="flex flex-row items-center" role="row">
 			{#each { length: device.touchpoints } as _, i}
-				<!-- On the Neo the infobar display sits physically between the two touchpoints. -->
-				{#if device.infobar > 0 && i === 1}
-					<Key
-						context={{ device: device.id, profile: profile.id, controller: "Infobar", position: 0 }}
-						bind:inslot={profile.infobar[0]}
-						on:dragover={handleDragOver}
-						on:drop={(event) => handleDrop(event, "Infobar", 0)}
-						on:dragstart={(event) => handleDragStart(event, "Infobar", 0)}
-						{handlePaste}
-						size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-						isInfobar
-						deviceType={device.type}
-					/>
+				<!-- On the Neo the infobar displays sit physically between the two touchpoints. -->
+				{#if device.infobars > 0 && i === 1}
+					{#each { length: device.infobars } as _, j}
+						<Key
+							context={{ device: device.id, profile: profile.id, controller: "Infobar", position: j }}
+							bind:inslot={profile.infobars[j]}
+							on:dragover={handleDragOver}
+							on:drop={(event) => handleDrop(event, "Infobar", j)}
+							on:dragstart={(event) => handleDragStart(event, "Infobar", j)}
+							{handlePaste}
+							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+							width={device.type === 9 ? 276 : 200}
+							height={device.type === 9 ? 65 : 100}
+						/>
+					{/each}
 				{/if}
 				<Key
 					context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (device.rows * device.columns) + i }}

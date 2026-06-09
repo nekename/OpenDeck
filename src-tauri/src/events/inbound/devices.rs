@@ -33,7 +33,7 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 			.iter()
 			.flatten()
 			.chain(profile.value.sliders.iter().flatten())
-			.chain(profile.value.infobar.iter().flatten())
+			.chain(profile.value.infobars.iter().flatten())
 		{
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		}
@@ -66,7 +66,7 @@ pub async fn deregister_device(uuid: &str, event: PayloadEvent<String>) -> Resul
 			.iter()
 			.flatten()
 			.chain(profile.value.sliders.iter().flatten())
-			.chain(profile.value.infobar.iter().flatten())
+			.chain(profile.value.infobars.iter().flatten())
 		{
 			let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
 		}

@@ -35,8 +35,6 @@
 	export let active: boolean = true;
 	export let scale: number = 1;
 	export let isTouchPoint: boolean = false;
-	export let isInfobar: boolean = false;
-	export let deviceType: number = 0;
 	let pressed: boolean = false;
 
 	let state: ActionState | undefined;
@@ -148,6 +146,9 @@
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
+	// Canvas resolution defaults to a square `size`, but rectangular controllers (e.g. the Neo infobar) can override.
+	export let width: number = size;
+	export let height: number = size;
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
@@ -196,10 +197,10 @@
 		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
 		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
 		class:rounded-full!={context?.controller == "Encoder"}
-		class:rounded-lg!={isInfobar}
+		class:rounded-lg!={context?.controller == "Infobar"}
 		class:bg-black={slot != null}
-		width={isInfobar ? (deviceType === 9 ? 276 : 200) : size}
-		height={isInfobar ? (deviceType === 9 ? 65 : 100) : size}
+		width={width}
+		height={height}
 		draggable={slot != null}
 		{tabindex}
 		{role}

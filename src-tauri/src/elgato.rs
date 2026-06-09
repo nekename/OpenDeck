@@ -162,7 +162,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				columns: kind.column_count(),
 				encoders: kind.encoder_count(),
 				touchpoints: kind.touchpoint_count(),
-				infobar: infobar_count,
+				infobars: infobar_count,
 				r#type: device_type,
 			},
 		},

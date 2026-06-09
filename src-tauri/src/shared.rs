@@ -39,7 +39,7 @@ pub struct DeviceInfo {
 	#[serde_inline_default(0)]
 	pub touchpoints: u8,
 	#[serde_inline_default(0)]
-	pub infobar: u8,
+	pub infobars: u8,
 	pub r#type: u8,
 }
 
@@ -315,7 +315,7 @@ pub struct Profile {
 	pub keys: Vec<Option<ActionInstance>>,
 	pub sliders: Vec<Option<ActionInstance>>,
 	#[serde(default)]
-	pub infobar: Vec<Option<ActionInstance>>,
+	pub infobars: Vec<Option<ActionInstance>>,
 }
 
 /// A map of category names to a list of actions in that category.

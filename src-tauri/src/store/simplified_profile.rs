@@ -191,7 +191,7 @@ pub struct DiskProfile {
 	pub keys: Vec<Option<DiskActionInstance>>,
 	pub sliders: Vec<Option<DiskActionInstance>>,
 	#[serde(default)]
-	pub infobar: Vec<Option<DiskActionInstance>>,
+	pub infobars: Vec<Option<DiskActionInstance>>,
 }
 
 impl From<&Profile> for DiskProfile {
@@ -199,7 +199,7 @@ impl From<&Profile> for DiskProfile {
 		Self {
 			keys: value.keys.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
 			sliders: value.sliders.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
-			infobar: value.infobar.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
+			infobars: value.infobars.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
 		}
 	}
 }
@@ -215,7 +215,7 @@ impl DiskProfile {
 			id,
 			keys: self.keys.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
 			sliders: self.sliders.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
-			infobar: self.infobar.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
+			infobars: self.infobars.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
 		}
 	}
 }
