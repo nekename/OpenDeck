@@ -61,3 +61,11 @@ windows-sys = "0.61"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
+
+# elgato-streamdeck with an added `From<StreamDeck> for AsyncStreamDeck`, so
+# device enumeration/open can be pinned to a dedicated HID thread (see
+# elgato.rs). Fixes a macOS sleep/wake crash where hidapi's IOHIDManager was
+# driven from a foreign thread's run loop. Drop this patch once the upstream PR
+# lands in a release: https://github.com/OpenActionAPI/rust-elgato-streamdeck/pull/59
+[patch.crates-io]
+elgato-streamdeck = { git = "https://github.com/kingb/rust-elgato-streamdeck", branch = "feat/async-from-sync-0.12" }
