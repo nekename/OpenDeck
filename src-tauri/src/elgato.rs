@@ -46,22 +46,10 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 					)
 					.await?;
 			} else if context.controller == "Infobar" {
-				if device.kind() == Kind::Plus {
-					device
-						.write_lcd(
-							context.position as u16 * 200,
-							0,
-							&ImageRect::from_image_async(image::DynamicImage::ImageRgba8(
-								image::load_from_memory(&bytes)?.resize_exact(200, 100, image::imageops::FilterType::Lanczos3).into_rgba8(),
-							))?,
-						)
-						.await?;
-				} else if device.kind() == Kind::Neo {
-					let img = image::load_from_memory(&bytes)?;
-					let format = device.kind().lcd_image_format().unwrap();
-					let data = convert_image_with_format_async(format, img.resize_exact(248, 58, image::imageops::FilterType::Lanczos3))?;
-					device.write_lcd_fill(&data).await?;
-				}
+				let img = image::load_from_memory(&bytes)?;
+				let format = device.kind().lcd_image_format().unwrap();
+				let data = convert_image_with_format_async(format, img.resize_exact(248, 58, image::imageops::FilterType::Lanczos3))?;
+				device.write_lcd_fill(&data).await?;
 			} else if is_touch_point {
 				let (r, g, b) = extract_average_colour(&image::load_from_memory(&bytes)?);
 				device.set_touchpoint_color(context.position - key_count, r, g, b).await?;

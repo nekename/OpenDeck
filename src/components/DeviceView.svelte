@@ -209,6 +209,7 @@
 				</div>
 			{/each}
 		</div>
+		
 		<div class="flex flex-row" role="row">
 			{#each { length: device.encoders } as _, i}
 				<Key
