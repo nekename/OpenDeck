@@ -209,7 +209,7 @@
 				</div>
 			{/each}
 		</div>
-		
+
 		<div class="flex flex-row" role="row">
 			{#each { length: device.encoders } as _, i}
 				<Key
@@ -231,17 +231,19 @@
 				<!-- On the Neo the infobar displays sit physically between the two touchpoints. -->
 				{#if device.infobars > 0 && i === 1}
 					{#each { length: device.infobars } as _, j}
-						<Key
-							context={{ device: device.id, profile: profile.id, controller: "Infobar", position: j }}
-							bind:inslot={profile.infobars[j]}
-							on:dragover={handleDragOver}
-							on:drop={(event) => handleDrop(event, "Infobar", j)}
-							on:dragstart={(event) => handleDragStart(event, "Infobar", j)}
-							{handlePaste}
-							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-							width={device.type === 9 ? 276 : 200}
-							height={device.type === 9 ? 65 : 100}
-						/>
+						<div class="px-[14px] py-[3.5px]">
+							<Key
+								context={{ device: device.id, profile: profile.id, controller: "Infobar", position: j }}
+								bind:inslot={profile.infobars[j]}
+								on:dragover={handleDragOver}
+								on:drop={(event) => handleDrop(event, "Infobar", j)}
+								on:dragstart={(event) => handleDragStart(event, "Infobar", j)}
+								{handlePaste}
+								size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+								width={device.type === 9 ? 248 : 200}
+								height={device.type === 9 ? 58 : 100}
+							/>
+						</div>
 					{/each}
 				{/if}
 				<Key

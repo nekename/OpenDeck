@@ -61,15 +61,9 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 				.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
 				.await?;
 		} else if context.controller == "Infobar" {
-			if device.kind() == Kind::Plus {
-				device
-					.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
-					.await?;
-			} else if device.kind() == Kind::Neo {
-				let format = device.kind().lcd_image_format().unwrap();
-				let data = convert_image_with_format_async(format, image::DynamicImage::new_rgb8(248, 58))?;
-				device.write_lcd_fill(&data).await?;
-			}
+			let format = device.kind().lcd_image_format().unwrap();
+			let data = convert_image_with_format_async(format, image::DynamicImage::new_rgb8(248, 58))?;
+			device.write_lcd_fill(&data).await?;
 		} else if is_touch_point {
 			device.set_touchpoint_color(context.position - key_count, 0, 0, 0).await?;
 		} else {
