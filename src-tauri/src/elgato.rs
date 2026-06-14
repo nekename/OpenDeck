@@ -42,7 +42,6 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
 
-			// Bypass regular rendering for image generation
 			if context.controller == "Encoder" {
 				let locks = acquire_locks().await;
 				if let Some(action) = get_slot(context, &locks).await?
@@ -52,13 +51,25 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 					let mut layout = encoder.layout_parsed.clone();
 					let path = config_dir().join("plugins").join(&action.action.plugin);
 
-					// If the title is missing, provide it from the action
-					if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut)
-						&& let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title"))
-						&& (title_item.get("value").is_none() || title_item["value"] == Value::Null)
-					{
-						let current_text = &action.states[action.current_state as usize].text;
-						title_item["value"] = Value::String(current_text.clone());
+					if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) {
+						// If the title is missing, provide it from the action
+						if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title"))
+							&& (title_item.get("value").is_none() || title_item["value"] == Value::Null)
+						{
+							let current_text = &action.states[action.current_state as usize].text;
+							title_item["value"] = Value::String(current_text.clone());
+						}
+
+						// If the icon is empty, provide it from the action
+						if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
+							let icon_empty = icon_item.get("value").and_then(Value::as_str).map_or(true, str::is_empty);
+
+							// Get the icon from the state
+							let current_icon = &action.states[action.current_state as usize].image;
+							if icon_empty && !action.action.icon.is_empty() {
+								icon_item["value"] = Value::String(current_icon.clone());
+							}
+						}
 					}
 					let img = get_dynamic_from_layout_value(&layout, &path, None)?;
 

@@ -245,6 +245,16 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 				title_item["value"] = Value::String(current_text.clone());
 			}
 
+			if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
+				let icon_empty = icon_item.get("value").and_then(Value::as_str).map_or(true, str::is_empty);
+
+				// Get the icon from the state
+				let current_icon = &action.states[action.current_state as usize].image;
+				if icon_empty && !action.action.icon.is_empty() {
+					icon_item["value"] = Value::String(current_icon.clone());
+				}
+			}
+
 			// Trigger a state update, should cause a redraw
 			update_state(crate::APP_HANDLE.get().unwrap(), action.context.clone(), &mut locks).await?;
 		}
