@@ -1,9 +1,11 @@
 use crate::events::inbound;
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::LazyLock;
 
+use crate::store::profiles::{acquire_locks, get_slot};
 use base64::Engine as _;
 use elgato_streamdeck::{
 	AsyncStreamDeck, DeviceStateUpdate,
@@ -11,6 +13,7 @@ use elgato_streamdeck::{
 	info::Kind,
 };
 use image::GenericImageView as _;
+use streamdeck_strip_render::get_dynamic_from_layout_value;
 use tokio::sync::RwLock;
 
 static ELGATO_DEVICES: LazyLock<RwLock<HashMap<String, AsyncStreamDeck>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
@@ -37,14 +40,30 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 		if let Some(image) = image {
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
+
+			// Bypass regular rendering for image generation
 			if context.controller == "Encoder" {
-				device
-					.write_lcd(
-						(context.position as u16 * 200) + 64,
-						14,
-						&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
-					)
-					.await?;
+				let locks = acquire_locks().await;
+				if let Some(action) = get_slot(context, &locks).await?
+					&& let Some(encoder) = &action.action.encoder
+					&& let Some(path) = &encoder.base_path
+				{
+					// Grab the layout, render the image, and send it
+					let layout = &encoder.layout_parsed;
+					let path = PathBuf::from(path);
+					let img = get_dynamic_from_layout_value(&layout, &*path, None)?;
+
+					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img.clone())?).await?;
+				} else {
+					// Draw the default icon
+					device
+						.write_lcd(
+							(context.position as u16 * 200) + 64,
+							14,
+							&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
+						)
+						.await?;
+				}
 			} else if is_touch_point {
 				let (r, g, b) = extract_average_colour(&image::load_from_memory(&bytes)?);
 				device.set_touchpoint_color(context.position - key_count, r, g, b).await?;
