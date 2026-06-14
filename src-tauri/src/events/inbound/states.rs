@@ -141,7 +141,7 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 							let item_key = item.get("key").and_then(Value::as_str).unwrap_or("");
 
 							// We shouldn't update titles, or anything explicitly changed
-							if explicit_keys.contains(item_key) || item_key == "title" {
+							if item_key == "title" && key != "title" {
 								continue;
 							}
 
@@ -236,6 +236,16 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 					_ => {
 						warn!("setFeedback: key '{key}' has unexpected payload type, ignoring");
 					}
+				}
+			}
+
+			// If we have a title, and it's not been defined as a value, fallback to the action title
+			if let Some(title_item) = items_array.iter_mut().find(|item| {
+				item.get("key").and_then(Value::as_str) == Some("title")
+			}) {
+				if title_item.get("value").is_none() || title_item["value"] == Value::Null {
+					let current_text = &action.states[action.current_state as usize].text;
+					title_item["value"] = Value::String(current_text.clone());
 				}
 			}
 
