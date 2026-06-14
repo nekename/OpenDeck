@@ -109,7 +109,16 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 				}
 
 				// Parse out the initial layout
-				encoder.layout_parsed = load_encoder_layout(&encoder.layout).unwrap_or(serde_json::Value::Null);
+				let initial = load_encoder_layout(&encoder.layout);
+				match initial {
+					Ok(value) => {
+						encoder.layout_parsed = value;
+					}
+					Err(e) => {
+						error!("Failed to load initial layout: {}", e);
+						encoder.layout_parsed = serde_json::Value::Null;
+					}
+				}
 			}
 		}
 
