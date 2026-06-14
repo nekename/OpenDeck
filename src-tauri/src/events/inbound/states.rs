@@ -129,102 +129,113 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 			};
 
 			for (key, payload_value) in &map {
+				// Grab the item from the layout
+				let Some(item) = items_array.iter_mut().find(|item| {
+					matches!(
+						item.get("key").and_then(|v| v.as_str()),
+						Some(k) if k == key
+					)
+				}) else {
+					warn!("setFeedback: no layout item found for key '{key}'");
+
+					// Debugging usefulness
+					let available: Vec<_> = items_array.iter().filter_map(|i| i.get("key").and_then(Value::as_str)).collect();
+					warn!("available keys in layout: {:?}", available);
+
+					continue;
+				};
+
 				match payload_value {
+					// We have a direct value, find the key, and set it.
 					Value::String(_) | Value::Number(_) => {
-						let Some(item) = items_array.iter_mut().find(|item| {
-							item.get("key").and_then(Value::as_str) == Some(key)
-						}) else {
-							warn!("setFeedback: no layout item found for key '{key}'");
+						// Get the item type
+						let Some(item_type) = item.get("type").and_then(Value::as_str) else {
+							warn!("setFeedback: no type found for key '{key}'");
 							continue;
 						};
 
-						let item_type = item.get("type").and_then(Value::as_str);
-						debug!("setFeedback: item '{}' has type {:?}", key, item_type);
-
 						match item_type {
-							Some(t @ ("text" | "bar" | "gbar")) => {
-								if let Some(coerced) = coerce_value(payload_value, t) {
-									item["value"] = coerced;
-									debug!("setFeedback: set value on item '{key}'");
+							"text" => {
+								// We need to map the value to a string
+								if let Value::Number(number) = payload_value {
+									item["value"] = Value::String(number.to_string());
 								} else {
-									warn!("setFeedback: could not coerce value for key '{key}'");
+									// Clone the string
+									item["value"] = payload_value.clone();
 								}
 							}
-							Some("pixmap") => {
-								if let Value::String(s) = payload_value {
-									item["value"] = Value::String(s.clone());
+
+							"bar" | "gbar" => {
+								if let Value::Number(value) = payload_value {
+									if key == "value" {
+										item["value"] = Value::Number(value.clone());
+									}
 								} else {
-									warn!("pixmap expects string path for key '{key}'");
+									warn!("setFeedback: bar/gbar expected number for key '{key}'");
 								}
 							}
-							_ => continue,
+
+							"pixmap" => {
+								// Updating the pixmap value, this should already be a string
+								item["value"] = payload_value.clone();
+							}
+
+							// For anything else (pixmap), we ignore this
+							_ => {
+								warn!("setFeedback: unknown item type '{item_type}' for key '{key}'");
+							}
 						}
 					}
 
+					// We have an object, so need to locate and map the change
 					Value::Object(obj) => {
-						debug!("setFeedback: processing object for key '{key}'");
+						debug!("setFeedback: processing object for key '{key}': {obj:?}");
 
-						let Some(item) = items_array.iter_mut().find(|item| {
-							item.get("key").and_then(Value::as_str).is_some_and(|k| k == key)
-						}) else {
-							warn!("setFeedback: no layout item found for key '{key}'");
+						// Grab the item type
+						let Some(item_type) = item.get("type").and_then(Value::as_str) else {
+							warn!("Missing or invalid 'type' field in item: {:?}", item);
 							continue;
 						};
+						debug!("setFeedback: item type for key '{key}': '{item_type}'");
 
-						let type_keys: Vec<&str> = match item.get("type").and_then(Value::as_str) {
-							Some("text") => vec!["value", "color", "alignment", "font", "text-overflow"],
-							Some("pixmap") => vec!["value"],
-							Some("bar") => BAR_KEYS.to_vec(),
-							Some("gbar") => BAR_KEYS.iter().copied().chain(["bar_h"]).collect(),
-							Some(unknown) => {
+						// Get valid keys for this item type
+						let type_keys: Vec<&str> = match item_type {
+							"text" => vec!["value", "color", "alignment", "font", "text-overflow"],
+							"pixmap" => vec!["value"],
+							"bar" => BAR_KEYS.to_vec(),
+							"gbar" => BAR_KEYS.iter().copied().chain(["bar_h"]).collect(),
+							unknown => {
 								warn!("setFeedback: unknown item type '{unknown}' for key '{key}'");
 								continue;
 							}
-							None => {
-								warn!("setFeedback: item with key '{key}' has no type field");
-								continue;
-							}
 						};
 
+						// Add the common keys
 						let valid_keys: Vec<&str> = COMMON_KEYS.iter().copied().chain(type_keys).collect();
-						let item_type = item.get("type").and_then(Value::as_str).unwrap_or("").to_string();
 
+						// Iterate over the values in the object
 						for (field, field_value) in obj {
 							if valid_keys.contains(&field.as_str()) {
-								let coerced = if field == "value" {
-									if let Some(coerced) = coerce_value(field_value, &item_type) {
-										coerced
-									} else {
-										warn!("setFeedback: could not coerce value for key '{key}' field '{field}'");
-										continue;
-									}
-								} else {
-									field_value.clone()
-								};
-								item[field] = coerced;
-							} else {
-								warn!("setFeedback: key '{key}' has unknown field '{field}' for its type, ignoring");
+								item[field] = field_value.clone()
 							}
 						}
 					}
+
 					_ => {
 						warn!("setFeedback: key '{key}' has unexpected payload type, ignoring");
 					}
 				}
 			}
 
-			if let Some(title_item) = items_array.iter_mut().find(|item| {
-				item.get("key").and_then(Value::as_str) == Some("title")
-			}) && (title_item.get("value").is_none() || title_item["value"] == Value::Null)
+			if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title"))
+				&& (title_item.get("value").is_none() || title_item["value"] == Value::Null)
 			{
 				let current_text = &action.states[action.current_state as usize].text;
 				title_item["value"] = Value::String(current_text.clone());
 			}
 
-			if let Some(icon_item) = items_array.iter_mut().find(|item| {
-				item.get("key").and_then(Value::as_str) == Some("icon")
-			}) {
-				let icon_empty = icon_item.get("value").and_then(Value::as_str).map_or(true, str::is_empty);
+			if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
+				let icon_empty = icon_item.get("value").and_then(Value::as_str).is_none_or(str::is_empty);
 
 				if icon_empty {
 					let icon = action
@@ -242,31 +253,12 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 				}
 			}
 
+			debug!("setFeedback: layout: {:#?}", layout);
 			update_state(crate::APP_HANDLE.get().unwrap(), action.context.clone(), &mut locks).await?;
 		}
 	}
 
 	Ok(())
-}
-
-// This is a helper function that'll coerce a value into the correct type
-fn coerce_value(value: &Value, item_type: &str) -> Option<Value> {
-	match item_type {
-		"text" => match value {
-			Value::String(s) => Some(Value::String(s.clone())),
-			Value::Number(n) => Some(Value::String(n.to_string())),
-			_ => None,
-		},
-		"bar" | "gbar" => match value {
-			Value::Number(n) => Some(Value::Number(n.clone())),
-			Value::String(s) => s.parse::<f64>()
-				.ok()
-				.and_then(serde_json::Number::from_f64)
-				.map(Value::Number),
-			_ => None,
-		},
-		_ => None,
-	}
 }
 
 pub async fn set_feedback_layout(event: ContextAndPayloadEvent<SetFeedbackLayoutPayload>) -> Result<(), anyhow::Error> {
