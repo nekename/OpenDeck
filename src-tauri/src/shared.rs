@@ -445,6 +445,8 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 });
 
 // TODO: These probably can go somewhere else, I'm not sure where to put them :D
+// This technically doesn't match the spec, but reviewing on Windows the canvas pixmap is
+// actually 168x54, so the docs are currently wrong.
 pub const LAYOUT_A0: &str = r#"
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
@@ -458,7 +460,7 @@ pub const LAYOUT_A0: &str = r#"
     {
       "key": "title",
       "type": "text",
-      "rect": [16, 10, 136, 24],
+      "rect": [16, 10, 168, 24],
       "zOrder": 1,
       "font": { "size": 16, "weight": 600 },
       "alignment": "left"
@@ -466,7 +468,7 @@ pub const LAYOUT_A0: &str = r#"
     {
       "key": "canvas",
       "type": "pixmap",
-      "rect": [16, 34, 136, 54],
+      "rect": [16, 34, 168, 54],
       "zOrder": 1
     }
   ]
