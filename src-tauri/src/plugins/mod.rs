@@ -4,7 +4,7 @@ mod webserver;
 
 use crate::APP_HANDLE;
 use crate::built_info::TARGET;
-use crate::shared::{CATEGORIES, Category, config_dir, convert_icon, is_flatpak, log_dir};
+use crate::shared::{CATEGORIES, Category, config_dir, convert_icon, is_flatpak, load_encoder_layout, log_dir};
 
 use std::collections::HashMap;
 use std::process::{Child, Command, Stdio};
@@ -107,6 +107,9 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 				if !encoder.layout.starts_with("$") {
 					encoder.layout = path.join(&encoder.layout).to_string_lossy().to_string();
 				}
+
+				// Parse out the initial layout
+				encoder.layout_parsed = load_encoder_layout(&encoder.layout).unwrap_or(serde_json::Value::Null);
 			}
 		}
 

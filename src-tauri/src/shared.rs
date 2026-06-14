@@ -6,6 +6,7 @@ use std::sync::LazyLock;
 use serde::{Deserialize, Deserializer, Serialize, de::Visitor};
 use serde_inline_default::serde_inline_default;
 
+use anyhow::{Result, bail};
 use dashmap::DashMap;
 use tauri::Manager;
 use tokio::sync::RwLock;
@@ -244,6 +245,37 @@ pub struct Encoder {
 	// TODO: Validation Pattern: "^(^(?![\\.]*[\\\\\\/]+).+\\.([Jj][Ss][Oo][Nn])$)|(\\$(X1|A0|A1|B1|B2|C1))$"
 	#[serde_inline_default(String::new())]
 	pub layout: String,
+
+	// Note: this is not a real manifest property; it is only used internally.
+	#[serde_inline_default(serde_json::Value::Null)]
+	pub layout_parsed: serde_json::Value,
+}
+
+// This can be called from plugins/mod.rs, it could also be called from a setFeedbackLayout request
+pub fn load_encoder_layout(layout: &str) -> Result<serde_json::Value> {
+	match layout {
+		"$A0" => Ok(serde_json::from_str(LAYOUT_A0)?),
+		"$A1" => Ok(serde_json::from_str(LAYOUT_A1)?),
+		"$B1" => Ok(serde_json::from_str(LAYOUT_B1)?),
+		"$B2" => Ok(serde_json::from_str(LAYOUT_B2)?),
+		"$C1" => Ok(serde_json::from_str(LAYOUT_C1)?),
+		"$X1" => Ok(serde_json::from_str(LAYOUT_X1)?),
+
+		path_str => {
+			// This doesn't match an existing built-in layout
+			if path_str.starts_with('$') {
+				bail!("Invalid layout type: {}", path_str);
+			}
+
+			let path = Path::new(path_str);
+			if !path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("json")) {
+				bail!("Invalid layout type: {}", path_str);
+			}
+
+			let content = std::fs::read_to_string(path)?;
+			Ok(serde_json::from_str(&content)?)
+		}
+	}
 }
 
 /// Descriptions of behaviours to be shown to the user in the prop inspector
@@ -411,3 +443,192 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 	);
 	RwLock::new(hashmap)
 });
+
+// TODO: These probably can go somewhere else, I'm not sure where to put them :D
+pub const LAYOUT_A0: &str = r#"
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+  "id": "$A0",
+  "items": [
+    {
+      "key": "full-canvas",
+      "type": "pixmap",
+      "rect": [0, 0, 200, 100]
+    },
+    {
+      "key": "title",
+      "type": "text",
+      "rect": [16, 10, 136, 24],
+      "zOrder": 1,
+      "font": { "size": 16, "weight": 600 },
+      "alignment": "left"
+    },
+    {
+      "key": "canvas",
+      "type": "pixmap",
+      "rect": [16, 34, 136, 54],
+      "zOrder": 1
+    }
+  ]
+}
+"#;
+
+pub const LAYOUT_A1: &str = r#"
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+  "id": "$A1",
+  "items": [
+    {
+      "key": "title",
+      "type": "text",
+      "rect": [16, 10, 136, 24],
+      "font": { "size": 16, "weight": 600 },
+      "alignment": "left"
+    },
+    {
+      "key": "icon",
+      "type": "pixmap",
+      "rect": [16, 40, 48, 48]
+    },
+    {
+      "key": "value",
+      "type": "text",
+      "rect": [76, 40, 108, 32],
+      "font": { "size": 24, "weight": 600 },
+      "alignment": "right"
+    }
+  ]
+}"#;
+
+pub const LAYOUT_B1: &str = r#"
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+  "id": "$B1",
+  "items": [
+    {
+      "key": "title",
+      "type": "text",
+      "rect": [16, 10, 136, 24],
+      "font": { "size": 16, "weight": 600 },
+      "alignment": "left"
+    },
+    {
+      "key": "icon",
+      "type": "pixmap",
+      "rect": [16, 40, 48, 48]
+    },
+    {
+      "key": "value",
+      "type": "text",
+      "rect": [76, 40, 108, 32],
+      "font": { "size": 24, "weight": 600 },
+      "alignment": "right"
+    },
+    {
+      "key": "indicator",
+      "type": "bar",
+      "rect": [76, 74, 108, 12],
+      "value": 20,
+      "subtype": 4,
+      "border_w": 0
+    }
+  ]
+}"#;
+
+pub const LAYOUT_B2: &str = r#"
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+  "id": "$B2",
+  "items": [
+    {
+      "key": "title",
+      "type": "text",
+      "rect": [16, 10, 136, 24],
+      "font": { "size": 16, "weight": 600 },
+      "alignment": "left"
+    },
+    {
+      "key": "icon",
+      "type": "pixmap",
+      "rect": [16, 40, 48, 48]
+    },
+    {
+      "key": "value",
+      "type": "text",
+      "rect": [76, 40, 108, 32],
+      "font": { "size": 24, "weight": 600 },
+      "alignment": "right"
+    },
+    {
+      "key": "indicator",
+      "type": "gbar",
+      "rect": [76, 74, 108, 20],
+      "value": 20,
+      "subtype": 4,
+      "bar_h": 12,
+      "border_w": 0,
+      "bar_bg_c": "0:#ff0000,0.33:#a6d4ec,0.66:#f4b675,1:#00ff00"
+    }
+  ]
+}"#;
+
+pub const LAYOUT_C1: &str = r#"
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+  "id": "$C1",
+  "items": [
+    {
+      "key": "title",
+      "type": "text",
+      "rect": [16, 10, 136, 24],
+      "font": { "size": 16, "weight": 600 },
+      "alignment": "left"
+    },
+    {
+      "key": "icon1",
+      "type": "pixmap",
+      "rect": [16, 40, 24, 24]
+    },
+    {
+      "key": "icon2",
+      "type": "pixmap",
+      "rect": [16, 68, 24, 24]
+    },
+    {
+      "key": "indicator1",
+      "type": "bar",
+      "rect": [48, 46, 136, 12],
+      "value": 70,
+      "subtype": 4,
+      "border_w": 0
+    },
+    {
+      "key": "indicator2",
+      "type": "bar",
+      "rect": [48, 74, 136, 12],
+      "value": 40,
+      "subtype": 4,
+      "border_w": 0
+    }
+  ]
+}"#;
+
+pub const LAYOUT_X1: &str = r#"
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+  "id": "$X1",
+  "items": [
+    {
+      "key": "title",
+      "type": "text",
+      "rect": [16, 10, 136, 24],
+      "font": { "size": 16, "weight": 600 },
+      "alignment": "left"
+    },
+    {
+      "key": "icon",
+      "type": "pixmap",
+      "rect": [76, 40, 48, 48]
+    }
+  ]
+}"#;
