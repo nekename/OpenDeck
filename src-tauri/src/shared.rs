@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::env::var;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::LazyLock;
 
 use serde::{Deserialize, Deserializer, Serialize, de::Visitor};
@@ -245,10 +245,6 @@ pub struct Encoder {
 	// TODO: Validation Pattern: "^(^(?![\\.]*[\\\\\\/]+).+\\.([Jj][Ss][Oo][Nn])$)|(\\$(X1|A0|A1|B1|B2|C1))$"
 	#[serde_inline_default(String::new())]
 	pub layout: String,
-
-	// Note: this is not a real manifest property, it's only used internally.
-	#[serde(default)]
-	pub base_path: Option<String>,
 
 	// Note: this is not a real manifest property; it is only used internally.
 	#[serde_inline_default(serde_json::Value::Null)]

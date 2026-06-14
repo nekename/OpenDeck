@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::LazyLock;
 
+use crate::shared::config_dir;
 use crate::store::profiles::{acquire_locks, get_slot};
 use base64::Engine as _;
 use elgato_streamdeck::{
@@ -46,10 +47,11 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 				let locks = acquire_locks().await;
 				if let Some(action) = get_slot(context, &locks).await?
 					&& let Some(encoder) = &action.action.encoder
-					&& let Some(path) = &encoder.base_path
 				{
 					// Grab the layout, render the image, and send it
 					let layout = &encoder.layout_parsed;
+					let path = config_dir().join("plugins").join(&action.action.plugin);
+
 					let path = PathBuf::from(path);
 					let img = get_dynamic_from_layout_value(&layout, &*path, None)?;
 
