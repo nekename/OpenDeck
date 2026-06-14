@@ -53,12 +53,21 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 					let path = config_dir().join("plugins").join(&action.action.plugin);
 
 					if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) {
-						// If the title is missing, provide it from the action
-						if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title"))
-							&& (title_item.get("value").is_none() || title_item["value"] == Value::Null)
-						{
-							let current_text = &action.states[action.current_state as usize].text;
-							title_item["value"] = Value::String(current_text.clone());
+						// If the title is missing, provide it from the action/state
+						if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title")) {
+							let title_value = title_item.get("value").and_then(Value::as_str).unwrap_or("").trim();
+
+							if title_value.is_empty() {
+								// Try and pull the title from the state
+								let state_text = action.states.get(action.current_state as usize).and_then(|s| {
+									let t = s.text.trim();
+									if t.is_empty() { None } else { Some(t) }
+								});
+
+								// If the state is empty, fall back to the action name
+								let title = state_text.unwrap_or(action.action.name.as_str());
+								title_item["value"] = Value::String(title.to_string());
+							}
 						}
 
 						// If the icon is empty, provide it from the state/action
