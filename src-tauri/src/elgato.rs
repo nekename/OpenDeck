@@ -64,10 +64,6 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 						// If the icon is empty, provide it from the state/action
 						if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
 							let icon_empty = icon_item.get("value").and_then(Value::as_str).map_or(true, str::is_empty);
-
-							debug!("setFeedback: icon_empty: {}", icon_empty);
-							debug!("setFeedback: icon as str: {:?}", icon_item.get("value").and_then(Value::as_str));
-
 							if icon_empty {
 								let icon = action
 									.states
