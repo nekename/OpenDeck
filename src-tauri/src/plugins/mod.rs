@@ -92,6 +92,9 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 		}
 
 		if let Some(encoder) = &mut action.encoder {
+			// We need this for now, the image generator requires it for loading pixmaps
+			encoder.base_path = Some(path.clone());
+
 			if !encoder.icon.is_empty() {
 				let encoder_icon_path = path.join(encoder.icon.clone());
 				encoder.icon = convert_icon(encoder_icon_path.to_str().unwrap().to_owned());
