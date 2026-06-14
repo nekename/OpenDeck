@@ -1,12 +1,12 @@
 use crate::events::inbound;
+use crate::shared::config_dir;
+use crate::store::profiles::{acquire_locks, get_slot, get_slot_mut};
 
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::LazyLock;
 
-use crate::shared::config_dir;
-use crate::store::profiles::{acquire_locks, get_slot};
 use base64::Engine as _;
 use elgato_streamdeck::{
 	AsyncStreamDeck, DeviceStateUpdate,
@@ -14,6 +14,7 @@ use elgato_streamdeck::{
 	info::Kind,
 };
 use image::GenericImageView as _;
+use serde_json::Value;
 use streamdeck_strip_render::get_dynamic_from_layout_value;
 use tokio::sync::RwLock;
 
@@ -48,9 +49,19 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 				if let Some(action) = get_slot(context, &locks).await?
 					&& let Some(encoder) = &action.action.encoder
 				{
-					// Grab the layout, render the image, and send it
-					let layout = &encoder.layout_parsed;
+					// Clone the layout so we can mutate it for rendering without persisting
+					let mut layout = encoder.layout_parsed.clone();
 					let path = config_dir().join("plugins").join(&action.action.plugin);
+
+					// If the title is missing, provide it from the action
+					if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut)
+						&& let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title"))
+					{
+						if title_item.get("value").is_none() || title_item["value"] == Value::Null {
+							let current_text = &action.states[action.current_state as usize].text;
+							title_item["value"] = Value::String(current_text.clone());
+						}
+					}
 
 					let path = PathBuf::from(path);
 					let img = get_dynamic_from_layout_value(&layout, &*path, None)?;
