@@ -2,7 +2,6 @@ use super::ContextAndPayloadEvent;
 use crate::events::frontend::instances::update_state;
 use crate::store::profiles::{acquire_locks_mut, debounce_profile_save, get_instance_mut, save_profile};
 use log::{debug, warn};
-use std::collections::HashSet;
 
 use crate::shared::{config_dir, load_encoder_layout};
 use serde::Deserialize;
@@ -131,8 +130,6 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 			};
 
 			// These are keys that are being explicitly updated as part of the object
-			let explicit_keys: HashSet<&str> = map.iter().filter_map(|(k, v)| matches!(v, Value::Object(_)).then_some(k.as_str())).collect();
-
 			for (key, payload_value) in &map {
 				match payload_value {
 					Value::String(_) | Value::Number(_) => {
@@ -240,13 +237,11 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 			}
 
 			// If we have a title, and it's not been defined as a value, fallback to the action title
-			if let Some(title_item) = items_array.iter_mut().find(|item| {
-				item.get("key").and_then(Value::as_str) == Some("title")
-			}) {
-				if title_item.get("value").is_none() || title_item["value"] == Value::Null {
-					let current_text = &action.states[action.current_state as usize].text;
-					title_item["value"] = Value::String(current_text.clone());
-				}
+			if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title"))
+				&& (title_item.get("value").is_none() || title_item["value"] == Value::Null)
+			{
+				let current_text = &action.states[action.current_state as usize].text;
+				title_item["value"] = Value::String(current_text.clone());
 			}
 
 			// Trigger a state update, should cause a redraw

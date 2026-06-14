@@ -234,10 +234,10 @@ pub async fn update_image(context: Context, image: Option<String>) {
 #[command]
 pub async fn get_encoder_image(context: Context) -> Result<Option<String>, Error> {
 	let locks = acquire_locks().await;
-	if let Some(instance) = get_slot(&context, &locks).await?.clone() {
-		if let Some(_encoder) = instance.action.encoder {
-			// Generate from encoder.layout_parsed
-		}
+	if let Some(instance) = get_slot(&context, &locks).await?.clone()
+		&& let Some(_encoder) = instance.action.encoder
+	{
+		// Generate from encoder.layout_parsed
 	}
 
 	Ok(None)

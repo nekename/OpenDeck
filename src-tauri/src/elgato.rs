@@ -1,9 +1,8 @@
 use crate::events::inbound;
 use crate::shared::config_dir;
-use crate::store::profiles::{acquire_locks, get_slot, get_slot_mut};
+use crate::store::profiles::{acquire_locks, get_slot};
 
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::LazyLock;
 
@@ -56,15 +55,12 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 					// If the title is missing, provide it from the action
 					if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut)
 						&& let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title"))
+						&& (title_item.get("value").is_none() || title_item["value"] == Value::Null)
 					{
-						if title_item.get("value").is_none() || title_item["value"] == Value::Null {
-							let current_text = &action.states[action.current_state as usize].text;
-							title_item["value"] = Value::String(current_text.clone());
-						}
+						let current_text = &action.states[action.current_state as usize].text;
+						title_item["value"] = Value::String(current_text.clone());
 					}
-
-					let path = PathBuf::from(path);
-					let img = get_dynamic_from_layout_value(&layout, &*path, None)?;
+					let img = get_dynamic_from_layout_value(&layout, &path, None)?;
 
 					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img.clone())?).await?;
 				} else {
