@@ -13,7 +13,7 @@ use elgato_streamdeck::{
 	info::Kind,
 };
 use image::GenericImageView as _;
-use log::debug;
+use log::{debug, warn};
 use serde_json::Value;
 use streamdeck_strip_render::get_dynamic_from_layout_value;
 use tokio::sync::RwLock;
@@ -93,6 +93,8 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 
 					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img.clone())?).await?;
 				} else {
+					warn!("Loading Encoder: no encoder found");
+
 					// Draw the default icon
 					device
 						.write_lcd(
