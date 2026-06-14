@@ -13,6 +13,7 @@ use elgato_streamdeck::{
 	info::Kind,
 };
 use image::GenericImageView as _;
+use log::debug;
 use serde_json::Value;
 use streamdeck_strip_render::get_dynamic_from_layout_value;
 use tokio::sync::RwLock;
@@ -60,14 +61,26 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 							title_item["value"] = Value::String(current_text.clone());
 						}
 
-						// If the icon is empty, provide it from the action
+						// If the icon is empty, provide it from the state/action
 						if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
 							let icon_empty = icon_item.get("value").and_then(Value::as_str).map_or(true, str::is_empty);
 
-							// Get the icon from the state
-							let current_icon = &action.states[action.current_state as usize].image;
-							if icon_empty && !action.action.icon.is_empty() {
-								icon_item["value"] = Value::String(current_icon.clone());
+							debug!("setFeedback: icon_empty: {}", icon_empty);
+							debug!("setFeedback: icon as str: {:?}", icon_item.get("value").and_then(Value::as_str));
+
+							if icon_empty {
+								let icon = action
+									.states
+									.get(action.current_state as usize)
+									.map(|state| &state.image)
+									.filter(|image| !image.is_empty())
+									.unwrap_or(&action.action.icon);
+
+								debug!("setFeedback: setting icon to: {}", icon);
+
+								if !icon.is_empty() {
+									icon_item["value"] = Value::String(icon.clone());
+								}
 							}
 						}
 					}

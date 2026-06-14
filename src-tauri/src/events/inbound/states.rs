@@ -113,12 +113,11 @@ const COMMON_KEYS: &[&str] = &["enabled", "opacity", "background"];
 const BAR_KEYS: &[&str] = &["bar_bg_c", "bar_border_c", "bar_fill_c", "border_w", "range", "subtype", "value"];
 
 pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), anyhow::Error> {
-	// Set feedback is an object, with a list of key / value pairs
 	let mut locks = acquire_locks_mut().await;
+
 	if let Some(action) = get_instance_mut(&event.context, &mut locks).await?
 		&& let Some(encoder) = &mut action.action.encoder
 	{
-		// We need to go through the parsed layout and update / insert values
 		let layout = &mut encoder.layout_parsed;
 
 		debug!("setFeedback: incoming: {:#?}", event.payload);
@@ -130,72 +129,39 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 				return Ok(());
 			};
 
-			// These are keys that are being explicitly updated as part of the object
 			for (key, payload_value) in &map {
 				match payload_value {
 					Value::String(_) | Value::Number(_) => {
-						// Apply to all items except those with explicit object updates
-						for item in items_array.iter_mut() {
-							let item_key = item.get("key").and_then(Value::as_str).unwrap_or("");
-
-							// We shouldn't update titles, or anything explicitly changed
-							if item_key == "title" && key != "title" {
-								continue;
-							}
-
-							item["value"] = match item.get("type").and_then(Value::as_str) {
-								Some("text") => match payload_value {
-									Value::Number(n) => Value::String(n.to_string()),
-									Value::String(_) => payload_value.clone(),
-									_ => {
-										warn!("setFeedback: key '{key}' is a text item but received unexpected value type: {payload_value}");
-										continue;
-									}
-								},
-								Some("pixmap") => {
-									if !matches!(payload_value, Value::String(_)) {
-										// Not a string, so we should ignore this
-										continue;
-									}
-									payload_value.clone()
-								}
-								Some("bar") | Some("gbar") => match payload_value {
-									Value::Number(_) => payload_value.clone(),
-									Value::String(s) => {
-										if let Ok(n) = s.parse::<f64>()
-											&& let Some(n) = serde_json::Number::from_f64(n)
-										{
-											Value::Number(n)
-										} else {
-											warn!("setFeedback: key '{key}' is a bar item but received non-numeric string value: {payload_value}");
-											continue;
-										}
-									}
-									_ => {
-										// Silenty fail if it's not the right type, this is expcted.
-										continue;
-									}
-								},
-								Some(unknown) => {
-									warn!("setFeedback: unknown item type '{unknown}' for key '{key}'");
-									continue;
-								}
-								None => {
-									warn!("setFeedback: item with key '{key}' has no type field");
-									continue;
-								}
-							};
-						}
-					}
-					Value::Object(obj) => {
-						// Target the specific item by key
-						let matching_item = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str).is_some_and(|k| k == key));
-						let Some(item) = matching_item else {
+						// Find matching item only (DO NOT broadcast to all items)
+						let Some(item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some(key)) else {
 							warn!("setFeedback: no layout item found for key '{key}'");
 							continue;
 						};
 
-						// Merge only valid fields for this item type
+						let item_type = item.get("type").and_then(Value::as_str);
+
+						match item_type {
+							Some("text") | Some("bar") | Some("gbar") => {
+								item["value"] = match payload_value {
+									Value::Number(n) => Value::Number(n.clone()),
+									Value::String(s) => Value::String(s.clone()),
+									_ => continue,
+								};
+							}
+
+							_ => {
+								// We don't need to update the value for other types
+								continue;
+							}
+						}
+					}
+
+					Value::Object(obj) => {
+						let Some(item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str).is_some_and(|k| k == key)) else {
+							warn!("setFeedback: no layout item found for key '{key}'");
+							continue;
+						};
+
 						let type_keys: Vec<&str> = match item.get("type").and_then(Value::as_str) {
 							Some("text") => vec!["value", "color", "alignment", "font", "text-overflow"],
 							Some("pixmap") => vec!["value"],
@@ -210,11 +176,12 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 								continue;
 							}
 						};
+
 						let valid_keys: Vec<&str> = COMMON_KEYS.iter().copied().chain(type_keys).collect();
 						let item_type = item.get("type").and_then(Value::as_str).unwrap_or("").to_string();
+
 						for (field, field_value) in obj {
 							if valid_keys.contains(&field.as_str()) {
-								// Coerce string numbers to f32 for bar value fields
 								let coerced = if field == "value"
 									&& matches!(item_type.as_str(), "bar" | "gbar")
 									&& let Value::String(s) = field_value
@@ -237,7 +204,6 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 				}
 			}
 
-			// If we have a title, and it's not been defined as a value, fallback to the action title
 			if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title"))
 				&& (title_item.get("value").is_none() || title_item["value"] == Value::Null)
 			{
@@ -248,17 +214,29 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 			if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
 				let icon_empty = icon_item.get("value").and_then(Value::as_str).map_or(true, str::is_empty);
 
-				// Get the icon from the state
-				let current_icon = &action.states[action.current_state as usize].image;
-				if icon_empty && !action.action.icon.is_empty() {
-					icon_item["value"] = Value::String(current_icon.clone());
+				debug!("setFeedback: icon_empty: {}", icon_empty);
+				debug!("setFeedback: icon as str: {:?}", icon_item.get("value").and_then(Value::as_str));
+
+				if icon_empty {
+					let icon = action
+						.states
+						.get(action.current_state as usize)
+						.map(|state| &state.image)
+						.filter(|image| !image.is_empty())
+						.unwrap_or(&action.action.icon);
+
+					debug!("setFeedback: setting icon to: {}", icon);
+
+					if !icon.is_empty() {
+						icon_item["value"] = Value::String(icon.clone());
+					}
 				}
 			}
 
-			// Trigger a state update, should cause a redraw
 			update_state(crate::APP_HANDLE.get().unwrap(), action.context.clone(), &mut locks).await?;
 		}
 	}
+
 	Ok(())
 }
 
