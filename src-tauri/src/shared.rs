@@ -248,7 +248,7 @@ pub struct Encoder {
 
 	// Note: this is not a real manifest property, it's only used internally.
 	#[serde(default)]
-	pub base_path: Option<PathBuf>,
+	pub base_path: Option<String>,
 
 	// Note: this is not a real manifest property; it is only used internally.
 	#[serde_inline_default(serde_json::Value::Null)]
