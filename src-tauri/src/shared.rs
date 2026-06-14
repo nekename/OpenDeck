@@ -216,8 +216,66 @@ pub struct Action {
 	#[serde(alias = "Controllers")]
 	pub controllers: Vec<String>,
 
+	#[serde(default, alias = "Encoder")]
+	pub encoder: Option<Encoder>,
+
 	#[serde(alias = "States")]
 	pub states: Vec<ActionState>,
+}
+
+/// An encoder, deserialised from the plugin manifest.
+#[serde_inline_default]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Encoder {
+	#[serde_inline_default(String::new())]
+	#[serde(alias = "Icon")]
+	pub icon: String,
+
+	#[serde_inline_default(String::new())]
+	#[serde(alias = "StackColor")]
+	pub stack_color: String,
+
+	#[serde(default, alias = "TriggerDescription")]
+	pub trigger_description: TriggerDescription,
+
+	#[serde_inline_default(String::new())]
+	pub background: String,
+
+	// TODO: Validation Pattern: "^(^(?![\\.]*[\\\\\\/]+).+\\.([Jj][Ss][Oo][Nn])$)|(\\$(X1|A0|A1|B1|B2|C1))$"
+	#[serde_inline_default(String::new())]
+	pub layout: String,
+}
+
+/// Descriptions of behaviours to be shown to the user in the prop inspector
+#[serde_inline_default]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TriggerDescription {
+	#[serde_inline_default(String::new())]
+	#[serde(alias = "LongTouch")]
+	pub long_touch: String,
+
+	#[serde_inline_default(String::new())]
+	#[serde(alias = "Push")]
+	pub push: String,
+
+	#[serde_inline_default(String::new())]
+	#[serde(alias = "Rotate")]
+	pub rotate: String,
+
+	#[serde_inline_default(String::new())]
+	#[serde(alias = "Touch")]
+	pub touch: String,
+}
+
+impl Default for TriggerDescription {
+	fn default() -> Self {
+		Self {
+			long_touch: "".to_owned(),
+			push: "".to_owned(),
+			rotate: "".to_owned(),
+			touch: "".to_owned(),
+		}
+	}
 }
 
 /// Location metadata of a slot.
