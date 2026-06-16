@@ -228,8 +228,6 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 }
 
 pub async fn set_feedback_layout(event: ContextAndPayloadEvent<SetFeedbackLayoutPayload>) -> Result<(), anyhow::Error> {
-	debug!("setFeedbackLayout: incoming: {:#?}", event.payload);
-
 	let mut locks = acquire_locks_mut().await;
 	if let Some(action) = get_instance_mut(&event.context, &mut locks).await?
 		&& let Some(encoder) = &mut action.action.encoder
