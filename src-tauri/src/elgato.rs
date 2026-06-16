@@ -52,6 +52,7 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 					let mut layout = encoder.layout_parsed.clone();
 					let path = config_dir().join("plugins").join(&action.action.plugin);
 
+					// We need to validate whether title text and icon images are defined, if not, pull them from the state / action
 					if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) {
 						// If the title is missing, provide it from the action/state
 						if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title")) {
@@ -81,8 +82,6 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 									.filter(|image| !image.is_empty())
 									.unwrap_or(&action.action.icon);
 
-								debug!("setFeedback: setting icon to: {}", icon);
-
 								if !icon.is_empty() {
 									icon_item["value"] = Value::String(icon.clone());
 								}
@@ -93,9 +92,9 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 
 					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img.clone())?).await?;
 				} else {
-					warn!("Loading Encoder: no encoder found");
-
-					// Draw the default icon
+					// If this encoder doesn't have a layout assigned to it, fall back to just render the icon.
+					// This shouldn't happen and is a safety fallback behaviour.
+					warn!("Encoder {} has no layout assigned to it, falling back to rendering the icon", context.position);
 					device
 						.write_lcd(
 							(context.position as u16 * 200) + 64,

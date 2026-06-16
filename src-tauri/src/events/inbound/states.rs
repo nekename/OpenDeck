@@ -118,10 +118,6 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 		&& let Some(encoder) = &mut action.action.encoder
 	{
 		let layout = &mut encoder.layout_parsed;
-
-		debug!("setFeedback: incoming: {:#?}", event.payload);
-		debug!("setFeedback: layout: {:#?}", layout);
-
 		if let Value::Object(map) = event.payload {
 			let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) else {
 				warn!("Layout has no items array");
@@ -189,14 +185,11 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 
 					// We have an object, so need to locate and map the change
 					Value::Object(obj) => {
-						debug!("setFeedback: processing object for key '{key}': {obj:?}");
-
 						// Grab the item type
 						let Some(item_type) = item.get("type").and_then(Value::as_str) else {
 							warn!("Missing or invalid 'type' field in item: {:?}", item);
 							continue;
 						};
-						debug!("setFeedback: item type for key '{key}': '{item_type}'");
 
 						// Get valid keys for this item type
 						let type_keys: Vec<&str> = match item_type {
@@ -252,8 +245,6 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 					}
 				}
 			}
-
-			debug!("setFeedback: layout: {:#?}", layout);
 			update_state(crate::APP_HANDLE.get().unwrap(), action.context.clone(), &mut locks).await?;
 		}
 	}
