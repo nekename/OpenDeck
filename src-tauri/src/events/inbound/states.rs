@@ -220,31 +220,6 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 				}
 			}
 
-			if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title"))
-				&& (title_item.get("value").is_none() || title_item["value"] == Value::Null)
-			{
-				let current_text = &action.states[action.current_state as usize].text;
-				title_item["value"] = Value::String(current_text.clone());
-			}
-
-			if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
-				let icon_empty = icon_item.get("value").and_then(Value::as_str).is_none_or(str::is_empty);
-
-				if icon_empty {
-					let icon = action
-						.states
-						.get(action.current_state as usize)
-						.map(|state| &state.image)
-						.filter(|image| !image.is_empty())
-						.unwrap_or(&action.action.icon);
-
-					debug!("setFeedback: setting icon to: {}", icon);
-
-					if !icon.is_empty() {
-						icon_item["value"] = Value::String(icon.clone());
-					}
-				}
-			}
 			update_state(crate::APP_HANDLE.get().unwrap(), action.context.clone(), &mut locks).await?;
 		}
 	}
