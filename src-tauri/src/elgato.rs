@@ -8,12 +8,12 @@ use std::sync::LazyLock;
 
 use base64::Engine as _;
 use elgato_streamdeck::{
-	AsyncStreamDeck, DeviceStateUpdate,
-	images::{ImageRect, convert_image_with_format_async},
-	info::Kind,
+	images::{convert_image_with_format_async, ImageRect}, info::Kind,
+	AsyncStreamDeck,
+	DeviceStateUpdate,
 };
 use image::GenericImageView as _;
-use log::{debug, warn};
+use log::warn;
 use serde_json::Value;
 use streamdeck_strip_render::get_dynamic_from_layout_value;
 use tokio::sync::RwLock;
