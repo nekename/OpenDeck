@@ -6,27 +6,28 @@ use crate::store::profiles::get_device_profiles;
 
 use serde::Deserialize;
 
-pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::DeviceInfo>) -> Result<(), anyhow::Error> {
-	if uuid.is_empty() || Some(uuid) == DEVICE_NAMESPACES.read().await.get(&event.payload.id[..2]).map(|x| x.as_str()) {
-		if let Ok(profiles) = get_device_profiles(&event.payload.id) {
+pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::DeviceRegistration>) -> Result<(), anyhow::Error> {
+	if uuid.is_empty() || Some(uuid) == DEVICE_NAMESPACES.read().await.get(&event.payload.device.id[..2]).map(|x| x.as_str()) {
+		if let Ok(profiles) = get_device_profiles(&event.payload.device.id) {
 			let mut profile_stores = crate::store::profiles::PROFILE_STORES.write().await;
 			for profile in profiles {
 				// This is called to initialise the store for each profile when the device is registered.
-				if let Err(e) = profile_stores.get_profile_store_mut(&event.payload, &profile).await {
+				if let Err(e) = profile_stores.get_profile_store_mut(&event.payload.device, &profile).await {
 					log::error!("{}", e);
 				}
 			}
 		}
 
-		event.payload.plugin = uuid.to_owned();
-		let _ = crate::events::outbound::devices::device_did_connect(&event.payload.id, (&event.payload).into()).await;
-		DEVICES.insert(event.payload.id.clone(), event.payload.clone());
-		let _ = crate::device_sleep::note_activity(&event.payload.id).await;
+		event.payload.device.plugin = uuid.to_owned();
+		let _ = crate::events::outbound::devices::device_did_connect(&event.payload.device.id, (&event.payload.device).into()).await;
+		let device_descriptor: crate::shared::DeviceDescriptor = event.payload.clone().into();
+		DEVICES.insert(event.payload.device.id.clone(), device_descriptor);
+		let _ = crate::device_sleep::note_activity(&event.payload.device.id).await;
 		crate::events::frontend::update_devices().await;
 
 		let mut locks = crate::store::profiles::acquire_locks_mut().await;
-		let selected_profile = locks.device_stores.get_selected_profile(&event.payload.id)?;
-		let profile = locks.profile_stores.get_profile_store(&DEVICES.get(&event.payload.id).unwrap(), &selected_profile)?;
+		let selected_profile = locks.device_stores.get_selected_profile(&event.payload.device.id)?;
+		let profile = locks.profile_stores.get_profile_store(&DEVICES.get(&event.payload.device.id).unwrap(), &selected_profile)?;
 		for instance in profile.value.keys.iter().flatten().chain(profile.value.sliders.iter().flatten()) {
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		}
@@ -35,11 +36,11 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 		let _ = crate::APP_HANDLE
 			.get()
 			.unwrap()
-			.track_event("device_registered", Some(serde_json::json!({ "name": event.payload.name })));
+			.track_event("device_registered", Some(serde_json::json!({ "name": event.payload.device.name })));
 
 		Ok(())
 	} else {
-		Err(anyhow::anyhow!("plugin {uuid} is not registered for device namespace {}", &event.payload.id[..2]))
+		Err(anyhow::anyhow!("plugin {uuid} is not registered for device namespace {}", &event.payload.device.id[..2]))
 	}
 }
 

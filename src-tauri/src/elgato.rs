@@ -121,15 +121,19 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 	crate::events::inbound::devices::register_device(
 		"",
 		crate::events::inbound::PayloadEvent {
-			payload: crate::shared::DeviceInfo {
-				id: device_id.clone(),
-				plugin: String::new(),
-				name: device.product().await.unwrap(),
-				rows: kind.row_count(),
-				columns: kind.column_count(),
-				encoders: kind.encoder_count(),
-				touchpoints: kind.touchpoint_count(),
-				r#type: device_type,
+			payload: crate::shared::DeviceRegistration {
+				device: crate::shared::DeviceInfo {
+					id: device_id.clone(),
+					plugin: String::new(),
+					name: device.product().await.unwrap(),
+					rows: kind.row_count(),
+					columns: kind.column_count(),
+					encoders: kind.encoder_count(),
+					touchpoints: kind.touchpoint_count(),
+					r#type: device_type,
+				},
+				layout_version: None,
+				layout: None,
 			},
 		},
 	)

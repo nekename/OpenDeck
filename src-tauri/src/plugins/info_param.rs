@@ -94,6 +94,6 @@ pub async fn make_info(uuid: String, version: String, wine: bool) -> Info {
 			highlightColor: "#F7821BFF".to_owned(),
 			mouseDownColor: "#CF6304FF".to_owned(),
 		},
-		devices: crate::shared::DEVICES.iter().map(|v| (&*v).into()).collect(),
+		devices: crate::shared::DEVICES.iter().map(|v| (&v.device).into()).collect(),
 	}
 }

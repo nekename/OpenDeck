@@ -4,7 +4,7 @@ pub mod profiles;
 pub mod property_inspector;
 pub mod settings;
 
-use crate::shared::{CATEGORIES, Category, DEVICES, DeviceInfo};
+use crate::shared::{CATEGORIES, Category, DEVICES, DeviceDescriptor};
 
 use std::collections::HashMap;
 
@@ -54,7 +54,7 @@ pub async fn restart(app: tauri::AppHandle) {
 }
 
 #[command]
-pub async fn get_devices() -> dashmap::DashMap<String, DeviceInfo> {
+pub async fn get_devices() -> dashmap::DashMap<String, DeviceDescriptor> {
 	DEVICES.clone()
 }
 

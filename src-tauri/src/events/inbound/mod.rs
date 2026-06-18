@@ -42,7 +42,7 @@ pub struct ContextAndPayloadEvent<T, C = ActionContext> {
 #[serde(tag = "event")]
 #[serde(rename_all = "camelCase")]
 pub enum InboundEventType {
-	RegisterDevice(PayloadEvent<crate::shared::DeviceInfo>),
+	RegisterDevice(PayloadEvent<crate::shared::DeviceRegistration>),
 	DeregisterDevice(PayloadEvent<String>),
 	RerenderImages(PayloadEvent<String>),
 	KeyDown(PayloadEvent<devices::PressPayload>),

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import type { DeviceInfo } from "$lib/DeviceInfo";
+	import type { DeviceDescriptor } from "$lib/DeviceInfo";
 	import type { Profile } from "$lib/Profile";
+	import { getDeviceCanvasSize } from "$lib/deviceLayout";
 
 	import { profileManager } from "$lib/singletons";
 
@@ -8,7 +9,7 @@
 	import { listen } from "@tauri-apps/api/event";
 	import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 
-	export let devices: { [id: string]: DeviceInfo } = {};
+	export let devices: { [id: string]: DeviceDescriptor } = {};
 	export let value: string;
 	export let selectedProfiles: { [id: string]: Profile } = {};
 
@@ -41,7 +42,7 @@
 	});
 
 	(async () => devices = await invoke("get_devices"))();
-	listen("devices", ({ payload }: { payload: { [id: string]: DeviceInfo } }) => devices = payload);
+	listen("devices", ({ payload }: { payload: { [id: string]: DeviceDescriptor } }) => devices = payload);
 
 	let buildInfo: string;
 	(async () => buildInfo = await invoke("get_build_info"))();
@@ -49,10 +50,9 @@
 
 	$: {
 		if (devices[value]) {
-			const effectiveCols = Math.min(Math.max(devices[value].columns, devices[value].encoders, devices[value].touchpoints), 8);
-			const effectiveRows = Math.min(devices[value].rows + Math.min(devices[value].encoders, 1) + Math.min(devices[value].touchpoints, 1), 4);
-			const idealWidth = (effectiveCols * 132) + 416;
-			const idealHeight = (effectiveRows * 132) + 384 + (buildInfo?.split("</summary>")[0]?.includes("darwin") ? 28 : 0);
+			const canvas = getDeviceCanvasSize(devices[value]);
+			const idealWidth = canvas.width + 416;
+			const idealHeight = canvas.height + 384 + (buildInfo?.split("</summary>")[0]?.includes("darwin") ? 28 : 0);
 			(async () => {
 				const width = Math.min(idealWidth, screen.availWidth);
 				const height = Math.min(idealHeight, screen.availHeight);

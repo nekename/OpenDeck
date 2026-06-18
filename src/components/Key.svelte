@@ -35,6 +35,11 @@
 	export let active: boolean = true;
 	export let scale: number = 1;
 	export let isTouchPoint: boolean = false;
+	export let isTouchPanelZone: boolean = false;
+	export let showButtonIndicator: boolean = false;
+	export let width: number | undefined = undefined;
+	export let height: number | undefined = undefined;
+	export let directSize: boolean = false;
 	let pressed: boolean = false;
 
 	let state: ActionState | undefined;
@@ -146,6 +151,8 @@
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
+	$: canvasWidth = width ?? size;
+	$: canvasHeight = height ?? size;
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
@@ -182,21 +189,31 @@
 	}
 
 	$: accessibleLabel = label + (slot ? ": " + slot.action.name + (state?.show && state?.text ? " - " + state.text : "") : "");
+	$: wrapperStyle = directSize
+		? `width: ${canvasWidth}px; height: ${canvasHeight}px;`
+		: `transform: scale(${(112 /* desired inner size */ / size) * scale});`;
+	$: canvasStyle = directSize
+		? "width: 100%; height: 100%;"
+		: `margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`;
+	$: isSelected = active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context));
+	$: showCanvasOutline = isSelected && (!isTouchPanelZone || slot != null);
 </script>
 
 <div
 	class="relative"
-	style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}
+	style={wrapperStyle}
 >
 	<canvas
 		bind:this={canvas}
-		class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
-		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
-		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
+		class="relative rounded-3xl outline-none outline-offset-2 outline-blue-500"
+		class:border-3={!isTouchPanelZone || slot != null}
+		class:border-neutral-700={!isTouchPanelZone || slot != null}
+		style={canvasStyle}
+		class:outline-solid={showCanvasOutline}
 		class:rounded-full!={context?.controller == "Encoder"}
 		class:bg-black={slot != null}
-		width={size}
-		height={size}
+		width={canvasWidth}
+		height={canvasHeight}
 		draggable={slot != null}
 		{tabindex}
 		{role}
@@ -222,7 +239,7 @@
 		on:focus={onfocus}
 		on:contextmenu={contextMenu}
 	/>
-	{#if isTouchPoint && !slot}
+	{#if (isTouchPoint || showButtonIndicator) && !slot && !isTouchPanelZone}
 		<div class="absolute left-1/4 top-1/2 w-1/2 border-t-4 border-neutral-700 pointer-events-none"></div>
 	{/if}
 </div>

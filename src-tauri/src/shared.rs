@@ -41,7 +41,126 @@ pub struct DeviceInfo {
 	pub r#type: u8,
 }
 
-pub static DEVICES: LazyLock<DashMap<String, DeviceInfo>> = LazyLock::new(DashMap::new);
+pub const DEVICE_LAYOUT_VERSION: u8 = 1;
+
+#[serde_inline_default]
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceLayout {
+	pub canvas: DeviceLayoutCanvas,
+	#[serde_inline_default(Vec::new())]
+	pub surfaces: Vec<DeviceLayoutSurface>,
+	pub controls: Vec<DeviceLayoutControl>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceLayoutCanvas {
+	pub width: u16,
+	pub height: u16,
+	#[serde(default)]
+	pub unit: Option<String>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceLayoutSurface {
+	pub id: String,
+	#[serde(default)]
+	pub kind: Option<DeviceLayoutSurfaceKind>,
+	pub x: u16,
+	pub y: u16,
+	pub width: u16,
+	pub height: u16,
+	#[serde(default)]
+	pub pixel_width: Option<u16>,
+	#[serde(default)]
+	pub pixel_height: Option<u16>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+pub enum DeviceLayoutSurfaceKind {
+	#[serde(rename = "display")]
+	Display,
+	#[serde(rename = "touchpanel")]
+	TouchPanel,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(tag = "shape", rename_all = "camelCase")]
+pub enum DeviceLayoutControl {
+	Rect {
+		controller: String,
+		position: u8,
+		x: u16,
+		y: u16,
+		width: u16,
+		height: u16,
+		#[serde(default)]
+		surface: Option<String>,
+	},
+	Circle {
+		controller: String,
+		position: u8,
+		cx: u16,
+		cy: u16,
+		r: u16,
+		#[serde(default)]
+		surface: Option<String>,
+	},
+}
+
+/// Rich device registration payload. The flattened shape preserves compatibility
+/// with existing plugins that already send top-level device fields.
+#[serde_inline_default]
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceRegistration {
+	#[serde(flatten)]
+	pub device: DeviceInfo,
+	#[serde_inline_default(None)]
+	pub layout_version: Option<u8>,
+	#[serde_inline_default(None)]
+	pub layout: Option<DeviceLayout>,
+}
+
+/// Device metadata stored internally and emitted to the frontend.
+#[serde_inline_default]
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceDescriptor {
+	#[serde(flatten)]
+	pub device: DeviceInfo,
+	#[serde_inline_default(None)]
+	pub layout_version: Option<u8>,
+	#[serde_inline_default(None)]
+	pub layout: Option<DeviceLayout>,
+}
+
+impl From<DeviceRegistration> for DeviceDescriptor {
+	fn from(value: DeviceRegistration) -> Self {
+		let layout = if value.layout_version == Some(DEVICE_LAYOUT_VERSION) {
+			value.layout
+		} else {
+			None
+		};
+		Self {
+			device: value.device,
+			layout_version: value.layout_version,
+			layout,
+		}
+	}
+}
+
+impl std::ops::Deref for DeviceDescriptor {
+	type Target = DeviceInfo;
+
+	fn deref(&self) -> &Self::Target {
+		&self.device
+	}
+}
+
+pub static DEVICES: LazyLock<DashMap<String, DeviceDescriptor>> = LazyLock::new(DashMap::new);
 
 /// Get the application configuration directory.
 pub fn config_dir() -> std::path::PathBuf {
