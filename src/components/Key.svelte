@@ -13,6 +13,7 @@
 	import { copiedItem, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
 	import { CanvasLock, renderImage } from "$lib/rendererHelper";
 	import { settings } from "$lib/settings";
+	import { t } from "$lib/i18n";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
@@ -239,7 +240,7 @@
 				on:click|stopPropagation={paste}
 			>
 				<Clipboard size="18" class="text-neutral-300" />
-				<span class="ml-2"> Paste </span>
+				<span class="ml-2">{$t("key.paste")}</span>
 			</button>
 		{:else}
 			<button
@@ -247,21 +248,21 @@
 				on:click|stopPropagation={edit}
 			>
 				<Pencil size="18" class="text-neutral-300" />
-				<span class="ml-2"> Edit </span>
+				<span class="ml-2">{$t("key.edit")}</span>
 			</button>
 			<button
 				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors cursor-pointer"
 				on:click|stopPropagation={copy}
 			>
 				<Copy size="18" class="text-neutral-300" />
-				<span class="ml-2"> Copy </span>
+				<span class="ml-2">{$t("key.copy")}</span>
 			</button>
 			<button
 				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-b-lg cursor-pointer"
 				on:click|stopPropagation={clear}
 			>
 				<Trash size="18" class="text-red-400" />
-				<span class="ml-2"> Delete </span>
+				<span class="ml-2">{$t("key.delete")}</span>
 			</button>
 		{/if}
 	</div>

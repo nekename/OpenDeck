@@ -5,6 +5,7 @@
 
 	import { getWebserverUrl, getWebSocketPort } from "$lib/ports";
 	import { inspectedInstance } from "$lib/propertyInspector";
+	import { t } from "$lib/i18n";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
@@ -188,7 +189,7 @@
 	{#each instances as instance (instance.context)}
 		{#if instance.action.property_inspector}
 			<iframe
-				title="Property inspector"
+				title={$t("propertyinspector.title")}
 				class="w-full h-full hidden"
 				class:block!={$inspectedInstance == instance.context}
 				src={getWebserverUrl(instance.action.property_inspector + "|opendeck_property_inspector")}

@@ -8,6 +8,7 @@
 	import Key from "./Key.svelte";
 
 	import { inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
+	import { t } from "$lib/i18n";
 
 	import { invoke } from "@tauri-apps/api/core";
 
@@ -172,7 +173,7 @@
 </style>
 
 {#key device}
-	<span id="grid-description" class="sr-only">Use arrow keys to navigate between keys. Moving to a key will display its property inspector.</span>
+	<span id="grid-description" class="sr-only">{$t("deviceview.grid-description")}</span>
 	<div
 		class="flex flex-col justify-center grow px-16 py-6 overflow-auto"
 		class:items-center={device.columns <= 8}
@@ -201,7 +202,7 @@
 							on:dragstart={(event) => handleDragStart(event, "Keypad", (r * device.columns) + c)}
 							{handlePaste}
 							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-							label="Key {String.fromCharCode(65 + r)}{c + 1}"
+							label="{$t('deviceview.key')} {String.fromCharCode(65 + r)}{c + 1}"
 							tabindex={focusedRow === r && focusedCol === c ? 0 : -1}
 						/>
 					{/each}
@@ -219,7 +220,7 @@
 					on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-					label="Encoder {i + 1}"
+					label="{$t('deviceview.encoder')} {i + 1}"
 					tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
 				/>
 			{/each}
@@ -236,7 +237,7 @@
 					{handlePaste}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					isTouchPoint
-					label="Touch point {i + 1}"
+					label="{$t('deviceview.touchpoint')} {i + 1}"
 					tabindex={focusedRow === touchpointRowIndex && focusedCol === i ? 0 : -1}
 				/>
 			{/each}

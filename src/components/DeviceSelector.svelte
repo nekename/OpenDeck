@@ -3,6 +3,7 @@
 	import type { Profile } from "$lib/Profile";
 
 	import { profileManager } from "$lib/singletons";
+	import { t } from "$lib/i18n";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
@@ -73,8 +74,8 @@
 {#if Object.keys(devices).length > 0}
 	<div class="select-device-wrapper">
 		<span bind:this={measure} class="invisible fixed whitespace-pre pointer-events-none text-xl font-semibold" aria-hidden="true"></span>
-		<select bind:value style:width="{selectWidth}px" aria-label="Device">
-			<option value="" disabled selected>Choose a device...</option>
+		<select bind:value style:width="{selectWidth}px" aria-label={$t("deviceselector.device")}>
+			<option value="" disabled selected>{$t("deviceselector.choosedevice")}</option>
 
 			{#each Object.entries(devices).sort() as [id, device]}
 				<option value={id}>{device.name}</option>
