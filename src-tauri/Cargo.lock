@@ -4028,7 +4028,7 @@ checksum = "33cb294fe86a74cbcf50d4445b37da762029549ebeea341421c7c70370f86cac"
 [[package]]
 name = "psp"
 version = "0.1.0"
-source = "git+https://github.com/pewsheen/psp?rev=16b7d86c9b73a0254dd167ecdb123e37d8f1ed6e#16b7d86c9b73a0254dd167ecdb123e37d8f1ed6e"
+source = "git+https://github.com/pewsheen/psp?rev=22d2412abd2fcf649472cb4be7df14133a55441a#22d2412abd2fcf649472cb4be7df14133a55441a"
 dependencies = [
  "cocoa",
  "crossbeam-channel",

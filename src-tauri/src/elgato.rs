@@ -105,6 +105,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 		return;
 	}
 
+	let device_name = device.product().await.unwrap();
 	let kind = device.kind();
 	let device_type = match kind {
 		Kind::Original | Kind::OriginalV2 | Kind::Mk2 | Kind::Mk2Scissor | Kind::Mk2Module => 0,
@@ -118,9 +119,10 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 	clear_all_touchpoints(&device).await;
 	let _ = device.set_brightness(crate::store::get_settings().value.brightness).await;
 	let _ = device.flush().await;
-	let device_name = device.product().await.unwrap();
+
 	let reader = device.get_reader();
 	ELGATO_DEVICES.write().await.insert(device_id.clone(), device);
+
 	crate::events::inbound::devices::register_device(
 		"",
 		crate::events::inbound::PayloadEvent {

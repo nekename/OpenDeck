@@ -109,7 +109,7 @@
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-sleep_when_computer_locked" class="text-neutral-400">Sleep when computer is locked:</label>
 			<input type="checkbox" bind:checked={$settings.sleep_when_computer_locked} id="settings-sleep_when_computer_locked" />
-			<Tooltip> This option puts devices into sleep mode when the computer locks and blocks all key presses until unlock. </Tooltip>
+			<Tooltip> If this option is enabled, devices will enter sleep mode when the computer locks and all key presses will be suppressed until it is unlocked. </Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
