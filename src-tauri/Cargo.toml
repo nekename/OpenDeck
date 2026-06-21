@@ -25,7 +25,7 @@ hidapi = "2.6"
 image = { version = "0.25", default-features = false, features = ["bmp", "jpeg"] }
 
 # Stream Deck Strip Renderer
-streamdeck-strip-render = { git = "https://github.com/FrostyCoolSlug/streamdeck-strip-render", rev = "56004e2c" }
+streamdeck-strip-render = { git = "https://github.com/FrostyCoolSlug/streamdeck-strip-render", rev = "d13e4c90" }
 
 # Smaller utility libraries
 dashmap = { version = "6.1", features = ["serde"] }
