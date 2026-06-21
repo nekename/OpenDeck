@@ -15,7 +15,6 @@ use elgato_streamdeck::{
 use image::GenericImageView as _;
 use log::warn;
 use serde_json::Value;
-use streamdeck_strip_render::get_dynamic_from_layout_value;
 use tokio::sync::RwLock;
 
 static ELGATO_DEVICES: LazyLock<RwLock<HashMap<String, AsyncStreamDeck>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
@@ -88,7 +87,7 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 							}
 						}
 					}
-					let img = get_dynamic_from_layout_value(&layout, &path, None)?;
+					let img = streamdeck_strip_render::render_to_image(layout, &path, None)?;
 
 					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img.clone())?).await?;
 				} else {
