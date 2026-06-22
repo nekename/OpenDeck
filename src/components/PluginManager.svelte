@@ -291,7 +291,7 @@
 	<div class="flex flex-row items-center mx-2 my-4 p-3 space-x-2 bg-yellow-900/20 border-l-4 border-yellow-500 rounded">
 		<WarningCircle size="20" class="mt-0.5 text-yellow-500" />
 		<div class="text-sm text-yellow-200">
-			{$t("plugin_manager.warning").replaceAll("{PRODUCT_NAME}", PRODUCT_NAME)}
+			{$t("plugin_manager.warning", { PRODUCT_NAME })}
 		</div>
 	</div>
 

@@ -20,7 +20,7 @@
 			class="px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
 			on:click={() => invoke("restart")}
 		>
-			{$t("no_devices_detected.restart").replaceAll("{PRODUCT_NAME}", PRODUCT_NAME)}
+			{$t("no_devices_detected.restart", { PRODUCT_NAME })}
 		</button>
 	</div>
 </div>

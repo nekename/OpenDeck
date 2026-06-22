@@ -90,7 +90,7 @@
 				</select>
 			</div>
 			<Tooltip>
-				{$t("settings.language.tooltip").replaceAll("{PRODUCT_NAME}", PRODUCT_NAME)}
+				{$t("settings.language.tooltip", { PRODUCT_NAME })}
 			</Tooltip>
 		</div>
 
@@ -120,17 +120,17 @@
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-background" class="text-neutral-400">{$t("settings.background")}</label>
 			<input type="checkbox" bind:checked={$settings.background} id="settings-background" />
-			<Tooltip>{$t("settings.background.tooltip").replaceAll("{PRODUCT_NAME}", PRODUCT_NAME)}</Tooltip>
+			<Tooltip>{$t("settings.background.tooltip", { PRODUCT_NAME })}</Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-autolaunch" class="text-neutral-400">{$t("settings.autolaunch")}</label>
 			<input type="checkbox" bind:checked={$settings.autolaunch} id="settings-autolaunch" />
 			<Tooltip>
-				{$t("settings.autolaunch.tooltip.1").replaceAll("{PRODUCT_NAME}", PRODUCT_NAME)}
+				{$t("settings.autolaunch.tooltip.1", { PRODUCT_NAME })}
 				{#if buildInfo?.split("</summary>")[0]?.includes("linux")}
 					<br />
-					{$t("settings.autolaunch.tooltip.2").replaceAll("{PRODUCT_NAME}", PRODUCT_NAME)}
+					{$t("settings.autolaunch.tooltip.2", { PRODUCT_NAME })}
 				{/if}
 			</Tooltip>
 		</div>
@@ -150,7 +150,7 @@
 				<label for="settings-separatewine" class="text-neutral-400">{$t("settings.separatewine")}</label>
 				<input type="checkbox" bind:checked={$settings.separatewine} id="settings-separatewine" />
 				<Tooltip>
-					{$t("settings.separatewine.tooltip").replaceAll("{PRODUCT_NAME}", PRODUCT_NAME)}
+					{$t("settings.separatewine.tooltip", { PRODUCT_NAME })}
 				</Tooltip>
 			</div>
 		{/if}
