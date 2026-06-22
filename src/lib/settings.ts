@@ -23,8 +23,8 @@ export const settings: Writable<Settings | null> = writable(null);
 export const localisations: Writable<{ [plugin: string]: any } | null> = writable(null);
 settings.subscribe(async (value) => {
 	if (value) {
-		locale.set(value.language);
 		await invoke("set_settings", { settings: value });
+		locale.set(value.language);
 		localisations.set(await invoke("get_localisations", { locale: value.language }));
 	}
 });

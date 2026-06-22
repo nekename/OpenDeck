@@ -10,10 +10,10 @@
 	import Trash from "phosphor-svelte/lib/Trash";
 	import InstanceEditor from "./InstanceEditor.svelte";
 
+	import { t } from "$lib/i18n";
 	import { copiedItem, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
 	import { CanvasLock, renderImage } from "$lib/rendererHelper";
 	import { settings } from "$lib/settings";
-	import { t } from "$lib/i18n";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";

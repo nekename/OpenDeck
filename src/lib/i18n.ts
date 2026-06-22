@@ -2,7 +2,6 @@ import { derived, writable } from "svelte/store";
 
 const FALLBACK_LOCALE = "en";
 
-// @ts-ignore: import.meta.glob is a Vite-specific API
 const translationModules = import.meta.glob("../../translations/*.json", {
 	eager: true,
 	import: "default",
@@ -20,11 +19,11 @@ const translations: Record<string, Record<string, string>> = Object.fromEntries(
 	}),
 );
 
-export const locale = writable("de");
+export const locale = writable("en");
 
 function translate(locale: string, key: string, vars: { [x: string]: any }) {
 	if (!key) throw new Error("no key provided to $t()");
-	if (!locale) throw new Error(`no translation for key "${key}"`);
+	if (!locale) throw new Error("no locale provided to $t()");
 
 	// Grab the translation from the translation object.
 	const dictionary = translations as Record<string, Record<string, string>>;

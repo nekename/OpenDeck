@@ -3,8 +3,8 @@
 	import DownloadSimple from "phosphor-svelte/lib/DownloadSimple";
 	import Popup from "./Popup.svelte";
 
-	import "$lib/shims.ts";
 	import { t } from "$lib/i18n.ts";
+	import "$lib/shims.ts";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import DOMPurify from "dompurify";
@@ -15,7 +15,7 @@
 
 	export let id: string;
 	export let details: { repository: string; name: string; author: string; download_url: string | undefined };
-	let readme = `<strong>${$t("plugindetails.loading")}</strong>`;
+	let readme = `<strong>${$t("plugin_details.loading")}</strong>`;
 	let downloadCount = 0;
 
 	export let install: () => void;
@@ -45,7 +45,7 @@
 				return await marked.parse(DOMPurify.sanitize(await response.text()).replace(/<a/g, '<a target="_blank" '));
 			}
 		}
-		return await marked.parse($t("plugindetails.readme.notfound", { repo: repo }));
+		return await marked.parse($t("plugin_details.readme.not_found", { repo }));
 	}
 
 	function handleReadmeClick(event: MouseEvent | KeyboardEvent) {
@@ -71,7 +71,7 @@
 	});
 </script>
 
-<Popup show label={$t("plugindetails.plugindetails").replaceAll("{details.name}", details.name)}>
+<Popup show label={$t("plugin_details.title").replaceAll("{details.name}", details.name)}>
 	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={close} aria-label={$t("settings.close")}>✕</button>
 	<div class="flex flex-row items-start">
 		<img
@@ -82,7 +82,7 @@
 		<div class="flex flex-col justify-center h-48 ml-8">
 			<div class="text-3xl text-neutral-200">{details.name}</div>
 			<div class="flex items-center mt-2 text-lg text-neutral-400">
-				<span class="mr-2">{$t("plugindetails.by")}</span>
+				<span class="mr-2">{$t("plugin_details.by")}</span>
 				<img
 					src={"https://avatars.githubusercontent.com/" + details.repository.split("/")[3]}
 					alt="Author avatar"
@@ -106,13 +106,13 @@
 					on:click={install}
 					class="px-8 py-3 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 hover:bg-indigo-500 transition-colors border border-indigo-500 rounded-l-lg"
 				>
-					{$t("plugindetails.install")}
+					{$t("plugin_details.install")}
 				</button>
 
 				<button
 					on:click={() => invoke("open_url", { url: details.download_url ?? details.repository + "/releases/latest" })}
 					class="ml-1 p-3.5 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 hover:bg-indigo-500 transition-colors border border-indigo-500 rounded-r-lg"
-					aria-label={$t("plugindetails.downloadlatest")}
+					aria-label={$t("plugin_details.download_latest")}
 				>
 					<ArrowSquareOut size={24} />
 				</button>

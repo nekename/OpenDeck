@@ -3,11 +3,11 @@
 
 	import MagnifyingGlass from "phosphor-svelte/lib/MagnifyingGlass";
 
+	import { t } from "$lib/i18n";
 	import { getWebserverUrl } from "$lib/ports";
 	import { copiedItem } from "$lib/propertyInspector";
 	import { localisations } from "$lib/settings";
 	import { PRODUCT_NAME } from "$lib/singletons";
-	import { t } from "$lib/i18n";
 
 	import { invoke } from "@tauri-apps/api/core";
 
@@ -82,13 +82,13 @@
 		<input
 			bind:value={query}
 			class="w-full p-1 text-sm text-neutral-300"
-			placeholder={$t("actionlist.searchplaceholder")}
+			placeholder={$t("action_list.search_placeholder")}
 			type="search"
 			spellcheck="false"
 		/>
 	</div>
 
-	<span id="action-list-hint" class="sr-only">{$t("actionlist.hint")}</span>
+	<span id="action-list-hint" class="sr-only">{$t("action_list.hint")}</span>
 	<div class="grow overflow-auto select-none divide-y divide-neutral-800!">
 		{#each filteredCategories as [name, { icon, actions }]}
 			<details open>
