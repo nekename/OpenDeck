@@ -123,6 +123,8 @@
   "settings.device.image.rotation": "Image rotation:",
   "settings.device.sleep": "Sleep after inactivity:",
   "settings.device.sleep.tooltip": "This option controls how many minutes of inactivity will cause devices to enter sleep mode, where a value of 0 disables sleeping automatically.",
+  "settings.device.sleep_on_lock": "Sleep when computer is locked:",
+  "settings.device.sleep_on_lock.tooltip": "If this option is enabled, devices will enter sleep mode when the computer locks and all key presses will be suppressed until it is unlocked.",
   "settings.devmode": "Enable developer mode:",
   "settings.devmode.tooltip": "This option enables features that make plugin development and debugging easier. Additionally, this option exposes all file paths on your device on the local webserver to allow symbolic linking of plugins, so you should disable it if it is not in use.",
   "settings.disableelgato": "Disable Elgato device discovery:",

@@ -3,6 +3,7 @@ pub mod deep_link;
 pub mod devices;
 pub mod encoder;
 pub mod keypad;
+pub mod misc;
 pub mod property_inspector;
 pub mod settings;
 pub mod states;

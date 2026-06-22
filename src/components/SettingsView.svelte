@@ -107,6 +107,12 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-sleep_when_computer_locked" class="text-neutral-400">{$t("settings.device.sleep_on_lock")}</label>
+			<input type="checkbox" bind:checked={$settings.sleep_when_computer_locked} id="settings-sleep_when_computer_locked" />
+			<Tooltip> {$t("settings.device.sleep_on_lock.tooltip")} </Tooltip>
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-rotation" class="text-neutral-400">{$t("settings.device.image.rotation")}</label>
 			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} id="settings-rotation" />
 		</div>
