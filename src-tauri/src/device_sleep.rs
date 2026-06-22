@@ -34,7 +34,7 @@ pub async fn update_sleep_timeout_minutes(minutes: u16) -> Result<(), anyhow::Er
 	SLEEP_TIMEOUT_MINUTES.store(minutes, Ordering::Relaxed);
 
 	if minutes == 0 && !(SLEEP_WHEN_COMPUTER_LOCKED.load(Ordering::Relaxed) && COMPUTER_LOCKED.load(Ordering::Relaxed)) {
-		for device in SLEEPING_DEVICES.iter().map(|entry| entry.key().clone()) {
+		for device in SLEEPING_DEVICES.iter().map(|entry| entry.key().clone()).collect::<Vec<_>>() {
 			wake_device(&device).await?;
 		}
 	}
