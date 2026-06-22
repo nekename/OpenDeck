@@ -6,6 +6,7 @@ mod device_sleep;
 mod elgato;
 mod events;
 mod plugins;
+mod power_events;
 mod shared;
 mod store;
 mod zip_extract;
@@ -197,6 +198,7 @@ If you have already donated, thank you so much for your support!"#,
 			plugins::initialise_plugins();
 			application_watcher::init_application_watcher();
 			device_sleep::init_device_sleep();
+			power_events::init_power_events();
 
 			let label = IconMenuItemBuilder::with_id("label", PRODUCT_NAME)
 				.icon(app.default_window_icon().unwrap().clone())
@@ -332,7 +334,7 @@ If you have already donated, thank you so much for your support!"#,
 						if args.len() > pos + 1 {
 							let device_id = args[pos + 1].clone();
 							std::thread::spawn(move || {
-								if let Err(error) = tauri::async_runtime::block_on(device_sleep::note_activity(&device_id)) {
+								if let Err(error) = tauri::async_runtime::block_on(device_sleep::wake_device(&device_id)) {
 									log::error!("Failed to wake device: {error}");
 								}
 							});

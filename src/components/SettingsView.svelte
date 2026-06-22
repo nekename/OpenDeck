@@ -107,6 +107,12 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-sleep_when_computer_locked" class="text-neutral-400">Sleep when computer is locked:</label>
+			<input type="checkbox" bind:checked={$settings.sleep_when_computer_locked} id="settings-sleep_when_computer_locked" />
+			<Tooltip> If this option is enabled, devices will enter sleep mode when the computer locks and all key presses will be suppressed until it is unlocked. </Tooltip>
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-rotation" class="text-neutral-400">Image rotation:</label>
 			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} id="settings-rotation" />
 		</div>

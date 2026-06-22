@@ -258,7 +258,14 @@
 			{/if}
 			{#each profiles.sort() as profile}
 				<div class="flex flex-row items-center py-2 space-x-2" class:ml-6={id} class:pl-2={id}>
-					<input type="radio" bind:group={value} value={profile} disabled={renamingProfile == profile} id={`profile-${encodeURIComponent(profile)}`} aria-label={id ? profile.split("/")[1] : profile} />
+					<input
+						type="radio"
+						bind:group={value}
+						value={profile}
+						disabled={renamingProfile == profile}
+						id={`profile-${encodeURIComponent(profile)}`}
+						aria-label={id ? profile.split("/")[1] : profile}
+					/>
 					{#if profile == renamingProfile}
 						<input
 							bind:this={renameInput}
