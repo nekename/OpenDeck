@@ -84,7 +84,7 @@
 	$: gridRowLengths = [
 		...Array(device.rows).fill(device.columns),
 		...(device.encoders > 0 ? [device.encoders] : []),
-		...(device.touchpoints > 0 ? [device.touchpoints] : []),
+		...((device.touchpoints > 0 || device.infobars > 0) ? [device.touchpoints + device.infobars] : []),
 	];
 	$: encoderRowIndex = device.rows;
 	$: touchpointRowIndex = device.rows + (device.encoders > 0 ? 1 : 0);
@@ -228,10 +228,10 @@
 
 		<div class="flex flex-row items-center" role="row">
 			{#each { length: device.touchpoints } as _, i}
-				<!-- On the Neo the infobar displays sit physically between the two touchpoints. -->
+				<!-- On the Stream Deck Neo, the infobar display sits physically between the two touchpoints. -->
 				{#if device.infobars > 0 && i === 1}
 					{#each { length: device.infobars } as _, j}
-						<div class="px-[14px] py-[3.5px]">
+						<div class="px-3.5 py-[3.5px]">
 							<Key
 								context={{ device: device.id, profile: profile.id, controller: "Infobar", position: j }}
 								bind:inslot={profile.infobars[j]}
@@ -240,8 +240,8 @@
 								on:dragstart={(event) => handleDragStart(event, "Infobar", j)}
 								{handlePaste}
 								size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-								width={device.type === 9 ? 248 : 200}
-								height={device.type === 9 ? 58 : 100}
+								width={248}
+								height={58}
 							/>
 						</div>
 					{/each}

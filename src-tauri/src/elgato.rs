@@ -47,7 +47,9 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 					.await?;
 			} else if context.controller == "Infobar" {
 				let img = image::load_from_memory(&bytes)?;
-				let format = device.kind().lcd_image_format().unwrap();
+				let Some(format) = device.kind().lcd_image_format() else {
+					return Err(anyhow::anyhow!("Failed to get LCD image format"));
+				};
 				let data = convert_image_with_format_async(format, img.resize_exact(248, 58, image::imageops::FilterType::Lanczos3))?;
 				device.write_lcd_fill(&data).await?;
 			} else if is_touch_point {
@@ -61,7 +63,9 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 				.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
 				.await?;
 		} else if context.controller == "Infobar" {
-			let format = device.kind().lcd_image_format().unwrap();
+			let Some(format) = device.kind().lcd_image_format() else {
+				return Err(anyhow::anyhow!("Failed to get LCD image format"));
+			};
 			let data = convert_image_with_format_async(format, image::DynamicImage::new_rgb8(248, 58))?;
 			device.write_lcd_fill(&data).await?;
 		} else if is_touch_point {
@@ -130,12 +134,12 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 	};
 	let _ = device.clear_all_button_images().await;
 	clear_all_touchpoints(&device).await;
-	let _ = clear_screen(&device_id).await;
 	let _ = device.set_brightness(crate::store::get_settings().value.brightness).await;
 	let _ = device.flush().await;
 
 	let reader = device.get_reader();
 	ELGATO_DEVICES.write().await.insert(device_id.clone(), device);
+	let _ = clear_screen(&device_id).await;
 
 	crate::events::inbound::devices::register_device(
 		"",

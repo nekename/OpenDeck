@@ -146,7 +146,7 @@
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
-	// Canvas resolution defaults to a square `size`, but rectangular controllers (e.g. the Neo infobar) can override.
+	// Canvas resolution defaults to a square `size`, but rectangular controllers (e.g. the Neo's infobar) can override this.
 	export let width: number = size;
 	export let height: number = size;
 	$: (async () => {
