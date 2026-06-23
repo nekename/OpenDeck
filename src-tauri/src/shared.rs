@@ -244,7 +244,6 @@ pub struct Encoder {
 	#[serde_inline_default(String::new())]
 	pub background: String,
 
-	// TODO: Validation Pattern: "^(^(?![\\.]*[\\\\\\/]+).+\\.([Jj][Ss][Oo][Nn])$)|(\\$(X1|A0|A1|B1|B2|C1))$"
 	#[serde_inline_default(String::new())]
 	pub layout: String,
 
