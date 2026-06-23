@@ -67,14 +67,12 @@ impl ProfileStores {
 
 			// We need to correct encoders which are now populated from a profile without them
 			for slot in store.value.sliders.iter_mut() {
-				if let Some(instance) = slot {
-					if instance.action.encoder.is_none() {
-						if let Some(action) = actions.iter().find(|a| a.uuid == *instance.action.uuid) {
-							if action.encoder.is_some() {
-								instance.action.encoder = action.encoder.clone();
-							}
-						}
-					}
+				if let Some(instance) = slot
+					&& instance.action.encoder.is_none()
+					&& let Some(action) = actions.iter().find(|a| a.uuid == *instance.action.uuid)
+					&& action.encoder.is_some()
+				{
+					instance.action.encoder = action.encoder.clone();
 				}
 			}
 
