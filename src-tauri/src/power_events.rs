@@ -30,6 +30,9 @@ pub fn init_power_events() {
 						if let Err(error) = crate::events::outbound::misc::system_did_wake_up().await {
 							log::error!("Failed to send the systemDidWakeUp event: {error}");
 						}
+						if let Err(error) = crate::device_sleep::reapply_brightness_after_resume().await {
+							log::error!("Failed to reapply device brightness after resume: {error}");
+						}
 					});
 				}
 				PowerState::Suspend | PowerState::Shutdown | PowerState::Unknown => {}

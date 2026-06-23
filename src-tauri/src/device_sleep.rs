@@ -16,6 +16,26 @@ pub fn is_device_sleeping(device: &str) -> bool {
 	SLEEPING_DEVICES.contains_key(device)
 }
 
+/// After the system resumes from sleep, device firmware has reset its brightness to 0, but
+/// OpenDeck's handles and software state are intact (devices are not re-enumerated). Re-push the
+/// configured brightness to every connected device that is not intentionally asleep (idle or
+/// computer-lock). Does not open/enumerate any device, so it is safe with respect to the macOS
+/// wake crash (which occurs in `hid_open`/`hid_enumerate`, not when writing to an open handle).
+pub async fn reapply_brightness_after_resume() -> Result<(), anyhow::Error> {
+	let brightness = crate::store::get_settings().value.brightness;
+	let devices = crate::shared::DEVICES.iter().map(|entry| entry.id.clone()).collect::<Vec<_>>();
+	let mut reapplied = 0;
+	for device in devices {
+		if is_device_sleeping(&device) {
+			continue;
+		}
+		crate::events::outbound::devices::set_device_brightness(&device, brightness).await?;
+		reapplied += 1;
+	}
+	log::info!("Reapplied brightness to {reapplied} device(s) after system resume");
+	Ok(())
+}
+
 pub fn init_device_sleep() {
 	SLEEP_TIMEOUT_MINUTES.store(crate::store::get_settings().value.sleep_timeout_minutes, Ordering::Relaxed);
 	SLEEP_WHEN_COMPUTER_LOCKED.store(crate::store::get_settings().value.sleep_when_computer_locked, Ordering::Relaxed);
