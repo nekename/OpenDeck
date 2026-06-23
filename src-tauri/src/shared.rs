@@ -263,6 +263,10 @@ pub fn load_encoder_layout(layout: &str) -> Result<serde_json::Value> {
 		"$X1" => Ok(serde_json::from_str(LAYOUT_X1)?),
 
 		path_str => {
+			if path_str.is_empty() {
+				bail!("Path is blank, ignoring");
+			}
+			
 			// This doesn't match an existing built-in layout
 			if path_str.starts_with('$') {
 				bail!("Invalid layout type: {}", path_str);
