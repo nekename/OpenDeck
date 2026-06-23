@@ -232,18 +232,6 @@ pub async fn update_image(context: Context, image: Option<String>) {
 }
 
 #[command]
-pub async fn get_encoder_image(context: Context) -> Result<Option<String>, Error> {
-	let locks = acquire_locks().await;
-	if let Some(instance) = get_slot(&context, &locks).await?.clone()
-		&& let Some(_encoder) = instance.action.encoder
-	{
-		// Generate from encoder.layout_parsed
-	}
-
-	Ok(None)
-}
-
-#[command]
 pub async fn trigger_virtual_press(context: Context) -> Result<(), Error> {
 	let event = || crate::events::inbound::PayloadEvent {
 		payload: crate::events::inbound::devices::PressPayload {
