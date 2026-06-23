@@ -146,6 +146,9 @@
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
+	// Canvas resolution defaults to a square `size`, but rectangular controllers (e.g. the Neo's infobar) can override this.
+	export let width: number = size;
+	export let height: number = size;
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
@@ -194,9 +197,10 @@
 		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
 		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
 		class:rounded-full!={context?.controller == "Encoder"}
+		class:rounded-lg!={context?.controller == "Infobar"}
 		class:bg-black={slot != null}
-		width={size}
-		height={size}
+		width={width}
+		height={height}
 		draggable={slot != null}
 		{tabindex}
 		{role}

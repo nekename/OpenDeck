@@ -32,7 +32,7 @@
 
 	async function handleDrop({ dataTransfer }: DragEvent, controller: string, position: number) {
 		let context = { device: device.id, profile: profile.id, controller, position };
-		let array = controller == "Encoder" ? profile.sliders : profile.keys;
+		let array = controller == "Encoder" ? profile.sliders : controller == "Infobar" ? profile.infobars : profile.keys;
 		if (dataTransfer?.getData("action")) {
 			let action = JSON.parse(dataTransfer?.getData("action"));
 			if (array[position]) {
@@ -41,10 +41,11 @@
 			array[position] = await invoke("create_instance", { context, action });
 			profile = profile;
 		} else if (dataTransfer?.getData("controller")) {
-			let oldArray = dataTransfer?.getData("controller") == "Encoder" ? profile.sliders : profile.keys;
+			let oldController = dataTransfer?.getData("controller");
+			let oldArray = oldController == "Encoder" ? profile.sliders : oldController == "Infobar" ? profile.infobars : profile.keys;
 			let oldPosition = parseInt(dataTransfer?.getData("position"));
 			let response: ActionInstance = await invoke("move_instance", {
-				source: { device: device.id, profile: profile.id, controller: dataTransfer?.getData("controller"), position: oldPosition },
+				source: { device: device.id, profile: profile.id, controller: oldController, position: oldPosition },
 				destination: context,
 				retain: false,
 			});
@@ -57,7 +58,7 @@
 	}
 
 	async function handlePaste(item: CopiedItem, destination: Context) {
-		let array = destination.controller == "Encoder" ? profile.sliders : profile.keys;
+		let array = destination.controller == "Encoder" ? profile.sliders : destination.controller == "Infobar" ? profile.infobars : profile.keys;
 
 		if (item.type == "action") {
 			if (array[destination.position]) return;
@@ -83,7 +84,7 @@
 	$: gridRowLengths = [
 		...Array(device.rows).fill(device.columns),
 		...(device.encoders > 0 ? [device.encoders] : []),
-		...(device.touchpoints > 0 ? [device.touchpoints] : []),
+		...((device.touchpoints > 0 || device.infobars > 0) ? [device.touchpoints + device.infobars] : []),
 	];
 	$: encoderRowIndex = device.rows;
 	$: touchpointRowIndex = device.rows + (device.encoders > 0 ? 1 : 0);
@@ -225,8 +226,26 @@
 			{/each}
 		</div>
 
-		<div class="flex flex-row" role="row">
+		<div class="flex flex-row items-center" role="row">
 			{#each { length: device.touchpoints } as _, i}
+				<!-- On the Stream Deck Neo, the infobar display sits physically between the two touchpoints. -->
+				{#if device.infobars > 0 && i === 1}
+					{#each { length: device.infobars } as _, j}
+						<div class="px-3.5 py-[3.5px]">
+							<Key
+								context={{ device: device.id, profile: profile.id, controller: "Infobar", position: j }}
+								bind:inslot={profile.infobars[j]}
+								on:dragover={handleDragOver}
+								on:drop={(event) => handleDrop(event, "Infobar", j)}
+								on:dragstart={(event) => handleDragStart(event, "Infobar", j)}
+								{handlePaste}
+								size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+								width={248}
+								height={58}
+							/>
+						</div>
+					{/each}
+				{/if}
 				<Key
 					context={{ device: device.id, profile: profile.id, controller: "Keypad", position: (device.rows * device.columns) + i }}
 					bind:inslot={profile.keys[(device.rows * device.columns) + i]}

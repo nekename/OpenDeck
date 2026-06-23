@@ -3,6 +3,7 @@ export type Settings = {
 	language: string;
 	brightness: number;
 	sleep_timeout_minutes: number;
+	sleep_when_computer_locked: boolean;
 	rotation: number;
 	background: boolean;
 	autolaunch: boolean;

@@ -21,13 +21,20 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 		event.payload.plugin = uuid.to_owned();
 		let _ = crate::events::outbound::devices::device_did_connect(&event.payload.id, (&event.payload).into()).await;
 		DEVICES.insert(event.payload.id.clone(), event.payload.clone());
-		let _ = crate::device_sleep::note_activity(&event.payload.id).await;
+		let _ = crate::device_sleep::apply_initial_device_sleep(&event.payload.id).await;
 		crate::events::frontend::update_devices().await;
 
 		let mut locks = crate::store::profiles::acquire_locks_mut().await;
 		let selected_profile = locks.device_stores.get_selected_profile(&event.payload.id)?;
 		let profile = locks.profile_stores.get_profile_store(&DEVICES.get(&event.payload.id).unwrap(), &selected_profile)?;
-		for instance in profile.value.keys.iter().flatten().chain(profile.value.sliders.iter().flatten()) {
+		for instance in profile
+			.value
+			.keys
+			.iter()
+			.flatten()
+			.chain(profile.value.sliders.iter().flatten())
+			.chain(profile.value.infobars.iter().flatten())
+		{
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		}
 
@@ -53,7 +60,14 @@ pub async fn deregister_device(uuid: &str, event: PayloadEvent<String>) -> Resul
 
 		let selected_profile = locks.device_stores.get_selected_profile(&event.payload)?;
 		let profile = locks.profile_stores.get_profile_store(&DEVICES.get(&event.payload).unwrap(), &selected_profile)?;
-		for instance in profile.value.keys.iter().flatten().chain(profile.value.sliders.iter().flatten()) {
+		for instance in profile
+			.value
+			.keys
+			.iter()
+			.flatten()
+			.chain(profile.value.sliders.iter().flatten())
+			.chain(profile.value.infobars.iter().flatten())
+		{
 			let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
 		}
 

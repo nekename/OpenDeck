@@ -155,7 +155,8 @@
 	$: instances = profile
 		.keys.filter(nonNull)
 		.reduce((prev, current) => prev.concat(current.children ? [current, ...current.children] : current), [] as ActionInstance[])
-		.concat(profile.sliders.filter(nonNull));
+		.concat(profile.sliders.filter(nonNull))
+		.concat(profile.infobars.filter(nonNull));
 
 	listen("plugin_reloaded", ({ payload }: { payload: string }) => {
 		for (const instance of instances) {
