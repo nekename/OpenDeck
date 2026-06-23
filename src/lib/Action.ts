@@ -1,5 +1,5 @@
 import type { ActionState } from "./ActionState.ts";
-import type {Encoder} from "$lib/Encoder.ts";
+import type { Encoder } from "$lib/Encoder.ts";
 
 export type Action = {
 	name: string;
