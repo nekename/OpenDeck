@@ -44,12 +44,12 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 
 			if context.controller == "Encoder" {
 				let locks = acquire_locks().await;
-				if let Some(action) = get_slot(context, &locks).await?
-					&& let Some(encoder) = &action.action.encoder
+				if let Some(instance) = get_slot(context, &locks).await?
+					&& let Some(encoder) = &instance.action.encoder
 				{
 					// Clone the layout so we can mutate it for rendering without persisting
 					let mut layout = encoder.layout_parsed.clone();
-					let path = config_dir().join("plugins").join(&action.action.plugin);
+					let path = config_dir().join("plugins").join(&instance.action.plugin);
 
 					// We need to validate whether title text and icon images are defined, if not, pull them from the state / action
 					if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) {
@@ -59,13 +59,13 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 
 							if title_value.is_empty() {
 								// Try and pull the title from the state
-								let state_text = action.states.get(action.current_state as usize).and_then(|s| {
+								let state_text = instance.states.get(instance.current_state as usize).and_then(|s| {
 									let t = s.text.trim();
 									if t.is_empty() { None } else { Some(t) }
 								});
 
 								// If the state is empty, fall back to the action name
-								let title = state_text.unwrap_or(action.action.name.as_str());
+								let title = state_text.unwrap_or(instance.action.name.as_str());
 								title_item["value"] = Value::String(title.to_string());
 							}
 						}
@@ -74,12 +74,12 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 						if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
 							let icon_empty = icon_item.get("value").and_then(Value::as_str).is_none_or(str::is_empty);
 							if icon_empty {
-								let icon = action
+								let icon = instance
 									.states
-									.get(action.current_state as usize)
+									.get(instance.current_state as usize)
 									.map(|state| &state.image)
 									.filter(|image| !image.is_empty())
-									.unwrap_or(&action.action.icon);
+									.unwrap_or(&instance.action.icon);
 
 								if !icon.is_empty() {
 									icon_item["value"] = Value::String(icon.clone());
