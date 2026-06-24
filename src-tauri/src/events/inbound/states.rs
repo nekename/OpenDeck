@@ -226,7 +226,7 @@ pub async fn set_feedback_layout(event: ContextAndPayloadEvent<SetFeedbackLayout
 	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
 		// We need to replace the existing parsed layout with the new one
 		let layout_name = event.payload.layout.clone();
-		crate::shared::load_encoder(&mut instance.action, Some(layout_name))?;
+		crate::shared::initialise_encoder_layout(&mut instance.action, Some(layout_name))?;
 
 		// Trigger a state update; should cause a redraw
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
