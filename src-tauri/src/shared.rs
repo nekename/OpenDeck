@@ -8,7 +8,6 @@ use serde_inline_default::serde_inline_default;
 
 use anyhow::{Result, bail};
 use dashmap::DashMap;
-use log::warn;
 use tauri::Manager;
 use tokio::sync::RwLock;
 
@@ -254,36 +253,35 @@ pub struct Encoder {
 	pub layout_parsed: serde_json::Value,
 }
 
-pub fn load_initial_encoder_layout(action: &mut Action) {
-	let Some(encoder) = action.encoder.as_mut() else { return };
+pub fn load_encoder(action: &mut Action, layout: Option<String>) -> Result<(), anyhow::Error> {
+	let Some(encoder) = action.encoder.as_mut() else { return Ok(()) };
 
-	let layout = if encoder.layout.starts_with('$') {
-		encoder.layout.clone()
+	let load_layout = layout.unwrap_or_else(|| encoder.layout.clone());
+	let layout = if load_layout.starts_with('$') {
+		load_layout.clone()
 	} else {
 		let plugin_dir = config_dir().join("plugins").join(&action.plugin);
-		let layout_file = plugin_dir.join(&encoder.layout);
+		let layout_file = plugin_dir.join(&load_layout);
 
 		match layout_file.canonicalize() {
 			Ok(resolved) if resolved.starts_with(&plugin_dir) => resolved.to_string_lossy().into_owned(),
 			Ok(_) => {
-				warn!("Encoder layout path escapes plugin directory: {}", encoder.layout);
-				return;
+				bail!("Encoder layout path escapes plugin directory: {}", load_layout);
 			}
 			Err(error) => {
-				warn!("Failed to canonicalize encoder layout path {}: {}", encoder.layout, error);
-				return;
+				bail!("Failed to canonicalize encoder layout path {}: {}", load_layout, error);
 			}
 		}
 	};
 
 	match load_encoder_layout(&layout) {
 		Ok(parsed) => encoder.layout_parsed = parsed,
-		Err(error) => warn!("Failed to load encoder layout {}: {}", encoder.layout, error),
+		Err(error) => bail!("Failed to load encoder layout {}: {}", load_layout, error),
 	}
+	Ok(())
 }
 
-// This can be called from plugins/mod.rs; it can also be called from a setFeedbackLayout request
-pub fn load_encoder_layout(layout: &str) -> Result<serde_json::Value> {
+fn load_encoder_layout(layout: &str) -> Result<serde_json::Value> {
 	match layout {
 		"$A0" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/A0.json"))?),
 		"$A1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/A1.json"))?),

@@ -1,7 +1,6 @@
 use super::ContextAndPayloadEvent;
 
 use crate::events::frontend::instances::update_state;
-use crate::shared::{config_dir, load_encoder_layout};
 use crate::store::profiles::{acquire_locks_mut, debounce_profile_save, get_instance_mut, save_profile};
 
 use anyhow::bail;
@@ -224,28 +223,10 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 
 pub async fn set_feedback_layout(event: ContextAndPayloadEvent<SetFeedbackLayoutPayload>) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
-	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await?
-		&& let Some(encoder) = &mut instance.action.encoder
-	{
+	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
 		// We need to replace the existing parsed layout with the new one
 		let layout_name = event.payload.layout.clone();
-
-		// Make sure the layout is a full path to the JSON file
-		let layout = if !encoder.layout.starts_with("$") {
-			let path = config_dir().join("plugins").join(&instance.action.plugin);
-
-			let layout_path = path.join(&layout_name).canonicalize()?;
-			if layout_path.starts_with(&path) {
-				layout_path.to_string_lossy().to_string()
-			} else {
-				// SetFeedbackLayout is sending a path outside our plugin; abort
-				bail!("Encoder layout path is outside plugin directory: {}", encoder.layout);
-			}
-		} else {
-			layout_name
-		};
-
-		encoder.layout_parsed = load_encoder_layout(&layout)?;
+		crate::shared::load_encoder(&mut instance.action, Some(layout_name))?;
 
 		// Trigger a state update; should cause a redraw
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
