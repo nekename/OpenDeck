@@ -7,9 +7,13 @@ use tauri::{AppHandle, Emitter, Manager, command};
 use tokio::fs::remove_dir_all;
 
 #[command]
-pub async fn create_instance(app: AppHandle, action: Action, context: Context) -> Result<Option<ActionInstance>, Error> {
+pub async fn create_instance(app: AppHandle, mut action: Action, context: Context) -> Result<Option<ActionInstance>, Error> {
 	if !action.controllers.contains(&context.controller) {
 		return Ok(None);
+	}
+
+	if context.controller == "Encoder" {
+		crate::shared::load_initial_encoder_layout(&mut action);
 	}
 
 	let mut locks = acquire_locks_mut().await;
@@ -22,12 +26,8 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			Some(instance) => instance.context.index + 1,
 		};
 
-		// We do this here anyway, although I don't think you can add encoders as children.
-		let mut action_inner = action.clone();
-		crate::shared::load_initial_action_layout(&mut action_inner);
-
 		let instance = ActionInstance {
-			action: action_inner,
+			action: action.clone(),
 			context: ActionContext::from_context(context.clone(), index),
 			states: action.states.clone(),
 			current_state: 0,
@@ -52,11 +52,8 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 		let slot = get_slot(&context, &locks).await?.clone();
 		Ok(slot)
 	} else {
-		let mut action_inner = action.clone();
-		crate::shared::load_initial_action_layout(&mut action_inner);
-
 		let instance = ActionInstance {
-			action: action_inner,
+			action: action.clone(),
 			context: ActionContext::from_context(context.clone(), 0),
 			states: action.states.clone(),
 			current_state: 0,

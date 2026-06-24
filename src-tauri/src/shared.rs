@@ -254,7 +254,7 @@ pub struct Encoder {
 	pub layout_parsed: serde_json::Value,
 }
 
-pub fn load_initial_action_layout(action: &mut Action) {
+pub fn load_initial_encoder_layout(action: &mut Action) {
 	let Some(encoder) = action.encoder.as_mut() else { return };
 
 	let layout = if encoder.layout.starts_with('$') {
@@ -269,8 +269,8 @@ pub fn load_initial_action_layout(action: &mut Action) {
 				warn!("Encoder layout path escapes plugin directory: {}", encoder.layout);
 				return;
 			}
-			Err(e) => {
-				warn!("Failed to canonicalize encoder layout path: {}: {}", encoder.layout, e);
+			Err(error) => {
+				warn!("Failed to canonicalize encoder layout path {}: {}", encoder.layout, error);
 				return;
 			}
 		}
@@ -278,7 +278,7 @@ pub fn load_initial_action_layout(action: &mut Action) {
 
 	match load_encoder_layout(&layout) {
 		Ok(parsed) => encoder.layout_parsed = parsed,
-		Err(e) => warn!("Failed to load encoder layout: {} - {}", encoder.layout, e),
+		Err(error) => warn!("Failed to load encoder layout {}: {}", encoder.layout, error),
 	}
 }
 
