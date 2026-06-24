@@ -1,3 +1,4 @@
+use anyhow::bail;
 use super::ContextAndPayloadEvent;
 
 use crate::events::frontend::instances::update_state;
@@ -238,10 +239,17 @@ pub async fn set_feedback_layout(event: ContextAndPayloadEvent<SetFeedbackLayout
 		// Make sure the layout is a full path to the json file
 		if !encoder.layout.starts_with("$") {
 			let path = config_dir().join("plugins").join(&action.action.plugin);
-			encoder.layout = path.join(&encoder.layout).to_string_lossy().to_string();
+
+			let layout_path = path.join(&encoder.layout).canonicalize()?;
+			if layout_path.starts_with(&path) {
+				encoder.layout = layout_path.to_string_lossy().to_string();
+			} else {
+				// SetFeedbackLayout is sending a path outside our plugin, abort.
+				bail!("Encoder Layout is outside Plugin: {}", encoder.layout);
+			}
 		}
 
-		encoder.layout_parsed = load_encoder_layout(&encoder.layout).unwrap_or(Value::Null);
+		encoder.layout_parsed = load_encoder_layout(&encoder.layout)?;
 
 		// Trigger a state update, should cause a redraw
 		update_state(crate::APP_HANDLE.get().unwrap(), action.context.clone(), &mut locks).await?;
