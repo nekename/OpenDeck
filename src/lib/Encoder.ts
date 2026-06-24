@@ -4,7 +4,6 @@ export type Encoder = {
 	trigger_description: TriggerDescription;
 	background: string;
 	layout: string;
-	layout_parsed: object;
 };
 
 export type TriggerDescription = {
