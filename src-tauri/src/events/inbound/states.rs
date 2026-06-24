@@ -1,10 +1,10 @@
-use anyhow::bail;
 use super::ContextAndPayloadEvent;
 
 use crate::events::frontend::instances::update_state;
 use crate::shared::{config_dir, load_encoder_layout};
 use crate::store::profiles::{acquire_locks_mut, debounce_profile_save, get_instance_mut, save_profile};
 
+use anyhow::bail;
 use log::warn;
 use serde::Deserialize;
 use serde_json::Value;

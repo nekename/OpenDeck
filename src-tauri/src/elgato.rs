@@ -91,7 +91,7 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 				if let Some(instance) = get_slot(context, &locks).await?
 					&& let Some(encoder) = &instance.action.encoder
 				{
-					let img = get_encoder_image(encoder, &instance)?;
+					let img = get_encoder_image(encoder, instance)?;
 					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img.clone())?).await?;
 				} else {
 					// If this encoder doesn't have a layout assigned to it, fall back to just render the icon.
