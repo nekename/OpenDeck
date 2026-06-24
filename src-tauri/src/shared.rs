@@ -228,7 +228,7 @@ pub struct Action {
 
 /// An encoder, deserialised from the plugin manifest.
 #[serde_inline_default]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Encoder {
 	#[serde_inline_default(String::new())]
 	#[serde(alias = "Icon")]
@@ -252,29 +252,29 @@ pub struct Encoder {
 	pub layout_parsed: serde_json::Value,
 }
 
-// This can be called from plugins/mod.rs, it could also be called from a setFeedbackLayout request
+// This can be called from plugins/mod.rs; it can also be called from a setFeedbackLayout request
 pub fn load_encoder_layout(layout: &str) -> Result<serde_json::Value> {
 	match layout {
-		"$A0" => Ok(serde_json::from_str(LAYOUT_A0)?),
-		"$A1" => Ok(serde_json::from_str(LAYOUT_A1)?),
-		"$B1" => Ok(serde_json::from_str(LAYOUT_B1)?),
-		"$B2" => Ok(serde_json::from_str(LAYOUT_B2)?),
-		"$C1" => Ok(serde_json::from_str(LAYOUT_C1)?),
-		"$X1" => Ok(serde_json::from_str(LAYOUT_X1)?),
+		"$A0" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/A0.json"))?),
+		"$A1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/A1.json"))?),
+		"$B1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/B1.json"))?),
+		"$B2" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/B2.json"))?),
+		"$C1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/C1.json"))?),
+		"$X1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/X1.json"))?),
 
 		path_str => {
 			if path_str.is_empty() {
-				bail!("Path is blank, ignoring");
+				bail!("Encoder layout path is blank, ignoring");
 			}
 
 			// This doesn't match an existing built-in layout
 			if path_str.starts_with('$') {
-				bail!("Invalid layout type: {}", path_str);
+				bail!("Invalid encoder layout type: {}", path_str);
 			}
 
 			let path = Path::new(path_str);
 			if !path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("json")) {
-				bail!("Invalid layout type: {}", path_str);
+				bail!("Invalid encoder layout type: {}", path_str);
 			}
 
 			let content = std::fs::read_to_string(path)?;
@@ -283,9 +283,9 @@ pub fn load_encoder_layout(layout: &str) -> Result<serde_json::Value> {
 	}
 }
 
-/// Descriptions of behaviours to be shown to the user in the prop inspector
+/// Descriptions of touchstrip interaction response behaviours, to be shown to the user in the PI
 #[serde_inline_default]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct TriggerDescription {
 	#[serde_inline_default(String::new())]
 	#[serde(alias = "LongTouch")]
@@ -302,17 +302,6 @@ pub struct TriggerDescription {
 	#[serde_inline_default(String::new())]
 	#[serde(alias = "Touch")]
 	pub touch: String,
-}
-
-impl Default for TriggerDescription {
-	fn default() -> Self {
-		Self {
-			long_touch: "".to_owned(),
-			push: "".to_owned(),
-			rotate: "".to_owned(),
-			touch: "".to_owned(),
-		}
-	}
 }
 
 /// Location metadata of a slot.
@@ -450,11 +439,3 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 	);
 	RwLock::new(hashmap)
 });
-
-// These are the built-in encoder layouts for the deck
-pub const LAYOUT_A0: &str = include_str!("../../static/encoder_layouts/A0.json");
-pub const LAYOUT_A1: &str = include_str!("../../static/encoder_layouts/A1.json");
-pub const LAYOUT_B1: &str = include_str!("../../static/encoder_layouts/B1.json");
-pub const LAYOUT_B2: &str = include_str!("../../static/encoder_layouts/B2.json");
-pub const LAYOUT_C1: &str = include_str!("../../static/encoder_layouts/C1.json");
-pub const LAYOUT_X1: &str = include_str!("../../static/encoder_layouts/X1.json");

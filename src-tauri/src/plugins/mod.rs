@@ -103,14 +103,14 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 			}
 
 			if !encoder.layout.is_empty() {
-				// Internal layouts start with $, custom layouts don't.
+				// Internal layouts start with $; custom layouts don't
 				if !encoder.layout.starts_with("$") {
 					let layout_path = path.join(&encoder.layout).canonicalize()?;
 
 					if layout_path.starts_with(&path) {
 						encoder.layout = layout_path.to_string_lossy().to_string();
 					} else {
-						warn!("Encoder Layout is outside Base: {}", encoder.layout);
+						warn!("Encoder layout path is outside plugin directory: {}", encoder.layout);
 						encoder.layout = String::new();
 					}
 				}
@@ -123,7 +123,7 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 							encoder.layout_parsed = value;
 						}
 						Err(e) => {
-							error!("Failed to load initial layout: {}", e);
+							warn!("Failed to load initial encoder layout: {}", e);
 							encoder.layout_parsed = serde_json::Value::Null;
 						}
 					}

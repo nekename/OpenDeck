@@ -13,7 +13,6 @@ use elgato_streamdeck::{
 	info::Kind,
 };
 use image::{DynamicImage, GenericImageView as _};
-use log::warn;
 use serde_json::Value;
 use tokio::sync::RwLock;
 
@@ -34,26 +33,26 @@ fn get_encoder_image(encoder: &Encoder, instance: &ActionInstance) -> Result<Dyn
 	let mut layout = encoder.layout_parsed.clone();
 	let path = config_dir().join("plugins").join(&instance.action.plugin);
 
-	// We need to validate whether title text and icon images are defined, if not, pull them from the state / action
+	// We need to validate whether title text and icon images are defined; if not, pull them from the state/action
 	if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) {
-		// If the title is missing, provide it from the action/state
+		// If the title is missing, provide it from the state/action
 		if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title")) {
 			let title_value = title_item.get("value").and_then(Value::as_str).unwrap_or("").trim();
 
 			if title_value.is_empty() {
-				// Try and pull the title from the state
+				// Try to pull the title from the state
 				let state_text = instance.states.get(instance.current_state as usize).and_then(|s| {
 					let t = s.text.trim();
 					if t.is_empty() { None } else { Some(t) }
 				});
 
-				// If the state is empty, fall back to the action name
+				// If the state title is empty, fall back to the action name
 				let title = state_text.unwrap_or(instance.action.name.as_str());
 				title_item["value"] = Value::String(title.to_string());
 			}
 		}
 
-		// If the icon is empty, provide it from the state/action
+		// If the icon is missing, provide it from the state/action
 		if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
 			let icon_empty = icon_item.get("value").and_then(Value::as_str).is_none_or(str::is_empty);
 			if icon_empty {
@@ -70,6 +69,7 @@ fn get_encoder_image(encoder: &Encoder, instance: &ActionInstance) -> Result<Dyn
 			}
 		}
 	}
+
 	streamdeck_strip_render::render_to_image(layout, &path, None)
 }
 
@@ -85,7 +85,6 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 		if let Some(image) = image {
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
-
 			if context.controller == "Encoder" {
 				let locks = acquire_locks().await;
 				if let Some(instance) = get_slot(context, &locks).await?
@@ -94,9 +93,8 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 					let img = get_encoder_image(encoder, instance)?;
 					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img.clone())?).await?;
 				} else {
-					// If this encoder doesn't have a layout assigned to it, fall back to just render the icon.
+					// If this encoder doesn't have a layout assigned to it, fall back and just render the icon.
 					// This shouldn't happen and is a safety fallback behaviour.
-					warn!("Encoder {} has no layout assigned to it, falling back to rendering the icon", context.position);
 					device
 						.write_lcd(
 							(context.position as u16 * 200) + 64,

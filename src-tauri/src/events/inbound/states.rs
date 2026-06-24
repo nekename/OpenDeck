@@ -115,114 +115,108 @@ const BAR_KEYS: &[&str] = &["bar_bg_c", "bar_border_c", "bar_fill_c", "border_w"
 pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
 
-	if let Some(action) = get_instance_mut(&event.context, &mut locks).await?
-		&& let Some(encoder) = &mut action.action.encoder
+	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await?
+		&& let Some(encoder) = &mut instance.action.encoder
+		&& let Value::Object(map) = event.payload
 	{
 		let layout = &mut encoder.layout_parsed;
-		if let Value::Object(map) = event.payload {
-			let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) else {
-				warn!("Layout has no items array");
-				return Ok(());
+
+		let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) else {
+			bail!("Layout has no items array");
+		};
+
+		for (key, payload_value) in &map {
+			// Grab the item from the layout
+			let Some(item) = items_array.iter_mut().find(|item| {
+				matches!(
+					item.get("key").and_then(|v| v.as_str()),
+					Some(k) if k == key
+				)
+			}) else {
+				warn!("setFeedback: no layout item found for key '{key}'");
+				continue;
 			};
 
-			for (key, payload_value) in &map {
-				// Grab the item from the layout
-				let Some(item) = items_array.iter_mut().find(|item| {
-					matches!(
-						item.get("key").and_then(|v| v.as_str()),
-						Some(k) if k == key
-					)
-				}) else {
-					warn!("setFeedback: no layout item found for key '{key}'");
+			match payload_value {
+				// We have a direct value; find the key, and set it
+				Value::String(_) | Value::Number(_) => {
+					// Get the item type
+					let Some(item_type) = item.get("type").and_then(Value::as_str) else {
+						warn!("setFeedback: no type found for key '{key}'");
+						continue;
+					};
 
-					// Debugging usefulness
-					let available: Vec<_> = items_array.iter().filter_map(|i| i.get("key").and_then(Value::as_str)).collect();
-					warn!("available keys in layout: {:?}", available);
-
-					continue;
-				};
-
-				match payload_value {
-					// We have a direct value, find the key, and set it.
-					Value::String(_) | Value::Number(_) => {
-						// Get the item type
-						let Some(item_type) = item.get("type").and_then(Value::as_str) else {
-							warn!("setFeedback: no type found for key '{key}'");
-							continue;
-						};
-
-						match item_type {
-							"text" => {
-								// We need to map the value to a string
-								if let Value::Number(number) = payload_value {
-									item["value"] = Value::String(number.to_string());
-								} else {
-									// Clone the string
-									item["value"] = payload_value.clone();
-								}
-							}
-
-							"bar" | "gbar" => {
-								if let Value::Number(value) = payload_value {
-									if key == "value" {
-										item["value"] = Value::Number(value.clone());
-									}
-								} else {
-									warn!("setFeedback: bar/gbar expected number for key '{key}'");
-								}
-							}
-
-							"pixmap" => {
-								// Updating the pixmap value, this should already be a string
+					match item_type {
+						"text" => {
+							// We need to map the value to a string
+							if let Value::Number(number) = payload_value {
+								item["value"] = Value::String(number.to_string());
+							} else {
+								// Clone the string
 								item["value"] = payload_value.clone();
 							}
+						}
 
-							// For anything else (pixmap), we ignore this
-							_ => {
-								warn!("setFeedback: unknown item type '{item_type}' for key '{key}'");
+						"bar" | "gbar" => {
+							if let Value::Number(value) = payload_value {
+								if key == "value" {
+									item["value"] = Value::Number(value.clone());
+								}
+							} else {
+								warn!("setFeedback: bar/gbar expected number for key '{key}'");
 							}
 						}
-					}
 
-					// We have an object, so need to locate and map the change
-					Value::Object(obj) => {
-						// Grab the item type
-						let Some(item_type) = item.get("type").and_then(Value::as_str) else {
-							warn!("Missing or invalid 'type' field in item: {:?}", item);
-							continue;
-						};
-
-						// Get valid keys for this item type
-						let type_keys: Vec<&str> = match item_type {
-							"text" => vec!["value", "color", "alignment", "font", "text-overflow"],
-							"pixmap" => vec!["value"],
-							"bar" => BAR_KEYS.to_vec(),
-							"gbar" => BAR_KEYS.iter().copied().chain(["bar_h"]).collect(),
-							unknown => {
-								warn!("setFeedback: unknown item type '{unknown}' for key '{key}'");
-								continue;
-							}
-						};
-
-						// Add the common keys
-						let valid_keys: Vec<&str> = COMMON_KEYS.iter().copied().chain(type_keys).collect();
-
-						// Iterate over the values in the object
-						for (field, field_value) in obj {
-							if valid_keys.contains(&field.as_str()) {
-								item[field] = field_value.clone()
-							}
+						"pixmap" => {
+							// Update the pixmap value; this should already be a string
+							item["value"] = payload_value.clone();
 						}
-					}
 
-					_ => {
-						warn!("setFeedback: key '{key}' has unexpected payload type, ignoring");
+						// Ignore anything else
+						_ => {
+							warn!("setFeedback: unknown item type '{item_type}' for key '{key}'");
+						}
 					}
 				}
-			}
 
-			update_state(crate::APP_HANDLE.get().unwrap(), action.context.clone(), &mut locks).await?;
+				// We have an object, so we need to locate and map the change
+				Value::Object(obj) => {
+					// Get the item type
+					let Some(item_type) = item.get("type").and_then(Value::as_str) else {
+						warn!("setFeedback: missing or invalid 'type' field in item: {:?}", item);
+						continue;
+					};
+
+					// Get the valid keys for this item type
+					let type_keys: Vec<&str> = match item_type {
+						"text" => vec!["value", "color", "alignment", "font", "text-overflow"],
+						"pixmap" => vec!["value"],
+						"bar" => BAR_KEYS.to_vec(),
+						"gbar" => BAR_KEYS.iter().copied().chain(["bar_h"]).collect(),
+						unknown => {
+							warn!("setFeedback: unknown item type '{unknown}' for key '{key}'");
+							continue;
+						}
+					};
+
+					// Add the common keys
+					let valid_keys: Vec<&str> = COMMON_KEYS.iter().copied().chain(type_keys).collect();
+
+					// Iterate over the values in the object
+					for (field, field_value) in obj {
+						if valid_keys.contains(&field.as_str()) {
+							item[field] = field_value.clone()
+						}
+					}
+				}
+
+				_ => {
+					warn!("setFeedback: key '{key}' has unexpected payload type, ignoring");
+				}
+			}
 		}
+
+		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
 
 	Ok(())
@@ -230,29 +224,29 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 
 pub async fn set_feedback_layout(event: ContextAndPayloadEvent<SetFeedbackLayoutPayload>) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
-	if let Some(action) = get_instance_mut(&event.context, &mut locks).await?
-		&& let Some(encoder) = &mut action.action.encoder
+	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await?
+		&& let Some(encoder) = &mut instance.action.encoder
 	{
 		// We need to replace the existing parsed layout with the new one
 		encoder.layout = event.payload.layout.clone();
 
-		// Make sure the layout is a full path to the json file
+		// Make sure the layout is a full path to the JSON file
 		if !encoder.layout.starts_with("$") {
-			let path = config_dir().join("plugins").join(&action.action.plugin);
+			let path = config_dir().join("plugins").join(&instance.action.plugin);
 
 			let layout_path = path.join(&encoder.layout).canonicalize()?;
 			if layout_path.starts_with(&path) {
 				encoder.layout = layout_path.to_string_lossy().to_string();
 			} else {
-				// SetFeedbackLayout is sending a path outside our plugin, abort.
-				bail!("Encoder Layout is outside Plugin: {}", encoder.layout);
+				// SetFeedbackLayout is sending a path outside our plugin; abort
+				bail!("Encoder layout path is outside plugin directory: {}", encoder.layout);
 			}
 		}
 
 		encoder.layout_parsed = load_encoder_layout(&encoder.layout)?;
 
-		// Trigger a state update, should cause a redraw
-		update_state(crate::APP_HANDLE.get().unwrap(), action.context.clone(), &mut locks).await?;
+		// Trigger a state update; should cause a redraw
+		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
 	Ok(())
 }
