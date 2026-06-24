@@ -228,22 +228,24 @@ pub async fn set_feedback_layout(event: ContextAndPayloadEvent<SetFeedbackLayout
 		&& let Some(encoder) = &mut instance.action.encoder
 	{
 		// We need to replace the existing parsed layout with the new one
-		encoder.layout = event.payload.layout.clone();
+		let layout_name = event.payload.layout.clone();
 
 		// Make sure the layout is a full path to the JSON file
-		if !encoder.layout.starts_with("$") {
+		let layout = if !encoder.layout.starts_with("$") {
 			let path = config_dir().join("plugins").join(&instance.action.plugin);
 
-			let layout_path = path.join(&encoder.layout).canonicalize()?;
+			let layout_path = path.join(&layout_name).canonicalize()?;
 			if layout_path.starts_with(&path) {
-				encoder.layout = layout_path.to_string_lossy().to_string();
+				layout_path.to_string_lossy().to_string()
 			} else {
 				// SetFeedbackLayout is sending a path outside our plugin; abort
 				bail!("Encoder layout path is outside plugin directory: {}", encoder.layout);
 			}
-		}
+		} else {
+			layout_name
+		};
 
-		encoder.layout_parsed = load_encoder_layout(&encoder.layout)?;
+		encoder.layout_parsed = load_encoder_layout(&layout)?;
 
 		// Trigger a state update; should cause a redraw
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
