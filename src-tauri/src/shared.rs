@@ -249,6 +249,7 @@ pub struct Encoder {
 
 	// Note: this is not a real manifest property; it is only used internally.
 	#[serde_inline_default(serde_json::Value::Null)]
+	#[serde(skip_serializing)]
 	pub layout_parsed: serde_json::Value,
 }
 
