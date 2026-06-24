@@ -1,5 +1,4 @@
 use super::Error;
-use log::warn;
 
 use crate::shared::{Action, ActionContext, ActionInstance, ActionState, Context, config_dir};
 use crate::store::profiles::{LocksMut, acquire_locks, acquire_locks_mut, get_instance_mut, get_slot, get_slot_mut, save_profile};
@@ -25,7 +24,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 
 		// We do this here anyway, although I don't think you can add encoders as children.
 		let mut action_inner = action.clone();
-		instance_try_load_encoder(&mut action_inner);
+		crate::shared::load_initial_action_layout(&mut action_inner);
 
 		let instance = ActionInstance {
 			action: action_inner,
@@ -54,7 +53,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 		Ok(slot)
 	} else {
 		let mut action_inner = action.clone();
-		instance_try_load_encoder(&mut action_inner);
+		crate::shared::load_initial_action_layout(&mut action_inner);
 
 		let instance = ActionInstance {
 			action: action_inner,
@@ -76,37 +75,6 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 		let _ = crate::events::outbound::will_appear::will_appear(&instance).await;
 
 		Ok(slot)
-	}
-}
-
-// This will load an encoder layout for an action, if it fails, we just leave the layout as
-// null rather than aborting the whole action itself.
-// If this action doesn't have any encoder settings, this function does nothing.
-fn instance_try_load_encoder(action: &mut Action) {
-	let Some(encoder) = action.encoder.as_mut() else { return };
-
-	let layout = if encoder.layout.starts_with('$') {
-		encoder.layout.clone()
-	} else {
-		let plugin_dir = config_dir().join("plugins").join(&action.plugin);
-		let layout_file = plugin_dir.join(&encoder.layout);
-
-		match layout_file.canonicalize() {
-			Ok(resolved) if resolved.starts_with(&plugin_dir) => resolved.to_string_lossy().into_owned(),
-			Ok(_) => {
-				warn!("Encoder layout path escapes plugin directory: {}", encoder.layout);
-				return;
-			}
-			Err(e) => {
-				warn!("Failed to canonicalize encoder layout path: {}: {}", encoder.layout, e);
-				return;
-			}
-		}
-	};
-
-	match crate::shared::load_encoder_layout(&layout) {
-		Ok(parsed) => encoder.layout_parsed = parsed,
-		Err(e) => warn!("Failed to load encoder layout: {} - {}", encoder.layout, e),
 	}
 }
 

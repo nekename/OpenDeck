@@ -8,6 +8,7 @@ use serde_inline_default::serde_inline_default;
 
 use anyhow::{Result, bail};
 use dashmap::DashMap;
+use log::warn;
 use tauri::Manager;
 use tokio::sync::RwLock;
 
@@ -251,6 +252,34 @@ pub struct Encoder {
 	#[serde_inline_default(serde_json::Value::Null)]
 	#[serde(skip_serializing)]
 	pub layout_parsed: serde_json::Value,
+}
+
+pub fn load_initial_action_layout(action: &mut Action) {
+	let Some(encoder) = action.encoder.as_mut() else { return };
+
+	let layout = if encoder.layout.starts_with('$') {
+		encoder.layout.clone()
+	} else {
+		let plugin_dir = config_dir().join("plugins").join(&action.plugin);
+		let layout_file = plugin_dir.join(&encoder.layout);
+
+		match layout_file.canonicalize() {
+			Ok(resolved) if resolved.starts_with(&plugin_dir) => resolved.to_string_lossy().into_owned(),
+			Ok(_) => {
+				warn!("Encoder layout path escapes plugin directory: {}", encoder.layout);
+				return;
+			}
+			Err(e) => {
+				warn!("Failed to canonicalize encoder layout path: {}: {}", encoder.layout, e);
+				return;
+			}
+		}
+	};
+
+	match load_encoder_layout(&layout) {
+		Ok(parsed) => encoder.layout_parsed = parsed,
+		Err(e) => warn!("Failed to load encoder layout: {} - {}", encoder.layout, e),
+	}
 }
 
 // This can be called from plugins/mod.rs; it can also be called from a setFeedbackLayout request
