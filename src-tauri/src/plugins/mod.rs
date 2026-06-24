@@ -4,7 +4,7 @@ mod webserver;
 
 use crate::APP_HANDLE;
 use crate::built_info::TARGET;
-use crate::shared::{CATEGORIES, Category, config_dir, convert_icon, is_flatpak, load_encoder_layout, log_dir};
+use crate::shared::{CATEGORIES, Category, config_dir, convert_icon, is_flatpak, log_dir};
 
 use std::collections::HashMap;
 use std::process::{Child, Command, Stdio};

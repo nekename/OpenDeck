@@ -68,20 +68,20 @@ impl ProfileStores {
 			// We need to populate instances from a profile without encoders with them
 			for instance in store.value.sliders.iter_mut().flatten() {
 				// Populate encoder from actions if missing
-				if instance.action.encoder.is_none() {
-					if let Some(action) = actions.iter().find(|a| a.uuid == *instance.action.uuid) {
-						instance.action.encoder = action.encoder.clone();
-					}
+				if instance.action.encoder.is_none()
+					&& let Some(action) = actions.iter().find(|a| a.uuid == *instance.action.uuid)
+				{
+					instance.action.encoder = action.encoder.clone();
 				}
 
 				// Load encoder layout if not yet parsed
-				if let Some(encoder) = &mut instance.action.encoder {
-					if encoder.layout_parsed.is_null() {
-						encoder.layout_parsed = crate::shared::load_encoder_layout(&encoder.layout).unwrap_or_else(|error| {
-							log::warn!("Failed to load initial encoder layout: {}", error);
-							serde_json::Value::Null
-						});
-					}
+				if let Some(encoder) = &mut instance.action.encoder
+					&& encoder.layout_parsed.is_null()
+				{
+					encoder.layout_parsed = crate::shared::load_encoder_layout(&encoder.layout).unwrap_or_else(|error| {
+						log::warn!("Failed to load initial encoder layout: {}", error);
+						serde_json::Value::Null
+					});
 				}
 			}
 
