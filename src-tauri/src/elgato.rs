@@ -99,8 +99,9 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 					let img = get_encoder_image(encoder, instance)?;
 					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img.clone())?).await?;
 				} else {
-					// If this encoder doesn't have a layout assigned to it, fall back and just render the icon.
-					// This shouldn't happen and is a safety fallback behaviour.
+					// If we get here, this is either an Encoder action that doesn't have an Encoder config in the manifest, or we were
+					// unable to locate the instance for this action. This realistically shouldn't happen, but if it does, we'll fall back
+					// to rendering what was provided to this function call.
 					device
 						.write_lcd(
 							(context.position as u16 * 200) + 64,
