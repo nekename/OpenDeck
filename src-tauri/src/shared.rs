@@ -8,6 +8,7 @@ use serde_inline_default::serde_inline_default;
 
 use anyhow::{Result, bail};
 use dashmap::DashMap;
+use log::debug;
 use tauri::Manager;
 use tokio::sync::RwLock;
 
@@ -244,7 +245,7 @@ pub struct Encoder {
 	#[serde_inline_default(String::new())]
 	pub background: String,
 
-	#[serde_inline_default(String::new())]
+	#[serde_inline_default(String::from("$X1"))]
 	pub layout: String,
 
 	// Note: this is not a real manifest property; it is only used internally.
@@ -256,7 +257,11 @@ pub struct Encoder {
 pub fn initialise_encoder_layout(action: &mut Action, layout: Option<String>) -> Result<(), anyhow::Error> {
 	let Some(encoder) = action.encoder.as_mut() else { return Ok(()) };
 
-	let load_layout = layout.unwrap_or_else(|| encoder.layout.clone());
+	let load_layout = match layout.unwrap_or_else(|| encoder.layout.clone()) {
+		s if s.is_empty() => "$X1".to_string(),
+		s => s,
+	};
+
 	let layout = if load_layout.starts_with('$') {
 		load_layout.clone()
 	} else {
