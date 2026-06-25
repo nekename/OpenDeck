@@ -31,6 +31,12 @@ fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
 fn get_encoder_image(encoder: &Encoder, instance: &ActionInstance) -> Result<DynamicImage, anyhow::Error> {
 	// Clone the layout so we can mutate it for rendering without persisting
 	let mut layout = encoder.layout_parsed.clone();
+
+	if layout.is_null() {
+		// Something's gone horribly wrong here, we should have a layout. Render a blank image.
+		return Ok(DynamicImage::new_rgb8(200, 100));
+	}
+
 	let path = config_dir().join("plugins").join(&instance.action.plugin);
 
 	// We need to validate whether title text and icon images are defined; if not, pull them from the state/action

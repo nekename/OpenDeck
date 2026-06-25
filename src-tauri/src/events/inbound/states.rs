@@ -119,6 +119,9 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 		&& let Value::Object(map) = event.payload
 	{
 		let layout = &mut encoder.layout_parsed;
+		if layout.is_null() {
+			bail!("Layout is not loaded, cannot set feedback");
+		}
 
 		let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) else {
 			bail!("Layout has no items array");
