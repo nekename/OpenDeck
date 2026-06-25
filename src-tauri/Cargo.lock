@@ -5394,7 +5394,7 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 [[package]]
 name = "streamdeck-strip-render"
 version = "0.1.0"
-source = "git+https://github.com/FrostyCoolSlug/streamdeck-strip-render?rev=948c4653#948c4653ec310539e081fbdec334463a72766d89"
+source = "git+https://github.com/FrostyCoolSlug/streamdeck-strip-render?rev=73e66d23#73e66d236b073c8eea5840ab2480498cdaab1b5a"
 dependencies = [
  "ab_glyph",
  "anyhow",
