@@ -33,7 +33,7 @@ fn get_encoder_image(encoder: &Encoder, instance: &ActionInstance) -> Result<Dyn
 	let mut layout = encoder.layout_parsed.clone();
 
 	if layout.is_null() {
-		// Something's gone horribly wrong here, we should have a layout. Render a blank image.
+		// Something's gone horribly wrong here; we should have a layout. Render a blank image.
 		return Ok(DynamicImage::new_rgb8(200, 100));
 	}
 
