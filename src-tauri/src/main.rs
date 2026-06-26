@@ -284,7 +284,7 @@ If you have already donated, thank you so much for your support!"#,
 			tauri_plugin_log::Builder::default()
 				.targets([Target::new(TargetKind::LogDir { file_name: None }), Target::new(TargetKind::Stdout)])
 				.level(log::LevelFilter::Info)
-				.level_for("opendeck", log::LevelFilter::Trace)
+				.level_for("opendeck", log::LevelFilter::Debug)
 				.build(),
 		)
 		.plugin(tauri_plugin_cors_fetch::init())

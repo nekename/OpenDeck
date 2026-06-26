@@ -91,6 +91,18 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 			action.property_inspector = path.join(property_inspector).to_string_lossy().to_string();
 		}
 
+		if let Some(encoder) = &mut action.encoder {
+			if !encoder.icon.is_empty() {
+				let encoder_icon_path = path.join(encoder.icon.clone());
+				encoder.icon = convert_icon(encoder_icon_path.to_str().unwrap().to_owned());
+			}
+
+			if !encoder.background.is_empty() {
+				let encoder_background_path = path.join(encoder.background.clone());
+				encoder.background = convert_icon(encoder_background_path.to_str().unwrap().to_owned());
+			}
+		}
+
 		for state in &mut action.states {
 			if state.image == "actionDefaultImage" {
 				state.image.clone_from(&action.icon);

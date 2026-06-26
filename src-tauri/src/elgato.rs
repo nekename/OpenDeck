@@ -1,4 +1,6 @@
 use crate::events::inbound;
+use crate::shared::{ActionInstance, Encoder, config_dir};
+use crate::store::profiles::{acquire_locks, get_slot};
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -10,7 +12,8 @@ use elgato_streamdeck::{
 	images::{ImageRect, convert_image_with_format_async},
 	info::Kind,
 };
-use image::GenericImageView as _;
+use image::{DynamicImage, GenericImageView as _};
+use serde_json::Value;
 use tokio::sync::RwLock;
 
 static ELGATO_DEVICES: LazyLock<RwLock<HashMap<String, AsyncStreamDeck>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
@@ -23,6 +26,57 @@ fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
 		.fold((0u64, 0u64, 0u64), |(r, g, b), (_, _, pixel)| (r + pixel[0] as u64, g + pixel[1] as u64, b + pixel[2] as u64));
 	let count = (img.width() * img.height()).max(1) as u64;
 	((r_sum / count) as u8, (g_sum / count) as u8, (b_sum / count) as u8)
+}
+
+fn get_encoder_image(encoder: &Encoder, instance: &ActionInstance) -> Result<DynamicImage, anyhow::Error> {
+	// Clone the layout so we can mutate it for rendering without persisting
+	let mut layout = encoder.layout_parsed.clone();
+
+	if layout.is_null() {
+		// Something's gone horribly wrong here; we should have a layout. Render a blank image.
+		return Ok(DynamicImage::new_rgb8(200, 100));
+	}
+
+	let path = config_dir().join("plugins").join(&instance.action.plugin);
+
+	// We need to validate whether title text and icon images are defined; if not, pull them from the state/action
+	if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) {
+		// If the title is missing, provide it from the state/action
+		if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title")) {
+			let title_value = title_item.get("value").and_then(Value::as_str).unwrap_or("").trim();
+
+			if title_value.is_empty() {
+				// Try to pull the title from the state
+				let state_text = instance.states.get(instance.current_state as usize).and_then(|s| {
+					let t = s.text.trim();
+					if t.is_empty() { None } else { Some(t) }
+				});
+
+				// If the state title is empty, fall back to the action name
+				let title = state_text.unwrap_or(instance.action.name.as_str());
+				title_item["value"] = Value::String(title.to_string());
+			}
+		}
+
+		// If the icon is missing, provide it from the state/action
+		if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
+			let icon_empty = icon_item.get("value").and_then(Value::as_str).is_none_or(str::is_empty);
+			if icon_empty {
+				let icon = instance
+					.states
+					.get(instance.current_state as usize)
+					.map(|state| &state.image)
+					.filter(|image| !image.is_empty())
+					.unwrap_or(&instance.action.icon);
+
+				if !icon.is_empty() {
+					icon_item["value"] = Value::String(icon.clone());
+				}
+			}
+		}
+	}
+
+	streamdeck_strip_render::render_to_image(layout, &path, None)
 }
 
 pub async fn update_image(context: &crate::shared::Context, image: Option<&str>) -> Result<(), anyhow::Error> {
@@ -38,13 +92,26 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
 			if context.controller == "Encoder" {
-				device
-					.write_lcd(
-						(context.position as u16 * 200) + 64,
-						14,
-						&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
-					)
-					.await?;
+				let locks = acquire_locks().await;
+				let slot = get_slot(context, &locks).await?.clone();
+				drop(locks);
+				if let Some(instance) = slot
+					&& let Some(encoder) = &instance.action.encoder
+				{
+					let img = get_encoder_image(encoder, &instance)?;
+					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img.clone())?).await?;
+				} else {
+					// If we get here, this is either an Encoder action that doesn't have an Encoder config in the manifest, or we were
+					// unable to locate the instance for this action. This realistically shouldn't happen, but if it does, we'll fall back
+					// to rendering what was provided to this function call.
+					device
+						.write_lcd(
+							(context.position as u16 * 200) + 64,
+							14,
+							&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
+						)
+						.await?;
+				}
 			} else if context.controller == "Infobar" {
 				let img = image::load_from_memory(&bytes)?;
 				let Some(format) = device.kind().lcd_image_format() else {
@@ -170,6 +237,15 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 			ticks: ticks.into(),
 		},
 	};
+	let touchscreen_press = |position, x, y, hold| inbound::PayloadEvent {
+		payload: inbound::devices::TouchscreenPressPayload {
+			device: device_id.clone(),
+			position,
+			x,
+			y,
+			hold,
+		},
+	};
 	loop {
 		let updates = match reader.read(100.0).await {
 			Ok(updates) => updates,
@@ -184,6 +260,20 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				DeviceStateUpdate::EncoderTwist(dial, ticks) => inbound::devices::encoder_change(encoder(dial, ticks)).await,
 				DeviceStateUpdate::EncoderDown(dial) => inbound::devices::encoder_down(press(dial)).await,
 				DeviceStateUpdate::EncoderUp(dial) => inbound::devices::encoder_up(press(dial)).await,
+				DeviceStateUpdate::TouchScreenPress(x, y) => {
+					let (position, x, y) = match kind {
+						Kind::Plus => ((x / 200) as u8, x % 200, y),
+						_ => continue,
+					};
+					inbound::devices::touchscreen_press(touchscreen_press(position, x, y, false)).await
+				}
+				DeviceStateUpdate::TouchScreenLongPress(x, y) => {
+					let (position, x, y) = match kind {
+						Kind::Plus => ((x / 200) as u8, x % 200, y),
+						_ => continue,
+					};
+					inbound::devices::touchscreen_press(touchscreen_press(position, x, y, true)).await
+				}
 				_ => Ok(()),
 			} {
 				Ok(_) => (),

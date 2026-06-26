@@ -1,0 +1,18 @@
+{
+	"$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+	"id": "$X1",
+	"items": [
+		{
+			"key": "title",
+			"type": "text",
+			"rect": [16, 10, 136, 24],
+			"font": { "size": 16, "weight": 600 },
+			"alignment": "left"
+		},
+		{
+			"key": "icon",
+			"type": "pixmap",
+			"rect": [76, 40, 48, 48]
+		}
+	]
+}

@@ -1,5 +1,14 @@
 # OpenDeck Development Guide
 
+## Token Efficiency
+
+Respond like smart caveman. Cut all filler, keep technical substance.
+- Drop articles (a, an, the), filler (just, really, basically, actually).
+- Drop pleasantries (sure, certainly, happy to).
+- No hedging. Fragments fine. Short synonyms.
+- Technical terms stay exact. Code blocks unchanged.
+- Pattern: [thing] [action] [reason]. [next step].
+
 ## Architecture Overview
 
 OpenDeck is a Tauri desktop application for controlling Elgato Stream Deck devices. It's built with:
@@ -38,34 +47,6 @@ plugins/com.amansprojects.starterpack.sdPlugin/  # Plugin with basic actions
 ├── assets/propertyInspector/                    # HTML UIs for action settings
 └── src/                                         # Rust plugin using openaction crate
 ```
-
-## Critical Workflows
-
-### Development Commands
-
-```bash
-# Frontend dev server (Vite HMR on port 5173)
-deno task dev
-
-# Run Tauri app in dev mode (spawns frontend + Rust app)
-deno task tauri dev
-
-# Build production bundle
-deno task tauri build
-```
-
-### Pre-commit Requirements
-
-Before commits, **always** run:
-1. `cargo clippy` (no violations allowed)
-2. `cargo fmt` (in both `src-tauri/` and plugin directories)
-3. `deno check`, `deno task check` and `deno lint` (no violations)
-
-These are project standards, not suggestions.
-
-### Built-in Plugins
-
-Built-in plugins included in OpenDeck are Rust binaries. The `build.ts` script in each plugin compiles for multiple targets (x86_64/aarch64) and organizes binaries by OS.
 
 ## Key Conventions
 
