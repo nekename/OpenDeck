@@ -235,6 +235,15 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 			ticks: ticks.into(),
 		},
 	};
+	let touchscreen_press = |position, x, y, hold| inbound::PayloadEvent {
+		payload: inbound::devices::TouchscreenPressPayload {
+			device: device_id.clone(),
+			position,
+			x,
+			y,
+			hold,
+		},
+	};
 	loop {
 		let updates = match reader.read(100.0).await {
 			Ok(updates) => updates,
@@ -249,6 +258,20 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				DeviceStateUpdate::EncoderTwist(dial, ticks) => inbound::devices::encoder_change(encoder(dial, ticks)).await,
 				DeviceStateUpdate::EncoderDown(dial) => inbound::devices::encoder_down(press(dial)).await,
 				DeviceStateUpdate::EncoderUp(dial) => inbound::devices::encoder_up(press(dial)).await,
+				DeviceStateUpdate::TouchScreenPress(x, y) => {
+					let (position, x, y) = match kind {
+						Kind::Plus => ((x / 200) as u8, x % 200, y),
+						_ => continue,
+					};
+					inbound::devices::touchscreen_press(touchscreen_press(position, x, y, false)).await
+				}
+				DeviceStateUpdate::TouchScreenLongPress(x, y) => {
+					let (position, x, y) = match kind {
+						Kind::Plus => ((x / 200) as u8, x % 200, y),
+						_ => continue,
+					};
+					inbound::devices::touchscreen_press(touchscreen_press(position, x, y, true)).await
+				}
 				_ => Ok(()),
 			} {
 				Ok(_) => (),
