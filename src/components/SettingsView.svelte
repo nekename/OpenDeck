@@ -78,6 +78,7 @@
 					<option value="zh_CN">中文</option>
 					<option value="ja">日本語</option>
 					<option value="ko">韓国語</option>
+					<option value="uk">Українська</option>
 				</select>
 			</div>
 			<Tooltip>
