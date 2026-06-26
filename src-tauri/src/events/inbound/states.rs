@@ -30,6 +30,15 @@ pub struct SetFeedbackLayoutPayload {
 	layout: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct SetTriggerDescriptionPayload {
+	#[serde(alias = "longTouch")]
+	long_touch: Option<String>,
+	push: Option<String>,
+	rotate: Option<String>,
+	touch: Option<String>,
+}
+
 pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
 
@@ -234,6 +243,36 @@ pub async fn set_feedback_layout(event: ContextAndPayloadEvent<SetFeedbackLayout
 		// Trigger a state update; should cause a redraw
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
+	Ok(())
+}
+
+pub async fn set_trigger_description(event: ContextAndPayloadEvent<SetTriggerDescriptionPayload>) -> Result<(), anyhow::Error> {
+	let mut locks = acquire_locks_mut().await;
+
+	let Some(instance) = get_instance_mut(&event.context, &mut locks).await? else {
+		return Ok(());
+	};
+
+	let Some(encoder) = instance.action.encoder.as_mut() else {
+		return Ok(());
+	};
+
+	if let Some(value) = event.payload.long_touch {
+		encoder.trigger_description.long_touch = value;
+	}
+	if let Some(value) = event.payload.push {
+		encoder.trigger_description.push = value;
+	}
+	if let Some(value) = event.payload.rotate {
+		encoder.trigger_description.rotate = value;
+	}
+	if let Some(value) = event.payload.touch {
+		encoder.trigger_description.touch = value;
+	}
+
+	update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
+	save_profile(&event.context.device, &mut locks).await?;
+
 	Ok(())
 }
 
