@@ -80,7 +80,6 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 		if !(uuid.is_empty() && skip_auth) {
 			if let Some(context) = match &decoded {
 				InboundEventType::SetSettings(event) => Some(&event.context),
-				InboundEventType::GetSettings(event) => Some(&event.context),
 				InboundEventType::SetTitle(event) => Some(&event.context),
 				InboundEventType::SetImage(event) => Some(&event.context),
 				InboundEventType::SetState(event) => Some(&event.context),
@@ -123,7 +122,7 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 			InboundEventType::EncoderUp(event) => devices::encoder_up(event).await,
 			InboundEventType::TouchscreenPress(event) => devices::touchscreen_press(event).await,
 			InboundEventType::SetSettings(event) => settings::set_settings(event, false).await,
-			InboundEventType::GetSettings(event) => settings::get_settings(event, false).await,
+			InboundEventType::GetSettings(event) => settings::get_settings(event, false, uuid).await,
 			InboundEventType::SetGlobalSettings(event) => settings::set_global_settings(event, false).await,
 			InboundEventType::GetGlobalSettings(event) => settings::get_global_settings(event, false).await,
 			InboundEventType::OpenUrl(event) => misc::open_url(event).await,
@@ -167,7 +166,7 @@ pub async fn process_incoming_message_pi(data: Result<Message, Error>, uuid: &st
 
 		if let Err(error) = match decoded {
 			InboundEventType::SetSettings(event) => settings::set_settings(event, true).await,
-			InboundEventType::GetSettings(event) => settings::get_settings(event, true).await,
+			InboundEventType::GetSettings(event) => settings::get_settings(event, true, uuid).await,
 			InboundEventType::SetGlobalSettings(event) => settings::set_global_settings(event, true).await,
 			InboundEventType::GetGlobalSettings(event) => settings::get_global_settings(event, true).await,
 			InboundEventType::OpenUrl(event) => misc::open_url(event).await,

@@ -30,6 +30,21 @@ pub async fn did_receive_settings(instance: &crate::shared::ActionInstance, to_p
 	}
 }
 
+pub async fn did_receive_settings_fallback(plugin: &str, context: &ActionContext, to_property_inspector: bool) -> Result<(), anyhow::Error> {
+	let data = DidReceiveSettingsEvent {
+		event: "didReceiveSettings",
+		action: String::new(),
+		context: context.clone(),
+		device: context.device.clone(),
+		payload: GenericInstancePayload::empty(context),
+	};
+	if to_property_inspector {
+		send_to_property_inspector(context, &data).await
+	} else {
+		send_to_plugin(plugin, &data).await
+	}
+}
+
 #[derive(Serialize)]
 struct DidReceiveGlobalSettingsPayload {
 	settings: serde_json::Value,

@@ -52,6 +52,27 @@ impl GenericInstancePayload {
 			isInMultiAction: instance.context.index != 0,
 		}
 	}
+
+	fn empty(context: &crate::shared::ActionContext) -> Self {
+		let coordinates = match &context.controller[..] {
+			"Encoder" => Coordinates { row: 0, column: context.position },
+			_ => match crate::shared::DEVICES.get(&context.device) {
+				Some(device) => Coordinates {
+					row: context.position / device.columns,
+					column: context.position % device.columns,
+				},
+				None => Coordinates { row: 0, column: 0 },
+			},
+		};
+
+		Self {
+			settings: serde_json::Value::Object(serde_json::Map::new()),
+			coordinates,
+			controller: context.controller.clone(),
+			state: 0,
+			isInMultiAction: context.index != 0,
+		}
+	}
 }
 
 async fn send_to_plugin(plugin: &str, data: &impl Serialize) -> Result<(), anyhow::Error> {
