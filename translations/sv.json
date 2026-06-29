@@ -9,7 +9,7 @@
 	"device_view.touchpoint": "Pekpunkt",
 	"dialog.no": "Nej",
 	"dialog.ok": "OK",
-	"dialog.yes": "Ja"
+	"dialog.yes": "Ja",
 	"instance_editor.alignment": "Justering",
 	"instance_editor.alignment.bottom": "Nederkant",
 	"instance_editor.alignment.middle": "Mitten",
@@ -28,7 +28,7 @@
 	"instance_editor.solid_colour": "Använd enfärgad",
 	"instance_editor.state": "Tillstånd",
 	"instance_editor.state.n": "Tillstånd {{n}}",
-	"instance_editor.stroke": "Linje"
+	"instance_editor.stroke": "Linje",
 	"instance_editor.text": "Text",
 	"key.copy": "Kopiera",
 	"key.delete": "Ta bort",
@@ -45,7 +45,7 @@
 	"parent_action_view.drag_paste": "Släpp eller klistra in åtgärder här",
 	"parent_action_view.multi": "Flera åtgärder",
 	"parent_action_view.remove": "Ta bort {{name}}",
-	"parent_action_view.toggle": "Växla åtgärd"
+	"parent_action_view.toggle": "Växla åtgärd",
 	"plugin_details.by": "av",
 	"plugin_details.download_latest": "Hämta senaste versionen från GitHub",
 	"plugin_details.install": "Installera",
@@ -64,7 +64,7 @@
 	"plugin_manager.install.prompt": "Det kan ta en stund att installera pluginet.",
 	"plugin_manager.install.success": "Installerade \"{{name}}\".",
 	"plugin_manager.install.success.title": "Installerade \"{{name}}\"",
-	"plugin_manager.install.title": "Installera \"{{name}}\"?"
+	"plugin_manager.install.title": "Installera \"{{name}}\"?",
 	"plugin_manager.installed": "Installerade plugin",
 	"plugin_manager.loading.elgato": "Laddar lista över plugin från Elgato App Store arkivet...",
 	"plugin_manager.loading.open_source": "Laddar lista över öppen källkod-plugin...",
@@ -85,7 +85,7 @@
 	"plugin_manager.view_details": "Visa information",
 	"plugin_manager.view_logs": "Visa loggar",
 	"plugin_manager.visit_website": "Besök webbplats",
-	"plugin_manager.warning": "Om du har problem med ett plugin, kontakta någon av {{PRODUCT_NAME}} supportkanaler innan du försöker kontakta plugin-utvecklaren."
+	"plugin_manager.warning": "Om du har problem med ett plugin, kontakta någon av {{PRODUCT_NAME}} supportkanaler innan du försöker kontakta plugin-utvecklaren.",
 	"profile_manager.application_profiles": "Programprofiler",
 	"profile_manager.application_profiles.aria": "{{name}} profil",
 	"profile_manager.application_profiles.hint.1": "Om ditt program inte finns i listan, prova att växla till det och tillbaka igen.",
@@ -108,7 +108,7 @@
 	"profile_manager.select_application": "Välj program",
 	"profile_manager.select_application.placeholder": "Välj program...",
 	"profile_manager.select_profile": "Välj profil",
-	"profile_manager.select_profile.placeholder": "Välj profil..."
+	"profile_manager.select_profile.placeholder": "Välj profil...",
 	"property_inspector.title": "Egenskapsinspektör",
 	"settings.autolaunch": "Starta vid inloggning:",
 	"settings.autolaunch.tooltip.1": "Om detta alternativ är aktiverat startar {{PRODUCT_NAME}} automatiskt när du loggar in.",
@@ -126,7 +126,7 @@
 	"settings.developer": "Aktivera utvecklarläge:",
 	"settings.developer.tooltip": "Detta alternativ aktiverar funktioner som gör utveckling av plugin och felsökning enklare. Dessutom visar detta alternativ alla filsökvägar på din enhet via den lokala webbservern för att möjliggöra symboliska länkar till plugin. Du bör därför inaktivera det om det inte används.",
 	"settings.disableelgato": "Inaktivera identifiering av Elgato-enheter:",
-	"settings.disableelgato.tooltip": "Detta alternativ inaktiverar identifiering av Elgato-enheter så att de kan hanteras av annan programvara."
+	"settings.disableelgato.tooltip": "Detta alternativ inaktiverar identifiering av Elgato-enheter så att de kan hanteras av annan programvara.",
 	"settings.footer.1": "Lämna gärna en ",
 	"settings.footer.2": "stjärna på GitHub ",
 	"settings.footer.3": "eller ",
