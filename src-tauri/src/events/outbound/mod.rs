@@ -18,6 +18,21 @@ struct Coordinates {
 	column: u8,
 }
 
+impl Coordinates {
+	fn from_context(context: &crate::shared::ActionContext) -> Self {
+		if context.controller == "Encoder" {
+			return Coordinates { row: 0, column: context.position };
+		}
+		match crate::shared::DEVICES.get(&context.device) {
+			Some(device) if device.columns > 0 => Coordinates {
+				row: context.position / device.columns,
+				column: context.position % device.columns,
+			},
+			_ => Coordinates { row: 0, column: 0 },
+		}
+	}
+}
+
 #[derive(Serialize)]
 #[allow(non_snake_case)]
 struct GenericInstancePayload {
@@ -30,23 +45,9 @@ struct GenericInstancePayload {
 
 impl GenericInstancePayload {
 	fn new(instance: &crate::shared::ActionInstance) -> Self {
-		let coordinates = match &instance.context.controller[..] {
-			"Encoder" => Coordinates {
-				row: 0,
-				column: instance.context.position,
-			},
-			_ => {
-				let columns = crate::shared::DEVICES.get(&instance.context.device).unwrap().columns;
-				Coordinates {
-					row: instance.context.position / columns,
-					column: instance.context.position % columns,
-				}
-			}
-		};
-
 		Self {
 			settings: instance.settings.clone(),
-			coordinates,
+			coordinates: Coordinates::from_context(&instance.context),
 			controller: instance.context.controller.clone(),
 			state: instance.current_state,
 			isInMultiAction: instance.context.index != 0,
@@ -54,20 +55,9 @@ impl GenericInstancePayload {
 	}
 
 	fn empty(context: &crate::shared::ActionContext) -> Self {
-		let coordinates = match &context.controller[..] {
-			"Encoder" => Coordinates { row: 0, column: context.position },
-			_ => match crate::shared::DEVICES.get(&context.device) {
-				Some(device) => Coordinates {
-					row: context.position / device.columns,
-					column: context.position % device.columns,
-				},
-				None => Coordinates { row: 0, column: 0 },
-			},
-		};
-
 		Self {
 			settings: serde_json::Value::Object(serde_json::Map::new()),
-			coordinates,
+			coordinates: Coordinates::from_context(context),
 			controller: context.controller.clone(),
 			state: 0,
 			isInMultiAction: context.index != 0,

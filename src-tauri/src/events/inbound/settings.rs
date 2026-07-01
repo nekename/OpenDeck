@@ -20,11 +20,11 @@ pub async fn set_settings(event: super::ContextAndPayloadEvent<serde_json::Value
 pub async fn get_settings(event: super::ContextEvent, from_property_inspector: bool, requester: &str) -> Result<(), anyhow::Error> {
 	let locks = acquire_locks().await;
 
-	if let Some(instance) = get_instance(&event.context, &locks).await? {
-		if from_property_inspector || instance.action.plugin == requester {
-			outbound::did_receive_settings(instance, from_property_inspector).await?;
-			return Ok(());
-		}
+	if let Some(instance) = get_instance(&event.context, &locks).await?
+		&& (from_property_inspector || instance.action.plugin == requester)
+	{
+		outbound::did_receive_settings(instance, from_property_inspector).await?;
+		return Ok(());
 	}
 
 	outbound::did_receive_settings_fallback(requester, &event.context, from_property_inspector).await?;
