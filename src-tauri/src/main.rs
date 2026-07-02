@@ -346,7 +346,7 @@ If you have already donated, thank you so much for your support!"#,
 								tauri::async_runtime::block_on(events::inbound::process_incoming_message(Ok(tokio_tungstenite::tungstenite::Message::Text(message.into())), "", true));
 							});
 						}
-					} else {
+					} else if !args.iter().any(|x| x.to_lowercase().trim() == "--hide") {
 						let _ = show_window(app);
 					}
 				})

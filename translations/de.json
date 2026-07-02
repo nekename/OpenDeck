@@ -114,7 +114,7 @@
 	"settings.autolaunch.tooltip.1": "Wenn diese Option aktiviert ist, wird {{PRODUCT_NAME}} automatisch beim Anmelden gestartet.",
 	"settings.autolaunch.tooltip.2": "Wenn du {{PRODUCT_NAME}} mit Flatpak installiert hast, funktioniert diese Option möglicherweise nicht wie vorgesehen",
 	"settings.background": "Im Hintergrund weiterlaufen lassen:",
-	"settings.background.tooltip": "Wenn diese Option aktiviert ist, wird {{PRODUCT_NAME}} in das System-Tray minimiert und im Hintergrund ausgeführt.",
+	"settings.background.tooltip": "Wenn diese Option aktiviert ist, wird {{PRODUCT_NAME}} beim Schließen des Fensters in das System-Tray minimiert, anstatt die Anwendung zu beenden. Dies hat keinen Einfluss darauf, ob das Fenster beim Start von {{PRODUCT_NAME}} angezeigt wird.",
 	"settings.backup_config.button": "Konfiguration sichern",
 	"settings.backup_config.prompt": "Du wirst aufgefordert, einen Speicherort zum Speichern der Sicherung auszuwählen. Der Konfigurationsordner wird komprimiert und dort gespeichert. Dies kann eine Weile dauern, wenn du viele Plugins oder Profile hast.",
 	"settings.backup_config.success.prompt": "Die Konfiguration wurde erfolgreich gesichert.",

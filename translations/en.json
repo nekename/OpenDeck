@@ -114,7 +114,7 @@
 	"settings.autolaunch.tooltip.1": "If this option is enabled, {{PRODUCT_NAME}} will automatically start at login.",
 	"settings.autolaunch.tooltip.2": "If you used Flatpak to install {{PRODUCT_NAME}}, this option may not function as intended.",
 	"settings.background": "Run in background:",
-	"settings.background.tooltip": "If this option is enabled, {{PRODUCT_NAME}} will minimise to the tray and run in the background.",
+	"settings.background.tooltip": "If this option is enabled, closing the {{PRODUCT_NAME}} window will minimise it to the tray instead of quitting the application. This does not affect whether the window is shown when {{PRODUCT_NAME}} starts.",
 	"settings.backup_config.button": "Back up config",
 	"settings.backup_config.prompt": "You will be prompted to select a location to save the backup to. The config directory will be compressed and saved there. This may take a while if you have many plugins or profiles.",
 	"settings.backup_config.success.prompt": "Successfully backed up the config directory.",
