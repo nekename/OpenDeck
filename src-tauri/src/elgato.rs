@@ -45,19 +45,14 @@ fn get_encoder_image(encoder: &Encoder, instance: &ActionInstance) -> Result<Dyn
 	if let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) {
 		// If the title is missing, provide it from the state/action
 		if let Some(title_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("title")) {
-			let title_value = title_item.get("value").and_then(Value::as_str).unwrap_or("").trim();
+			let state = instance.states[instance.current_state as usize].text.trim();
 
-			if title_value.is_empty() {
-				// Try to pull the title from the state
-				let state_text = instance.states.get(instance.current_state as usize).and_then(|s| {
-					let t = s.text.trim();
-					if t.is_empty() { None } else { Some(t) }
-				});
-
-				// If the state title is empty, fall back to the action name
-				let title = state_text.unwrap_or(instance.action.name.as_str());
-				title_item["value"] = Value::String(title.to_string());
-			}
+			let title = if !state.is_empty() {
+				state
+			} else {
+				title_item.get("value").and_then(Value::as_str).unwrap_or(&instance.action.name).trim()
+			};
+			title_item["value"] = Value::String(title.to_string());
 		}
 
 		// Expand all image paths in the layout and confirm they're in the plugin
@@ -88,19 +83,17 @@ fn get_encoder_image(encoder: &Encoder, instance: &ActionInstance) -> Result<Dyn
 
 		// If the icon is missing, provide it from the state/action
 		if let Some(icon_item) = items_array.iter_mut().find(|item| item.get("key").and_then(Value::as_str) == Some("icon")) {
-			let icon_empty = icon_item.get("value").and_then(Value::as_str).is_none_or(str::is_empty);
-			if icon_empty {
-				let icon = instance
-					.states
-					.get(instance.current_state as usize)
-					.map(|state| &state.image)
-					.filter(|image| !image.is_empty())
-					.unwrap_or(&instance.action.icon);
+			// We need to compare this states icon with the default icon for this state
+			let state = &instance.states[instance.current_state as usize];
+			let default = &instance.action.states[instance.current_state as usize];
 
-				if !icon.is_empty() {
-					icon_item["value"] = Value::String(icon.clone());
-				}
-			}
+			let override_image = state.image != default.image;
+			let icon = if override_image && !state.image.is_empty() {
+				state.image.trim()
+			} else {
+				icon_item.get("value").and_then(Value::as_str).unwrap_or(&instance.action.icon).trim()
+			};
+			icon_item["value"] = Value::String(icon.to_string());
 		}
 	}
 
