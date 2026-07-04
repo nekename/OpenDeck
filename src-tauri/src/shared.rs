@@ -8,6 +8,8 @@ use serde_inline_default::serde_inline_default;
 
 use anyhow::{Result, bail};
 use dashmap::DashMap;
+use streamdeck_strip_render::get_incremental_renderer;
+use streamdeck_strip_render::strip_renderer::StripRenderer;
 use tauri::Manager;
 use tokio::sync::RwLock;
 
@@ -248,9 +250,8 @@ pub struct Encoder {
 	pub layout: String,
 
 	// Note: this is not a real manifest property; it is only used internally.
-	#[serde_inline_default(serde_json::Value::Null)]
-	#[serde(skip_serializing)]
-	pub layout_parsed: serde_json::Value,
+	#[serde(skip)]
+	pub layout_parsed: Option<StripRenderer>,
 }
 
 pub fn initialise_encoder_layout(action: &mut Action, layout: Option<String>) -> Result<(), anyhow::Error> {
@@ -274,20 +275,20 @@ pub fn initialise_encoder_layout(action: &mut Action, layout: Option<String>) ->
 		match layout_file.canonicalize() {
 			Ok(resolved) if resolved.starts_with(&plugin_dir) => resolved.to_string_lossy().into_owned(),
 			Ok(_) => {
-				encoder.layout_parsed = serde_json::Value::Null;
+				encoder.layout_parsed = None;
 				bail!("Encoder layout path escapes plugin directory: {}", load_layout);
 			}
 			Err(error) => {
-				encoder.layout_parsed = serde_json::Value::Null;
+				encoder.layout_parsed = None;
 				bail!("Failed to canonicalize encoder layout path {}: {}", load_layout, error);
 			}
 		}
 	};
 
 	match load_encoder_layout(&layout) {
-		Ok(parsed) => encoder.layout_parsed = parsed,
+		Ok(parsed) => encoder.layout_parsed = Some(get_incremental_renderer(parsed, None)?),
 		Err(error) => {
-			encoder.layout_parsed = serde_json::Value::Null;
+			encoder.layout_parsed = None;
 			bail!("Failed to load encoder layout {}: {}", load_layout, error)
 		}
 	}
