@@ -34,7 +34,7 @@ fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
 
 // Honestly, this probably needs moving, not sure where though, given the scope and size of this it
 // might be worth just making an new encoder.rs for it
-async fn generate_encoder_image(context: &crate::shared::Context, fallback: &[u8]) -> Result<DynamicImage, anyhow::Error> {
+pub async fn generate_encoder_image(context: &crate::shared::Context, fallback: &[u8]) -> Result<DynamicImage, anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
 	let slot = get_slot_mut(context, &mut locks).await?;
 
