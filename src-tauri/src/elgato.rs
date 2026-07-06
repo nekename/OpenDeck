@@ -66,7 +66,7 @@ pub async fn generate_encoder_image(context: &crate::shared::Context, fallback: 
 				.context("Failed to decode fallback image")?
 				.resize(72, 72, image::imageops::FilterType::Nearest);
 
-			overlay(&mut fallback_canvas, &fallback_img.to_rgba8(), 64, 36);
+			overlay(&mut fallback_canvas, &fallback_img.to_rgba8(), 64, 14);
 
 			Ok(DynamicImage::ImageRgba8(fallback_canvas))
 		}
