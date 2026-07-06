@@ -64,8 +64,10 @@
 />
 
 <Popup show={showPopup} label={$t("settings.button")}>
-	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => (showPopup = false)} aria-label={$t("settings.close")}>✕</button>
-	<h2 class="m-2 font-semibold text-xl text-neutral-300">{$t("settings.button")}</h2>
+	<svelte:fragment slot="header">
+		<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => (showPopup = false)} aria-label={$t("settings.close")}>✕</button>
+		<h2 class="m-2 font-semibold text-xl text-neutral-300">{$t("settings.button")}</h2>
+	</svelte:fragment>
 	{#if $settings}
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-language" class="text-neutral-400">{$t("settings.language")}</label>
@@ -202,7 +204,9 @@
 		<span class="text-xs text-neutral-400">
 			{@html buildInfo}
 		</span>
-		<div class="absolute bottom-6 flex flex-row items-center text-sm text-neutral-400">
+	</div>
+	<svelte:fragment slot="footer">
+		<div class="mt-4 flex flex-row items-center text-sm text-neutral-400 bg-neutral-800">
 			<span class="mr-1">
 				{$t("settings.footer.1")}
 				<button on:click={() => invoke("open_url", { url: "https://github.com/nekename/OpenDeck" })} class="underline">{$t("settings.footer.2")}</button>
@@ -215,5 +219,5 @@
 			<Heart weight="fill" fill="fuchsia" />
 			<span class="ml-1">{$t("settings.footer.5")}</span>
 		</div>
-	</div>
+	</svelte:fragment>
 </Popup>

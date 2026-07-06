@@ -72,7 +72,10 @@
 </script>
 
 <Popup show label={$t("plugin_details.title").replaceAll("{details.name}", details.name)}>
-	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={close} aria-label={$t("settings.close")}>✕</button>
+	<svelte:fragment slot="header">
+		<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={close} aria-label={$t("settings.close")}>✕</button>
+	</svelte:fragment>
+
 	<div class="flex flex-row items-start">
 		<img src={"https://openactionapi.github.io/plugins/icons/" + id + ".png"} alt={details.name} class="size-48 rounded-2xl" />
 		<div class="flex flex-col justify-center h-48 ml-8">
