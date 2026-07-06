@@ -6,15 +6,16 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::LazyLock;
-
+use anyhow::Context;
 use base64::Engine as _;
 use elgato_streamdeck::{
 	AsyncStreamDeck, DeviceStateUpdate,
 	images::{ImageRect, convert_image_with_format_async},
 	info::Kind,
 };
-use image::{DynamicImage, GenericImageView as _};
-use log::warn;
+use image::imageops::overlay;
+use image::{DynamicImage, GenericImageView as _, Rgba, RgbaImage};
+use log::{trace, warn};
 use serde_json::{Map, Value};
 use streamdeck_strip_render::layout::{LayoutItem, PixmapSource};
 use tokio::sync::RwLock;
@@ -29,6 +30,47 @@ fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
 		.fold((0u64, 0u64, 0u64), |(r, g, b), (_, _, pixel)| (r + pixel[0] as u64, g + pixel[1] as u64, b + pixel[2] as u64));
 	let count = (img.width() * img.height()).max(1) as u64;
 	((r_sum / count) as u8, (g_sum / count) as u8, (b_sum / count) as u8)
+}
+
+// Honestly, this probably needs moving, not sure where though, given the scope and size of this it
+// might be worth just making an new encoder.rs for it
+async fn generate_encoder_image(context: &crate::shared::Context, fallback: &[u8]) -> Result<DynamicImage, anyhow::Error> {
+	let mut locks = acquire_locks_mut().await;
+	let slot = get_slot_mut(context, &mut locks).await?;
+
+	// We need to borrow the encoder instance to render the image, so we'll take it then give it
+	// back when we're done.
+	let img = if let Some(instance) = slot {
+		if let Some(mut encoder) = instance.action.encoder.take() {
+			let result = get_encoder_image(&mut encoder, instance).context("Failed to render Encoder Image");
+			instance.action.encoder = Some(encoder);
+			Some(result?)
+		} else {
+			None
+		}
+	} else {
+		None
+	};
+	drop(locks);
+
+	match img {
+		Some(img) => Ok(img),
+		None => {
+			// If we get here, this is either an Encoder action that doesn't have an Encoder config in the manifest, or we were
+			// unable to locate the instance for this action. This realistically shouldn't happen, but if it does, we'll fall back
+			// to rendering what was provided to this function call.
+			trace!("No encoder instance / config found for action; using fallback image");
+
+			let mut fallback_canvas = RgbaImage::from_pixel(200, 100, Rgba([0, 0, 0, 255]));
+			let fallback_img = image::load_from_memory(fallback)
+				.context("Failed to decode fallback image")?
+				.resize(72, 72, image::imageops::FilterType::Nearest);
+
+			overlay(&mut fallback_canvas, &fallback_img.to_rgba8(), 64, 36);
+
+			Ok(DynamicImage::ImageRgba8(fallback_canvas))
+		}
+	}
 }
 
 fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result<DynamicImage, anyhow::Error> {
@@ -125,39 +167,8 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
 			if context.controller == "Encoder" {
-				let mut locks = acquire_locks_mut().await;
-				let slot = get_slot_mut(context, &mut locks).await?;
-
-				// We need to borrow the encoder instance to render the image, so we'll take it
-				// then give it back when we're done.
-				let img = if let Some(instance) = slot {
-					if let Some(mut encoder) = instance.action.encoder.take() {
-						let result = get_encoder_image(&mut encoder, instance);
-						instance.action.encoder = Some(encoder);
-						Some(result?)
-					} else {
-						None
-					}
-				} else {
-					None
-				};
-
-				drop(locks);
-
-				if let Some(img) = img {
-					device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img)?).await?;
-				} else {
-					// If we get here, this is either an Encoder action that doesn't have an Encoder config in the manifest, or we were
-					// unable to locate the instance for this action. This realistically shouldn't happen, but if it does, we'll fall back
-					// to rendering what was provided to this function call.
-					device
-						.write_lcd(
-							(context.position as u16 * 200) + 64,
-							14,
-							&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(72, 72, image::imageops::FilterType::Nearest))?,
-						)
-						.await?;
-				}
+				let img = generate_encoder_image(context, &bytes).await?;
+				device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image(img)?).await?;
 			} else if context.controller == "Infobar" {
 				let img = image::load_from_memory(&bytes)?;
 				let Some(format) = device.kind().lcd_image_format() else {
