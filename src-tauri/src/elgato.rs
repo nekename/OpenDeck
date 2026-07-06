@@ -62,6 +62,14 @@ fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result
 	let mut feedback = Map::new();
 	let layout = renderer.layout();
 
+	// If the layout doesn't have a title, fall back to the action title
+	if let Some(title) = layout.item("title")
+		&& let LayoutItem::Text(title) = title
+		&& title.value.as_deref().is_none_or(str::is_empty)
+	{
+		feedback.insert("title".to_string(), Value::String(instance.action.name.clone()));
+	}
+
 	// If the layout doesn't have an icon, we'll use the state image.
 	if let Some(icon) = layout.item("icon")
 		&& let LayoutItem::Pixmap(icon) = icon
