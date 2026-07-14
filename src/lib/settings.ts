@@ -12,6 +12,7 @@ export type Settings = {
 	separatewine: boolean;
 	developer: boolean;
 	disableelgato: boolean;
+	autoswitch: boolean;
 };
 
 import { invoke } from "@tauri-apps/api/core";

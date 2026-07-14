@@ -140,6 +140,7 @@ pub struct Settings {
 	pub separatewine: bool,
 	pub developer: bool,
 	pub disableelgato: bool,
+	pub autoswitch: bool,
 }
 
 impl Default for Settings {
@@ -159,6 +160,7 @@ impl Default for Settings {
 			separatewine: false,
 			developer: false,
 			disableelgato: false,
+			autoswitch: true,
 		}
 	}
 }

@@ -113,6 +113,8 @@
 	"settings.autolaunch": "Start at login:",
 	"settings.autolaunch.tooltip.1": "If this option is enabled, {{PRODUCT_NAME}} will automatically start at login.",
 	"settings.autolaunch.tooltip.2": "If you used Flatpak to install {{PRODUCT_NAME}}, this option may not function as intended.",
+	"settings.autoswitch": "Enable profile auto switching:",
+	"settings.autoswitch.tooltip": "If this option is enabled, the active profile will switch automatically based on the currently focussed application.",
 	"settings.background": "Run in background:",
 	"settings.background.tooltip": "If this option is enabled, {{PRODUCT_NAME}} will minimise to the tray and run in the background.",
 	"settings.backup_config.button": "Back up config",

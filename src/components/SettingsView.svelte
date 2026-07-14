@@ -115,6 +115,12 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-autoswitch" class="text-neutral-400">{$t("settings.autoswitch")}</label>
+			<input type="checkbox" bind:checked={$settings.autoswitch} id="settings-autoswitch" />
+			<Tooltip>{$t("settings.autoswitch.tooltip")}</Tooltip>
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-background" class="text-neutral-400">{$t("settings.background")}</label>
 			<input type="checkbox" bind:checked={$settings.background} id="settings-background" />
 			<Tooltip>{$t("settings.background.tooltip", { PRODUCT_NAME })}</Tooltip>

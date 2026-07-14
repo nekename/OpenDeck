@@ -113,6 +113,8 @@
 	"settings.autolaunch": "Beim Anmelden starten:",
 	"settings.autolaunch.tooltip.1": "Wenn diese Option aktiviert ist, wird {{PRODUCT_NAME}} automatisch beim Anmelden gestartet.",
 	"settings.autolaunch.tooltip.2": "Wenn du {{PRODUCT_NAME}} mit Flatpak installiert hast, funktioniert diese Option möglicherweise nicht wie vorgesehen",
+	"settings.autoswitch": "Profil-Autoumschaltung aktivieren:",
+	"settings.autoswitch.tooltip": "Wenn diese Option aktiviert ist, wechselt das aktive Profil automatisch basierend auf der aktuell fokussierten Anwendung.",
 	"settings.background": "Im Hintergrund weiterlaufen lassen:",
 	"settings.background.tooltip": "Wenn diese Option aktiviert ist, wird {{PRODUCT_NAME}} in das System-Tray minimiert und im Hintergrund ausgeführt.",
 	"settings.backup_config.button": "Konfiguration sichern",
