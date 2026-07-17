@@ -80,6 +80,7 @@ async fn main() {
 			frontend::instances::move_instance,
 			frontend::instances::remove_instance,
 			frontend::instances::set_state,
+			frontend::instances::set_instance_settings,
 			frontend::instances::update_image,
 			frontend::instances::trigger_virtual_press,
 			frontend::profiles::get_profiles,

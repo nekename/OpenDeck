@@ -67,7 +67,13 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			)
 			.await?;
 
+			// I don't know if that's still needed - no time to dig further tho. ~KeryaneK
 			tokio::time::sleep(Duration::from_millis(100)).await;
+
+			let delay = child.settings.get("delay_ms").and_then(|v| v.as_u64()).unwrap_or(0);
+			if delay > 0 {
+				tokio::time::sleep(Duration::from_millis(delay)).await;
+			}
 		}
 
 		let contexts = instance.children.as_ref().unwrap().iter().map(|x| x.context.clone()).collect::<Vec<_>>();

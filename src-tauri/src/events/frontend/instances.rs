@@ -225,6 +225,16 @@ pub async fn set_state(context: ActionContext, index: u16, state: ActionState) -
 }
 
 #[command]
+pub async fn set_instance_settings(context: ActionContext, settings: serde_json::Value) -> Result<(), Error> {
+	let mut locks = acquire_locks_mut().await;
+	if let Some(instance) = get_instance_mut(&context, &mut locks).await? {
+		instance.settings = settings;
+		save_profile(&context.device, &mut locks).await?;
+	}
+	Ok(())
+}
+
+#[command]
 pub async fn update_image(context: Context, image: Option<String>) {
 	if Some(&context.profile) != crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(&context.device).ok().as_ref() {
 		return;
