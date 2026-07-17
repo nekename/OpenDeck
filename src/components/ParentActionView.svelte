@@ -24,6 +24,10 @@
 	$: children = profile.keys[$inspectedParentAction!.position]!.children!;
 	let parentUuid: string;
 	$: parentUuid = profile.keys[$inspectedParentAction!.position]!.action.uuid;
+	let parentContext: string;
+	$: parentContext = profile.keys[$inspectedParentAction!.position]!.context;
+	let parentSettings: any;
+	$: parentSettings = profile.keys[$inspectedParentAction!.position]!.settings;
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
@@ -69,6 +73,13 @@
 			items[i].tabIndex = i == targetIndex ? 0 : -1;
 		}
 		items[targetIndex]?.focus();
+	}
+
+	async function setDelay(index: number, event: Event) {
+		const target = event.currentTarget as HTMLInputElement;
+		const val = Math.max(0, parseInt(target.value) || 0);
+		const settings = await invoke<any>("set_child_delay", { parentContext, index, delayMs: val });
+		profile.keys[$inspectedParentAction!.position]!.settings = settings;
 	}
 
 	function handleListKeydown(event: KeyboardEvent) {
@@ -166,13 +177,8 @@
 					min="0"
 					max="300000"
 					step="100"
-					value={instance.settings?.delay_ms ?? 0}
-					on:input={(e) => {
-						const target = e.currentTarget;
-						const val = parseInt(target.value) || 0;
-						const newSettings = { ...instance.settings, delay_ms: val };
-						invoke("set_instance_settings", { context: instance.context, settings: newSettings });
-					}}
+					value={parentSettings?.delays?.[index] ?? 0}
+					on:input={(e) => setDelay(index, e)}
 					class="no-spinner w-20 px-1 py-0.5 text-neutral-300 border border-neutral-600 rounded text-sm bg-neutral-900 text-center"
 				/>
 				<span class="text-xs text-neutral-500">ms</span>

@@ -36,7 +36,14 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 
 	let Some(instance) = get_slot_mut(&context, &mut locks).await? else { return Ok(()) };
 	if instance.action.uuid == "opendeck.multiaction" {
-		for child in instance.children.as_mut().unwrap() {
+		let delays: Vec<u64> = instance
+			.settings
+			.get("delays")
+			.and_then(|v| v.as_array())
+			.map(|arr| arr.iter().filter_map(|v| v.as_u64()).collect())
+			.unwrap_or_default();
+
+		for (i, child) in instance.children.as_mut().unwrap().iter_mut().enumerate() {
 			send_to_plugin(
 				&child.action.plugin,
 				&KeyEvent {
@@ -67,10 +74,9 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			)
 			.await?;
 
-			// I don't know if that's still needed - no time to dig further tho. ~KeryaneK
 			tokio::time::sleep(Duration::from_millis(100)).await;
 
-			let delay = child.settings.get("delay_ms").and_then(|v| v.as_u64()).unwrap_or(0);
+			let delay = delays.get(i).copied().unwrap_or(0);
 			if delay > 0 {
 				tokio::time::sleep(Duration::from_millis(delay)).await;
 			}
