@@ -126,7 +126,7 @@
 	{#each children as instance, index}
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 		<div
-			class="flex flex-row items-center mx-4 my-2 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
+			class="flex flex-row items-center mx-4 my-1 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
 			on:click|stopPropagation={() => ($inspectedInstance = instance.context)}
 			on:focus|stopPropagation={() => ($inspectedInstance = instance.context)}
 			on:keydown={(e) => {
@@ -150,14 +150,34 @@
 			/>
 			<p class="ml-4 text-xl text-neutral-300">{instance.action.name}</p>
 			<button
-				class="ml-auto mr-10"
 				on:click|stopPropagation={() => removeInstance(index)}
 				tabindex={-1}
 				aria-label={$t("parent_action_view.remove", { name: instance.action.name })}
+				class="ml-auto mr-10"
 			>
 				<Trash size="32" class="text-neutral-400" />
 			</button>
 		</div>
+		{#if parentUuid == "opendeck.multiaction" && index < children.length - 1}
+			<div class="flex flex-row items-center gap-2 mx-14 my-1 px-3 py-2 bg-neutral-800 border border-dashed border-neutral-600 rounded-lg">
+				<span class="text-xs text-neutral-400">{$t("parent_action_view.delay_label")}</span>
+				<input
+					type="number"
+					min="0"
+					max="300000"
+					step="100"
+					value={instance.settings?.delay_ms ?? 0}
+					on:input={(e) => {
+						const target = e.currentTarget;
+						const val = parseInt(target.value) || 0;
+						const newSettings = { ...instance.settings, delay_ms: val };
+						invoke("set_instance_settings", { context: instance.context, settings: newSettings });
+					}}
+					class="no-spinner w-20 px-1 py-0.5 text-neutral-300 border border-neutral-600 rounded text-sm bg-neutral-900 text-center"
+				/>
+				<span class="text-xs text-neutral-500">ms</span>
+			</div>
+		{/if}
 	{/each}
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 	<div
@@ -177,3 +197,15 @@
 		<p class="ml-4 text-xl text-neutral-400">{$t("parent_action_view.drag_paste")}</p>
 	</div>
 </div>
+
+<style>
+	:global(.no-spinner::-webkit-outer-spin-button),
+	:global(.no-spinner::-webkit-inner-spin-button) {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+	:global(.no-spinner[type="number"]) {
+		-moz-appearance: textfield;
+		appearance: textfield;
+	}
+</style>
