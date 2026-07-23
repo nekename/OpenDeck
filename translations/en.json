@@ -136,6 +136,8 @@
 	"settings.language.tooltip": "{{PRODUCT_NAME}} itself is not yet completely translated. Changing this setting will translate the text from installed plugins into your language for those that support it.",
 	"settings.open_config": "Open config",
 	"settings.open_logs": "Open logs",
+	"settings.profile_history_size": "Profile history stack size:",
+	"settings.profile_history_size.tooltip": "Maximum number of previous profiles stored in memory per device for navigating back using __PREVIOUS__.",
 	"settings.restore_config.button": "Restore config",
 	"settings.restore_config.prompt": "You will be prompted to select a location to restore the backup from. This may take a while if you have many plugins or profiles. The application will restart after the restoration is complete.\n\nYou may encounter issues if you attempt to restore a backup from a different operating system or architecture.",
 	"settings.restore_config.title": "Restoring configuration",

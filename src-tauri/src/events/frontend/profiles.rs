@@ -25,10 +25,26 @@ pub async fn get_selected_profile(device: String) -> Result<crate::shared::Profi
 
 #[allow(clippy::flat_map_identity)]
 #[command]
-pub async fn set_selected_profile(device: String, id: String) -> Result<(), Error> {
+/// Sets the selected profile for a device. Returns the resolved profile ID (e.g., if `id` is `PREVIOUS_PROFILE_KEY`).
+pub async fn set_selected_profile(device: String, mut id: String) -> Result<String, Error> {
 	let mut locks = acquire_locks_mut().await;
 	if !DEVICES.contains_key(&device) {
 		return Err(Error::new(format!("device {device} not found")));
+	}
+
+	if id == crate::store::profiles::PREVIOUS_PROFILE_KEY {
+		if let Some(prev) = crate::store::profiles::pop_profile_history(&device) {
+			id = prev;
+		} else {
+			let current = locks.device_stores.get_selected_profile(&device)?;
+			return Ok(current);
+		}
+	} else {
+		if let Ok(current) = locks.device_stores.get_selected_profile(&device) {
+			if current != id {
+				crate::store::profiles::push_profile_history(&device, &current);
+			}
+		}
 	}
 
 	// If a profile save is pending for this device, save it immediately to prevent losing profile data
@@ -90,9 +106,10 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 	}
 	store.save()?;
 
-	locks.device_stores.set_selected_profile(&device, id)?;
+	locks.device_stores.set_selected_profile(&device, id.clone())?;
 
-	Ok(())
+	// Return the resolved profile ID so the frontend updates UI/folders with actual profile name instead of __PREVIOUS__
+	Ok(id)
 }
 
 #[command]

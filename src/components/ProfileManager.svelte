@@ -37,17 +37,19 @@
 	export let profile: Profile;
 	export async function setProfile(id: string) {
 		if (!device || !id) return;
-		if (value != id) {
+		if (value != id && id != "__PREVIOUS__") {
 			value = id;
 			return;
 		}
-		await invoke("set_selected_profile", { device: device.id, id });
+		const actualId: string = await invoke("set_selected_profile", { device: device.id, id });
 		profile = await invoke("get_selected_profile", { device: device.id });
+		value = profile.id;
+		oldValue = value;
 
-		let folder = id.includes("/") ? id.split("/")[0] : "";
+		let folder = actualId.includes("/") ? actualId.split("/")[0] : "";
 		if (folders[folder]) {
-			if (!folders[folder].includes(id)) folders[folder].push(id);
-		} else folders[folder] = [id];
+			if (!folders[folder].includes(actualId)) folders[folder].push(actualId);
+		} else folders[folder] = [actualId];
 		folders = folders;
 
 		$inspectedInstance = null;

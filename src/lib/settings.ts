@@ -12,6 +12,7 @@ export type Settings = {
 	separatewine: boolean;
 	developer: boolean;
 	disableelgato: boolean;
+	profile_history_size: number;
 };
 
 import { invoke } from "@tauri-apps/api/core";

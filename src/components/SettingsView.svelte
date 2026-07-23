@@ -104,6 +104,19 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-profile_history_size" class="text-neutral-400">{$t("settings.profile_history_size")}</label>
+			<input
+				type="number"
+				min="0"
+				max="100"
+				bind:value={$settings.profile_history_size}
+				class="w-16 px-1 text-neutral-300 border border-neutral-600 rounded-lg"
+				id="settings-profile_history_size"
+			/>
+			<Tooltip>{$t("settings.profile_history_size.tooltip")}</Tooltip>
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-sleep_when_computer_locked" class="text-neutral-400">{$t("settings.sleep_when_computer_locked")}</label>
 			<input type="checkbox" bind:checked={$settings.sleep_when_computer_locked} id="settings-sleep_when_computer_locked" />
 			<Tooltip>{$t("settings.sleep_when_computer_locked.tooltip")}</Tooltip>

@@ -288,6 +288,34 @@ pub static PROFILE_STORES: LazyLock<RwLock<ProfileStores>> = LazyLock::new(|| Rw
 /// A singleton object to manage Store instances for device configurations.
 pub static DEVICE_STORES: LazyLock<RwLock<DeviceStores>> = LazyLock::new(|| RwLock::new(DeviceStores { stores: HashMap::new() }));
 
+pub const PREVIOUS_PROFILE_KEY: &str = "__PREVIOUS__";
+
+/// In-memory profile history stack per device for navigating back to previous profiles.
+pub static PROFILE_HISTORY: LazyLock<DashMap<String, Vec<String>>> = LazyLock::new(DashMap::new);
+
+pub fn push_profile_history(device: &str, profile: &str) {
+	let max_history = crate::store::get_settings().value.profile_history_size;
+	if max_history == 0 {
+		return;
+	}
+	let mut entry = PROFILE_HISTORY.entry(device.to_owned()).or_default();
+	if entry.last().map(|s| s.as_str()) != Some(profile) {
+		entry.push(profile.to_owned());
+		if entry.len() > max_history {
+			entry.remove(0);
+		}
+	}
+}
+
+pub fn pop_profile_history(device: &str) -> Option<String> {
+	if let Some(mut entry) = PROFILE_HISTORY.get_mut(device) {
+		entry.pop()
+	} else {
+		None
+	}
+}
+
+
 pub struct Locks<'a> {
 	#[allow(dead_code)]
 	pub device_stores: RwLockReadGuard<'a, DeviceStores>,
