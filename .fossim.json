@@ -1,0 +1,6 @@
+{
+	"host": "https://fossim.amankhanna.me",
+	"name": "OpenDeck",
+	"icon": "https://raw.githubusercontent.com/nekename/OpenDeck/main/src-tauri/icons/icon.png",
+	"banner": "https://raw.githubusercontent.com/nekename/OpenDeck/main/.github/readme/mainmenu.png"
+}

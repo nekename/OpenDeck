@@ -69,6 +69,8 @@ pub struct Info {
 
 /// Construct the info parameter for a given plugin's UUID and version.
 pub async fn make_info(uuid: String, version: String, wine: bool) -> Info {
+	let configured_language = crate::store::get_settings().value.language;
+
 	#[cfg(target_os = "windows")]
 	let platform = "windows";
 	#[cfg(target_os = "macos")]
@@ -79,7 +81,11 @@ pub async fn make_info(uuid: String, version: String, wine: bool) -> Info {
 	Info {
 		application: ApplicationInfo {
 			font: "ui-sans-serif".to_owned(),
-			language: crate::store::get_settings().value.language,
+			language: if matches!(configured_language.as_str(), "en" | "es" | "zh_CN" | "fr" | "de" | "ja" | "ko") {
+				configured_language
+			} else {
+				"en".to_owned()
+			},
 			platform: if !wine { platform.to_owned() } else { "windows".to_owned() },
 			platformVersion: if !wine { os_info::get().version().to_string() } else { "10.0.19045.4474".to_owned() },
 			version: "7.1.0".to_owned(),

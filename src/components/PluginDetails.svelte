@@ -71,7 +71,7 @@
 	});
 </script>
 
-<Popup show label={$t("plugin_details.title").replaceAll("{details.name}", details.name)}>
+<Popup show label={$t("plugin_details.title", { name: details.name })}>
 	<svelte:fragment slot="header">
 		<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={close} aria-label={$t("settings.close")}>✕</button>
 	</svelte:fragment>

@@ -18,8 +18,8 @@
 	export let device: DeviceInfo;
 	export let profile: Profile;
 
-	async function iframeOnLoad(instance: ActionInstance) {
-		const iframe = iframes[instance.context];
+	async function iframeOnLoad(event: Event, instance: ActionInstance) {
+		const iframe = iframes[instance.context] ?? event.target;
 		const split = instance.context.split(".");
 
 		const position = parseInt(split[3]);
@@ -30,7 +30,7 @@
 			coordinates = { row: Math.floor(position / device.columns), column: position % device.columns };
 		}
 
-		if (instance == null || !iframe.src || !iframe.src.startsWith(getWebserverUrl())) return;
+		if (instance == null || !iframe?.src || !iframe.src.startsWith(getWebserverUrl())) return;
 		const info = JSON.stringify(await invoke("make_info", { plugin: instance.action.plugin }));
 
 		iframe?.contentWindow?.postMessage(
@@ -123,8 +123,8 @@
 				return mergedArray;
 			}
 
-			// @ts-expect-error
 			window
+				// @ts-expect-error
 				.fetchCORS(...data.payload.args)
 				.then(async (response: Response) => {
 					const chunks = [];
@@ -205,7 +205,7 @@
 				src={getWebserverUrl(instance.action.property_inspector + "|opendeck_property_inspector")}
 				name={instance.context}
 				bind:this={iframes[instance.context]}
-				on:load={() => iframeOnLoad(instance)}
+				on:load={(event) => iframeOnLoad(event, instance)}
 			/>
 		{/if}
 	{/each}
