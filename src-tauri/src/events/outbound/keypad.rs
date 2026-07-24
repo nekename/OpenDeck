@@ -47,7 +47,7 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 		let _ = instance;
 		drop(locks);
 
-		for (i, child) in children.iter_mut().enumerate() {
+		for (i, child) in children.iter().enumerate() {
 			send_to_plugin(
 				&child.action.plugin,
 				&KeyEvent {
@@ -61,10 +61,6 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			.await?;
 
 			tokio::time::sleep(Duration::from_millis(100)).await;
-
-			if child.states.len() == 2 && !child.action.disable_automatic_states {
-				child.current_state = (child.current_state + 1) % (child.states.len() as u16);
-			}
 
 			send_to_plugin(
 				&child.action.plugin,
@@ -87,6 +83,13 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 		}
 
 		let mut locks = acquire_locks_mut().await;
+
+		for child in &mut children {
+			if child.states.len() == 2 && !child.action.disable_automatic_states {
+				child.current_state = (child.current_state + 1) % (child.states.len() as u16);
+			}
+		}
+
 		let child_contexts: Vec<crate::shared::ActionContext> =
 			children.iter().map(|x| x.context.clone()).collect();
 		if let Some(instance) = get_slot_mut(&context, &mut locks).await? {
