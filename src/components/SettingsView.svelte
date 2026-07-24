@@ -18,16 +18,6 @@
 
 	let showPopup: boolean;
 	let buildInfo: string;
-	const languageOptions = [
-		{ value: "en", label: "English" },
-		{ value: "es", label: "Español" },
-		{ value: "zh_CN", label: "中文" },
-		{ value: "fr", label: "Français" },
-		{ value: "de", label: "Deutsch" },
-		{ value: "ja", label: "日本語" },
-		{ value: "ko", label: "韓国語" }
-	];
-
 	(async () => (buildInfo = await invoke("get_build_info")))();
 
 	listen("device_brightness", ({ payload }: { payload: { action: string; value: number } }) => {
@@ -81,9 +71,13 @@
 			<label for="settings-language" class="text-neutral-400">{$t("settings.language")}</label>
 			<div class="select-wrapper">
 				<select bind:value={$settings.language} class="w-auto" style="padding-right: 2.5em;" id="settings-language">
-					{#each languageOptions as option}
-						<option value={option.value}>{option.label}</option>
-					{/each}
+					<option value="en">English</option>
+					<option value="es">Español</option>
+					<option value="zh_CN">中文</option>
+					<option value="fr">Français</option>
+					<option value="de">Deutsch</option>
+					<option value="ja">日本語</option>
+					<option value="ko">韓国語</option>
 				</select>
 			</div>
 			<Tooltip>
