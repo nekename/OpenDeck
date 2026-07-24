@@ -14,11 +14,10 @@ pub async fn generate_encoder_image(context: &crate::shared::Context, fallback: 
 	let mut locks = acquire_locks_mut().await;
 	let slot = get_slot_mut(context, &mut locks).await?;
 
-	// We need to borrow the encoder instance to render the image, so we'll take it then give it
-	// back when we're done.
+	// We need to borrow the encoder instance to render the image, so we'll take it, then give it back when we're done.
 	let img = if let Some(instance) = slot {
 		if let Some(mut encoder) = instance.action.encoder.take() {
-			let result = get_encoder_image(&mut encoder, instance).context("Failed to render Encoder Image");
+			let result = get_encoder_image(&mut encoder, instance).context("Failed to render encoder image");
 			instance.action.encoder = Some(encoder);
 			Some(result?)
 		} else {
@@ -50,7 +49,6 @@ pub async fn generate_encoder_image(context: &crate::shared::Context, fallback: 
 }
 
 fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result<DynamicImage, anyhow::Error> {
-	// Clone the layout so we can mutate it for rendering without persisting
 	let Some(ref mut renderer) = encoder.layout_parsed else {
 		// Something's gone horribly wrong here; we should have a layout. Render a blank image.
 		return Ok(DynamicImage::new_rgb8(200, 100));
@@ -61,14 +59,13 @@ fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result
 
 	let state_idx = instance.current_state as usize;
 
-	// Override the title if it's set in the State
+	// Override the title if it's set in the state.
 	let override_title = {
 		let t = instance.states[state_idx].text.trim();
 		(!t.is_empty()).then(|| t.to_string())
 	};
 
-	// Similar to the title, except for the rendered icon (We check whether the state matches
-	// the default, and if it doesn't, we use it)
+	// Similar to the title, except for the rendered icon (we check whether the state matches the default, and if it doesn't, we use it).
 	let state_image = &instance.states[state_idx].image.trim();
 
 	let override_icon = {
@@ -76,11 +73,11 @@ fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result
 		(!state_image.is_empty() && state_image != default_image).then(|| state_image.to_string())
 	};
 
-	// We need to do small item corrections here
+	// We need to do small item corrections here.
 	let mut feedback = Map::new();
 	let layout = renderer.layout();
 
-	// If the layout doesn't have a title, fall back to the action title
+	// If the layout doesn't have a title, fall back to the action title.
 	if let Some(title) = layout.item("title")
 		&& let LayoutItem::Text(title) = title
 		&& title.value.as_deref().is_none_or(str::is_empty)
@@ -88,7 +85,7 @@ fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result
 		feedback.insert("title".to_string(), Value::String(instance.action.name.clone()));
 	}
 
-	// If the layout doesn't have an icon, we'll use the state image.
+	// If the layout doesn't have an icon, fall back to the state image.
 	if let Some(icon) = layout.item("icon")
 		&& let LayoutItem::Pixmap(icon) = icon
 		&& icon.value == PixmapSource::None
@@ -96,7 +93,7 @@ fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result
 		feedback.insert("icon".to_string(), Value::String(state_image.to_string()));
 	}
 
-	// Expand + sandbox every pixmap item's relative file path.
+	// Expand and sandbox every pixmap item's relative file path.
 	for item in &layout.items {
 		let LayoutItem::Pixmap(p) = item else { continue };
 		let PixmapSource::File(v) = &p.value else { continue };
@@ -105,7 +102,7 @@ fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result
 		}
 
 		let resolved = {
-			// We need to make sure this path isn't already canonical
+			// We need to make sure this path isn't already canonical.
 			let candidate = if Path::new(v).is_absolute() { PathBuf::from(v) } else { path.join(v) };
 			match candidate.canonicalize() {
 				Ok(resolved) if resolved.starts_with(&path_canonical) => resolved.to_string_lossy().into_owned(),
@@ -123,7 +120,7 @@ fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result
 		feedback.insert(item.key().to_string(), Value::String(resolved));
 	}
 
-	// Send changes to the renderer, note that the overrides are NOOP if they haven't changed.
+	// Send changes to the renderer; note that the overrides are NOOP if they haven't changed.
 	renderer.set_icon_override(override_icon);
 	renderer.set_title_override(override_title);
 	renderer.set_feedback(Value::Object(feedback))?;
