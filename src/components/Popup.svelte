@@ -21,7 +21,7 @@
 {#if show}
 	<div
 		bind:this={popupEl}
-		class="absolute top-0 left-0 m-2 p-4 w-[calc(100%-1rem)] h-[calc(100%-1rem)] bg-neutral-800 border border-neutral-700 rounded-lg overflow-hidden flex flex-col z-30"
+		class="absolute top-0 left-0 flex flex-col m-2 p-4 w-[calc(100%-1rem)] h-[calc(100%-1rem)] bg-neutral-800 border border-neutral-700 rounded-lg overflow-hidden z-30"
 		role="dialog"
 		tabindex="-1"
 		aria-label={label}

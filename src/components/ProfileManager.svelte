@@ -313,6 +313,7 @@
 		<span class="text-sm text-neutral-400">{$t("profile_manager.application_profiles.hint.1")}</span>
 		<span class="text-sm text-neutral-400">{$t("profile_manager.application_profiles.hint.2")}</span>
 	</svelte:fragment>
+
 	<table class="w-full text-neutral-300 divide-y divide-neutral-500!">
 		{#each Object.entries(applicationProfiles).sort( (a, b) => (a[0] == "opendeck_default" ? -1 : b[0] == "opendeck_default" ? 1 : a[0].localeCompare(b[0])), ) as [appName, devices]}
 			{#if devices[device.id]}
