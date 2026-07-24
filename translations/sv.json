@@ -51,7 +51,7 @@
 	"plugin_details.install": "Installera",
 	"plugin_details.loading": "Laddar plugin-information...",
 	"plugin_details.readme.not_found": "**Plugin README hittades inte**\n\n[Visa plugin på GitHub](https://github.com/{{repo}})",
-	"plugin_details.title": "{details.name} - plugininformation",
+	"plugin_details.title": "{{name}} - plugininformation",
 	"plugin_manager.available": "tillgängliga:",
 	"plugin_manager.button": "Plugin",
 	"plugin_manager.choose_asset": "Välj en versionsfil",
