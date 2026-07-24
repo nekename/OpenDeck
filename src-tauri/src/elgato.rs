@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::LazyLock;
+
 use anyhow::Context;
 use base64::Engine as _;
 use elgato_streamdeck::{

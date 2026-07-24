@@ -8,8 +8,7 @@ use serde_inline_default::serde_inline_default;
 
 use anyhow::{Result, bail};
 use dashmap::DashMap;
-use streamdeck_strip_render::get_incremental_renderer;
-use streamdeck_strip_render::strip_renderer::StripRenderer;
+use streamdeck_strip_render::{get_incremental_renderer, strip_renderer::StripRenderer};
 use tauri::Manager;
 use tokio::sync::RwLock;
 
