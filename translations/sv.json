@@ -5,7 +5,7 @@
 	"device_selector.device": "Enhet",
 	"device_view.encoder": "Encoder",
 	"device_view.grid_description": "Använd piltangenterna för att navigera mellan knappar. När du flyttar till en knapp visas dess egenskapsinspektör.",
-	"device_view.key": "Nyckel",
+	"device_view.key": "Knapp",
 	"device_view.touchpoint": "Pekpunkt",
 	"dialog.no": "Nej",
 	"dialog.ok": "OK",
