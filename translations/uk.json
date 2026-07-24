@@ -1,8 +1,6 @@
 {
 	"action_list.hint": "Використовуйте клавіші зі стрілками для навігації між діями у категорії.",
 	"action_list.search_placeholder": "Пошук дій",
-	"action_view.drag_copy": "Перетягніть нову дію сюди або скопіюйте її за допомогою Ctrl+C і вставте за допомогою Ctrl+V.",
-	"action_view.drag_paste": "Перетягніть або вставте дії сюди",
 	"device_selector.choose_device": "Виберіть пристрій...",
 	"device_selector.device": "Пристрій",
 	"device_view.encoder": "Енкодер",
@@ -53,7 +51,7 @@
 	"plugin_details.install": "Встановити",
 	"plugin_details.loading": "Завантаження деталей плагіна...",
 	"plugin_details.readme.not_found": "**Файл README плагіна не знайдено**\n\n[Переглянути плагін на GitHub](https://github.com/{{repo}})",
-	"plugin_details.title": "Деталі плагіна {details.name}",
+	"plugin_details.title": "Деталі плагіна {{name}}",
 	"plugin_manager.available": "доступна:",
 	"plugin_manager.button": "Плагіни",
 	"plugin_manager.choose_asset": "Виберіть файл релізу",
