@@ -242,7 +242,7 @@
 		<h2 class="m-2 font-semibold text-xl text-neutral-300">{$t("plugin_manager.title")}</h2>
 	</svelte:fragment>
 
-	<h2 class="mx-2 mt-6 mb-2 text-lg text-neutral-400">{$t("plugin_manager.installed")}</h2>
+	<h2 class="mx-2 mt-4 mb-2 text-lg text-neutral-400">{$t("plugin_manager.installed")}</h2>
 	<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 		<!-- prettier-ignore -->
 		{#each installed.sort((a, b) =>

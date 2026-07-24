@@ -70,7 +70,7 @@
 	</svelte:fragment>
 
 	{#if $settings}
-		<div class="flex flex-row items-center m-2 space-x-2">
+		<div class="flex flex-row items-center mx-2 mb-2 space-x-2">
 			<label for="settings-language" class="text-neutral-400">{$t("settings.language")}</label>
 			<div class="select-wrapper">
 				<select bind:value={$settings.language} class="w-auto pr-10!" id="settings-language">
