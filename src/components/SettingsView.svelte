@@ -70,12 +70,12 @@
 		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-language" class="text-neutral-400">{$t("settings.language")}</label>
 			<div class="select-wrapper">
-				<select bind:value={$settings.language} class="w-32" id="settings-language">
+				<select bind:value={$settings.language} class="w-auto pr-10!" id="settings-language">
+					<option value="de">Deutsch</option>
 					<option value="en">English</option>
 					<option value="es">Español</option>
-					<option value="zh_CN">中文</option>
 					<option value="fr">Français</option>
-					<option value="de">Deutsch</option>
+					<option value="zh_CN">中文</option>
 					<option value="ja">日本語</option>
 					<option value="ko">韓国語</option>
 				</select>
