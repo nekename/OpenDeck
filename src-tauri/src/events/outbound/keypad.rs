@@ -43,7 +43,11 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			.map(|arr| arr.iter().filter_map(|v| v.as_u64()).collect())
 			.unwrap_or_default();
 
-		for (i, child) in instance.children.as_mut().unwrap().iter_mut().enumerate() {
+		let mut children = instance.children.take().unwrap_or_default();
+		let _ = instance;
+		drop(locks);
+
+		for (i, child) in children.iter_mut().enumerate() {
 			send_to_plugin(
 				&child.action.plugin,
 				&KeyEvent {
@@ -82,8 +86,14 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			}
 		}
 
-		let contexts = instance.children.as_ref().unwrap().iter().map(|x| x.context.clone()).collect::<Vec<_>>();
-		for child in contexts {
+		let mut locks = acquire_locks_mut().await;
+		let child_contexts: Vec<crate::shared::ActionContext> =
+			children.iter().map(|x| x.context.clone()).collect();
+		if let Some(instance) = get_slot_mut(&context, &mut locks).await? {
+			instance.children = Some(children);
+		}
+
+		for child in child_contexts {
 			let _ = update_state(crate::APP_HANDLE.get().unwrap(), child, &mut locks).await;
 		}
 
