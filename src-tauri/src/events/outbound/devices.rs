@@ -1,6 +1,6 @@
 use super::{send_to_all_plugins, send_to_plugin};
 
-use crate::elgato::generate_encoder_image;
+use crate::encoder_layouts::generate_encoder_image;
 use crate::plugins::{DEVICE_NAMESPACES, info_param::DeviceInfo};
 
 use base64::Engine;
