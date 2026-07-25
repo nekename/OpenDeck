@@ -75,6 +75,7 @@
 					<option value="en">English</option>
 					<option value="es">Español</option>
 					<option value="fr">Français</option>
+					<option value="pt_BR">Português (Brasil)</option>
 					<option value="sv">Svenska</option>
 					<option value="uk">Українська</option>
 					<option value="zh_CN">中文</option>
