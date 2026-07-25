@@ -4,6 +4,7 @@
 mod application_watcher;
 mod device_sleep;
 mod elgato;
+mod encoder_layouts;
 mod events;
 mod plugins;
 mod power_events;
