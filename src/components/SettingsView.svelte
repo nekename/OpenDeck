@@ -64,10 +64,13 @@
 />
 
 <Popup show={showPopup} label={$t("settings.button")}>
-	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => (showPopup = false)} aria-label={$t("settings.close")}>✕</button>
-	<h2 class="m-2 font-semibold text-xl text-neutral-300">{$t("settings.button")}</h2>
+	<svelte:fragment slot="header">
+		<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => (showPopup = false)} aria-label={$t("settings.close")}>✕</button>
+		<h2 class="m-2 font-semibold text-xl text-neutral-300">{$t("settings.button")}</h2>
+	</svelte:fragment>
+
 	{#if $settings}
-		<div class="flex flex-row items-center m-2 space-x-2">
+		<div class="flex flex-row items-center mx-2 mb-2 space-x-2">
 			<label for="settings-language" class="text-neutral-400">{$t("settings.language")}</label>
 			<div class="select-wrapper">
 				<select bind:value={$settings.language} class="w-auto pr-10!" id="settings-language">
@@ -205,7 +208,10 @@
 		<span class="text-xs text-neutral-400">
 			{@html buildInfo}
 		</span>
-		<div class="absolute bottom-6 flex flex-row items-center text-sm text-neutral-400">
+	</div>
+
+	<svelte:fragment slot="footer">
+		<div class="flex flex-row items-center mt-4 text-sm text-neutral-400">
 			<span class="mr-1">
 				{$t("settings.footer.1")}
 				<button on:click={() => invoke("open_url", { url: "https://github.com/nekename/OpenDeck" })} class="underline">{$t("settings.footer.2")}</button>
@@ -218,5 +224,5 @@
 			<Heart weight="fill" fill="fuchsia" />
 			<span class="ml-1">{$t("settings.footer.5")}</span>
 		</div>
-	</div>
+	</svelte:fragment>
 </Popup>

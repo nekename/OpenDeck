@@ -220,8 +220,10 @@
 />
 
 <Popup show={showPopup} label="{device.name} {$t('profile_manager.profiles')}">
-	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => (showPopup = false)} aria-label={$t("settings.close")}>✕</button>
-	<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
+	<svelte:fragment slot="header">
+		<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => (showPopup = false)} aria-label={$t("settings.close")}>✕</button>
+		<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
+	</svelte:fragment>
 
 	<div class="flex flex-row mt-2 mb-1">
 		<input
@@ -305,10 +307,12 @@
 </Popup>
 
 <Popup show={showApplicationManager} label={$t("profile_manager.application_profiles")}>
-	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => (showApplicationManager = false)} aria-label={$t("settings.close")}>✕</button>
-	<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
-	<span class="text-sm text-neutral-400">{$t("profile_manager.application_profiles.hint.1")}</span>
-	<span class="text-sm text-neutral-400">{$t("profile_manager.application_profiles.hint.2")}</span>
+	<svelte:fragment slot="header">
+		<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => (showApplicationManager = false)} aria-label={$t("settings.close")}>✕</button>
+		<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
+		<span class="text-sm text-neutral-400">{$t("profile_manager.application_profiles.hint.1")}</span>
+		<span class="text-sm text-neutral-400">{$t("profile_manager.application_profiles.hint.2")}</span>
+	</svelte:fragment>
 
 	<table class="w-full text-neutral-300 divide-y divide-neutral-500!">
 		{#each Object.entries(applicationProfiles).sort( (a, b) => (a[0] == "opendeck_default" ? -1 : b[0] == "opendeck_default" ? 1 : a[0].localeCompare(b[0])), ) as [appName, devices]}
