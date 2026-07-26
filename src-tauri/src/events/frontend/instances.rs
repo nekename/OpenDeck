@@ -1,7 +1,7 @@
 use super::Error;
 
 use crate::shared::{Action, ActionContext, ActionInstance, ActionState, Context, config_dir};
-use crate::store::profiles::{LocksMut, acquire_locks, acquire_locks_mut, get_instance_mut, get_slot, get_slot_mut, save_profile};
+use crate::store::profiles::{LocksMut, acquire_locks, acquire_locks_mut, get_instance_mut, get_slot, get_slot_mut, save_profile_now};
 
 use tauri::{AppHandle, Emitter, Manager, command};
 use tokio::fs::remove_dir_all;
@@ -44,7 +44,7 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 			let _ = update_state(&app, parent.context.clone(), &mut locks).await;
 		}
 
-		save_profile(&context.device, &mut locks).await?;
+		save_profile_now(&context.device, &mut locks).await?;
 		drop(locks);
 		let _ = crate::events::outbound::will_appear::will_appear(&instance).await;
 
@@ -68,7 +68,7 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 		*slot = Some(instance.clone());
 		let slot = slot.clone();
 
-		save_profile(&context.device, &mut locks).await?;
+		save_profile_now(&context.device, &mut locks).await?;
 		let _ = crate::events::outbound::will_appear::will_appear(&instance).await;
 
 		Ok(slot)
@@ -146,7 +146,7 @@ pub async fn move_instance(source: Context, destination: Context, retain: bool) 
 
 	let _ = crate::events::outbound::will_appear::will_appear(&new).await;
 
-	save_profile(&destination.device, &mut locks).await?;
+	save_profile_now(&destination.device, &mut locks).await?;
 
 	Ok(Some(new))
 }
@@ -190,7 +190,7 @@ pub async fn remove_instance(context: ActionContext) -> Result<(), Error> {
 		}
 	}
 
-	save_profile(&context.device, &mut locks).await?;
+	save_profile_now(&context.device, &mut locks).await?;
 
 	Ok(())
 }
@@ -219,7 +219,7 @@ pub async fn set_state(context: ActionContext, index: u16, state: ActionState) -
 	let reference = get_instance_mut(&context, &mut locks).await?.unwrap();
 	reference.states[index as usize] = state;
 	let clone = reference.clone();
-	save_profile(&context.device, &mut locks).await?;
+	save_profile_now(&context.device, &mut locks).await?;
 	crate::events::outbound::states::title_parameters_did_change(&clone, index).await?;
 	Ok(())
 }

@@ -439,6 +439,9 @@ pub struct Profile {
 	pub sliders: Vec<Option<ActionInstance>>,
 	#[serde(default)]
 	pub infobars: Vec<Option<ActionInstance>>,
+
+	#[serde(skip)]
+	pub stale: bool,
 }
 
 /// A map of category names to a list of actions in that category.
