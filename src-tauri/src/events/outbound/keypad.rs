@@ -90,8 +90,7 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			}
 		}
 
-		let child_contexts: Vec<crate::shared::ActionContext> =
-			children.iter().map(|x| x.context.clone()).collect();
+		let child_contexts: Vec<crate::shared::ActionContext> = children.iter().map(|x| x.context.clone()).collect();
 		if let Some(instance) = get_slot_mut(&context, &mut locks).await? {
 			instance.children = Some(children);
 		}
