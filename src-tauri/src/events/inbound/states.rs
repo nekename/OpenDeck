@@ -1,7 +1,7 @@
 use super::ContextAndPayloadEvent;
 
 use crate::events::frontend::instances::update_state;
-use crate::store::profiles::{acquire_locks_mut, get_instance_mut, save_profile};
+use crate::store::profiles::{acquire_locks_mut, get_instance_mut, mark_profile_stale};
 
 use anyhow::bail;
 use serde::Deserialize;
@@ -59,7 +59,7 @@ pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result
 		}
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
-	save_profile(&event.context.device, &mut locks).await?;
+	mark_profile_stale(&event.context.device, &mut locks).await?;
 
 	Ok(())
 }
@@ -97,7 +97,7 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
 
-	save_profile(&event.context.device, &mut locks).await?;
+	mark_profile_stale(&event.context.device, &mut locks).await?;
 	Ok(())
 }
 
@@ -141,7 +141,7 @@ pub async fn set_state(event: ContextAndPayloadEvent<SetStatePayload>) -> Result
 		instance.current_state = event.payload.state;
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
-	save_profile(&event.context.device, &mut locks).await?;
+	mark_profile_stale(&event.context.device, &mut locks).await?;
 
 	Ok(())
 }
