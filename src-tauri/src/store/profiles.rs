@@ -39,7 +39,7 @@ impl ProfileStores {
 				sliders: Vec::new(),
 				infobars: Vec::new(),
 
-				profile_stale: false,
+				stale: false,
 			};
 
 			let mut store = Store::new(&canonical_id, &config_dir().join("profiles"), default).context(format!("Failed to create store for profile {}", canonical_id))?;
@@ -373,7 +373,7 @@ pub async fn mark_profile_stale(device_id: &str, locks: &mut LocksMut<'_>) -> Re
 	let selected_profile = locks.device_stores.get_selected_profile(device_id)?;
 	let device = DEVICES.get(device_id).ok_or_else(|| anyhow!("device not found"))?;
 	let store = locks.profile_stores.get_profile_store_mut(&device, &selected_profile).await?;
-	store.value.profile_stale = true;
+	store.value.stale = true;
 	Ok(())
 }
 
@@ -382,9 +382,9 @@ pub async fn save_profile_now(device_id: &str, locks: &mut LocksMut<'_>) -> Resu
 	let device = DEVICES.get(device_id).ok_or_else(|| anyhow!("device not found"))?;
 	let store = locks.profile_stores.get_profile_store_mut(&device, &selected_profile).await?;
 
-	if store.value.profile_stale {
+	if store.value.stale {
 		store.save()?;
-		store.value.profile_stale = false;
+		store.value.stale = false;
 	}
 
 	Ok(())
@@ -393,9 +393,9 @@ pub async fn save_profile_now(device_id: &str, locks: &mut LocksMut<'_>) -> Resu
 pub async fn flush_stale_profiles() -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
 	for store in locks.profile_stores.stores.values_mut() {
-		if store.value.profile_stale {
+		if store.value.stale {
 			store.save()?;
-			store.value.profile_stale = false;
+			store.value.stale = false;
 		}
 	}
 	Ok(())
