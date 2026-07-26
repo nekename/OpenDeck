@@ -8,10 +8,9 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 
 use anyhow::{Context, anyhow};
-use dashmap::DashMap;
+use log::debug;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use tokio::task::JoinHandle;
 
 pub struct ProfileStores {
 	stores: HashMap<String, Store<Profile>>,
@@ -40,6 +39,8 @@ impl ProfileStores {
 				keys: Vec::new(),
 				sliders: Vec::new(),
 				infobars: Vec::new(),
+
+				profile_stale: false,
 			};
 
 			let mut store = Store::new(&canonical_id, &config_dir().join("profiles"), default).context(format!("Failed to create store for profile {}", canonical_id))?;
@@ -372,24 +373,33 @@ pub async fn get_instance_mut<'a>(context: &crate::shared::ActionContext, locks:
 pub async fn save_profile(device: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
 	let selected_profile = locks.device_stores.get_selected_profile(device)?;
 	let device = DEVICES.get(device).ok_or_else(|| anyhow!("device not found"))?;
-	let store = locks.profile_stores.get_profile_store(&device, &selected_profile)?;
-	store.save()
+	let store = locks.profile_stores.get_profile_store_mut(&device, &selected_profile).await?;
+	store.value.profile_stale = true;
+	Ok(())
 }
 
-pub static PROFILE_SAVE_DEBOUNCE: LazyLock<DashMap<crate::shared::ActionContext, JoinHandle<()>>> = LazyLock::new(DashMap::new);
-pub fn debounce_profile_save(context: crate::shared::ActionContext) {
-	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&context) {
-		handle.abort();
+pub async fn save_profile_now(device: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
+	let selected_profile = locks.device_stores.get_selected_profile(device)?;
+	let device_info = DEVICES.get(device).ok_or_else(|| anyhow!("device not found"))?;
+	let store = locks.profile_stores.get_profile_store_mut(&device_info, &selected_profile).await?;
+
+	if store.value.profile_stale {
+		debug!("Saving profile: {}", store.value.id);
+		store.save()?;
+		store.value.profile_stale = false;
 	}
-	PROFILE_SAVE_DEBOUNCE.insert(
-		context.clone(),
-		tokio::spawn(async move {
-			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-			let mut locks = acquire_locks_mut().await;
-			if let Err(error) = save_profile(&context.device, &mut locks).await {
-				log::error!("Failed to save profile for device {}: {error}", context.device);
-			}
-			PROFILE_SAVE_DEBOUNCE.remove(&context);
-		}),
-	);
+
+	Ok(())
+}
+
+pub async fn flush_stale_profiles() -> Result<(), anyhow::Error> {
+	let mut locks = acquire_locks_mut().await;
+	for store in locks.profile_stores.stores.values_mut() {
+		if store.value.profile_stale {
+			debug!("Flushing Stale Profile: {}", store.value.id);
+			store.save()?;
+			store.value.profile_stale = false;
+		}
+	}
+	Ok(())
 }

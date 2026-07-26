@@ -1,7 +1,7 @@
 use super::Error;
 
 use crate::shared::DEVICES;
-use crate::store::profiles::{PROFILE_SAVE_DEBOUNCE, PROFILE_STORES, acquire_locks_mut, get_device_profiles, save_profile};
+use crate::store::profiles::{PROFILE_STORES, acquire_locks_mut, get_device_profiles, save_profile, save_profile_now};
 
 use tauri::{AppHandle, Emitter, Manager, command};
 
@@ -32,24 +32,11 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 	}
 
 	// If a profile save is pending for this device, save it immediately to prevent losing profile data
-	let entries = PROFILE_SAVE_DEBOUNCE
-		.iter()
-		.filter(|entry| entry.key().device == device)
-		.map(|entry| entry.key().clone())
-		.collect::<Vec<_>>();
-	if !entries.is_empty() {
-		for context in &entries {
-			if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(context) {
-				handle.abort();
-			}
-		}
-		if let Err(error) = save_profile(&device, &mut locks).await {
-			log::error!("Failed to save profile for device {device}: {error}");
-		}
+	if let Err(error) = save_profile_now(&device, &mut locks).await {
+		log::error!("Failed to save profile for device {device}: {error}");
 	}
 
 	let selected_profile = locks.device_stores.get_selected_profile(&device)?;
-
 	if selected_profile != id {
 		let old_profile = &locks.profile_stores.get_profile_store(&DEVICES.get(&device).unwrap(), &selected_profile)?.value;
 		for instance in old_profile

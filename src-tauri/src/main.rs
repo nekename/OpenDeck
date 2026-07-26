@@ -20,7 +20,7 @@ use events::frontend;
 use shared::PRODUCT_NAME;
 
 use std::sync::OnceLock;
-
+use std::time::Duration;
 use tauri::{
 	AppHandle, Builder, Manager, WindowEvent,
 	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
@@ -29,6 +29,7 @@ use tauri::{
 use tauri_plugin_log::{Target, TargetKind};
 
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
+const SAVE_PROBE: Duration = Duration::from_secs(20);
 
 fn show_window(app: &AppHandle) -> Result<(), tauri::Error> {
 	#[cfg(target_os = "macos")]
@@ -196,6 +197,16 @@ If you have already donated, thank you so much for your support!"#,
 					tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 				}
 			});
+
+			tokio::spawn(async {
+				loop {
+					tokio::time::sleep(SAVE_PROBE).await;
+					if let Err(error) = store::profiles::flush_stale_profiles().await {
+						log::error!("Failed to flush stale profiles: {error}");
+					}
+				}
+			});
+
 			plugins::initialise_plugins();
 			application_watcher::init_application_watcher();
 			device_sleep::init_device_sleep();
@@ -380,6 +391,13 @@ If you have already donated, thank you so much for your support!"#,
 		if let tauri::RunEvent::Exit = event {
 			#[cfg(windows)]
 			futures::executor::block_on(plugins::deactivate_plugins());
+
+			let flush_future = store::profiles::flush_stale_profiles();
+			match tauri::async_runtime::block_on(flush_future) {
+				Ok(_) => log::info!("Successfully flushed all stale profiles on exit"),
+				Err(error) => log::error!("Failed to flush stale profiles on exit: {error}"),
+			}
+
 			tokio::spawn(elgato::reset_devices());
 			use tauri_plugin_aptabase::EventTracker;
 			app.flush_events_blocking();
