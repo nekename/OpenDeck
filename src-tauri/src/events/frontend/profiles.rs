@@ -1,7 +1,7 @@
 use super::Error;
 
 use crate::shared::DEVICES;
-use crate::store::profiles::{PROFILE_STORES, acquire_locks_mut, get_device_profiles, save_profile, save_profile_now};
+use crate::store::profiles::{PROFILE_STORES, acquire_locks_mut, get_device_profiles, save_profile_now};
 
 use tauri::{AppHandle, Emitter, Manager, command};
 
