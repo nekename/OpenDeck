@@ -30,7 +30,7 @@ use tauri::{
 use tauri_plugin_log::{Target, TargetKind};
 
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
-const SAVE_PROBE: Duration = Duration::from_secs(20);
+const SAVE_PROBE: Duration = Duration::from_secs(30);
 
 fn show_window(app: &AppHandle) -> Result<(), tauri::Error> {
 	#[cfg(target_os = "macos")]
