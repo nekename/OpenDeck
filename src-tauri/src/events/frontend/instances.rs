@@ -227,24 +227,27 @@ pub async fn set_state(context: ActionContext, index: u16, state: ActionState) -
 #[command]
 pub async fn set_child_delay(parent_context: ActionContext, index: usize, delay_ms: u64) -> Result<serde_json::Value, Error> {
 	let mut locks = acquire_locks_mut().await;
-	let parent_settings = match get_instance_mut(&parent_context, &mut locks).await? {
-		Some(parent) => {
-			let delays = parent.settings.get_mut("delays").and_then(|v| v.as_array_mut());
-			if let Some(arr) = delays {
-				if arr.len() <= index {
-					arr.resize(index + 1, serde_json::json!(0));
-				}
-				arr[index] = serde_json::json!(delay_ms);
-			} else {
-				let map = parent.settings.as_object_mut().unwrap();
-				let mut arr = vec![serde_json::json!(0); index + 1];
-				arr[index] = serde_json::json!(delay_ms);
-				map.insert("delays".to_string(), serde_json::Value::Array(arr));
-			}
-			parent.settings.clone()
-		}
-		None => serde_json::Value::Null,
+	let Some(parent) = get_instance_mut(&parent_context, &mut locks).await? else {
+		return Ok(serde_json::Value::Null);
 	};
+
+	let delays = parent.settings.get_mut("delays").and_then(|v| v.as_array_mut());
+	if let Some(arr) = delays {
+		if arr.len() <= index {
+			arr.resize(index + 1, serde_json::json!(0));
+		}
+		arr[index] = serde_json::json!(delay_ms);
+	} else {
+		if !parent.settings.is_object() {
+			parent.settings = serde_json::Value::Object(serde_json::Map::new());
+		}
+		let map = parent.settings.as_object_mut().unwrap();
+		let mut arr = vec![serde_json::json!(0); index + 1];
+		arr[index] = serde_json::json!(delay_ms);
+		map.insert("delays".to_string(), serde_json::Value::Array(arr));
+	}
+	let parent_settings = parent.settings.clone();
+
 	save_profile_now(&parent_context.device, &mut locks).await?;
 	Ok(parent_settings)
 }
