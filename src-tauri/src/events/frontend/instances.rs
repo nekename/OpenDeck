@@ -245,7 +245,7 @@ pub async fn set_child_delay(parent_context: ActionContext, index: usize, delay_
 		}
 		None => serde_json::Value::Null,
 	};
-	save_profile(&parent_context.device, &mut locks).await?;
+	save_profile_now(&parent_context.device, &mut locks).await?;
 	Ok(parent_settings)
 }
 
