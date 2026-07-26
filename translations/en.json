@@ -52,7 +52,7 @@
 	"plugin_details.install": "Install",
 	"plugin_details.loading": "Loading plugin details...",
 	"plugin_details.readme.not_found": "**Plugin README file not found**\n\n[View plugin on GitHub](https://github.com/{{repo}})",
-	"plugin_details.title": "{details.name} plugin details",
+	"plugin_details.title": "{{name}} plugin details",
 	"plugin_manager.available": "available:",
 	"plugin_manager.button": "Plugins",
 	"plugin_manager.choose_asset": "Choose a release asset",

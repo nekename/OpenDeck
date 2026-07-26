@@ -1,10 +1,9 @@
 use super::ContextAndPayloadEvent;
 
 use crate::events::frontend::instances::update_state;
-use crate::store::profiles::{acquire_locks_mut, debounce_profile_save, get_instance_mut, save_profile};
+use crate::store::profiles::{acquire_locks_mut, get_instance_mut, mark_profile_stale};
 
 use anyhow::bail;
-use log::trace;
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -60,7 +59,7 @@ pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result
 		}
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
-	save_profile(&event.context.device, &mut locks).await?;
+	mark_profile_stale(&event.context.device, &mut locks).await?;
 
 	Ok(())
 }
@@ -98,128 +97,21 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
 
-	if let Some(image) = &event.payload.image
-		&& image.trim().starts_with("data:")
-	{
-		debounce_profile_save(event.context);
-	} else {
-		save_profile(&event.context.device, &mut locks).await?;
-	}
-
+	mark_profile_stale(&event.context.device, &mut locks).await?;
 	Ok(())
 }
 
-const COMMON_KEYS: &[&str] = &["enabled", "opacity", "background"];
-const BAR_KEYS: &[&str] = &["bar_bg_c", "bar_border_c", "bar_fill_c", "border_w", "range", "subtype", "value"];
 pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
 
 	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await?
 		&& let Some(encoder) = &mut instance.action.encoder
-		&& let Value::Object(map) = event.payload
 	{
-		let layout = &mut encoder.layout_parsed;
-		if layout.is_null() {
+		let Some(layout) = &mut encoder.layout_parsed else {
 			bail!("Layout is not loaded; cannot set feedback");
-		}
-
-		let Some(items_array) = layout.get_mut("items").and_then(Value::as_array_mut) else {
-			bail!("Layout has no items array");
 		};
 
-		for (key, payload_value) in &map {
-			// Grab the item from the layout
-			let Some(item) = items_array.iter_mut().find(|item| {
-				matches!(
-					item.get("key").and_then(|v| v.as_str()),
-					Some(k) if k == key
-				)
-			}) else {
-				trace!("setFeedback: no layout item found for key '{key}'");
-				continue;
-			};
-
-			match payload_value {
-				// We have a direct value; find the key, and set it
-				Value::String(_) | Value::Number(_) => {
-					// Get the item type
-					let Some(item_type) = item.get("type").and_then(Value::as_str) else {
-						trace!("setFeedback: no type found for key '{key}'");
-						continue;
-					};
-
-					match item_type {
-						"text" => {
-							// We need to map the value to a string
-							if let Value::Number(number) = payload_value {
-								item["value"] = Value::String(number.to_string());
-							} else {
-								// Clone the string
-								item["value"] = payload_value.clone();
-							}
-						}
-
-						"bar" | "gbar" => {
-							if let Value::Number(value) = payload_value {
-								item["value"] = Value::Number(value.clone());
-							} else if let Value::String(value) = payload_value {
-								if let Ok(value) = value.parse() {
-									item["value"] = Value::Number(value);
-								} else {
-									trace!("setFeedback: bar/gbar unexpected value for key '{key}' - {value}");
-								}
-							}
-						}
-
-						"pixmap" => {
-							// Update the pixmap value; this should already be a string
-							item["value"] = payload_value.clone();
-						}
-
-						// Ignore anything else
-						_ => {
-							trace!("setFeedback: unknown item type '{item_type}' for key '{key}'");
-						}
-					}
-				}
-
-				// We have an object, so we need to locate and map the change
-				Value::Object(obj) => {
-					// Get the item type
-					let Some(item_type) = item.get("type").and_then(Value::as_str) else {
-						trace!("setFeedback: missing or invalid 'type' field in item: {:?}", item);
-						continue;
-					};
-
-					// Get the valid keys for this item type
-					let type_keys: Vec<&str> = match item_type {
-						"text" => vec!["value", "color", "alignment", "font", "text-overflow"],
-						"pixmap" => vec!["value"],
-						"bar" => BAR_KEYS.to_vec(),
-						"gbar" => BAR_KEYS.iter().copied().chain(["bar_h"]).collect(),
-						unknown => {
-							trace!("setFeedback: unknown item type '{unknown}' for key '{key}'");
-							continue;
-						}
-					};
-
-					// Add the common keys
-					let valid_keys: Vec<&str> = COMMON_KEYS.iter().copied().chain(type_keys).collect();
-
-					// Iterate over the values in the object
-					for (field, field_value) in obj {
-						if valid_keys.contains(&field.as_str()) {
-							item[field] = field_value.clone()
-						}
-					}
-				}
-
-				_ => {
-					trace!("setFeedback: key '{key}' has unexpected payload type, ignoring");
-				}
-			}
-		}
-
+		layout.set_feedback(event.payload)?;
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
 
@@ -249,7 +141,7 @@ pub async fn set_state(event: ContextAndPayloadEvent<SetStatePayload>) -> Result
 		instance.current_state = event.payload.state;
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
-	save_profile(&event.context.device, &mut locks).await?;
+	mark_profile_stale(&event.context.device, &mut locks).await?;
 
 	Ok(())
 }
