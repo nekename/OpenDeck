@@ -8,7 +8,6 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 
 use anyhow::{Context, anyhow};
-use log::debug;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -370,21 +369,20 @@ pub async fn get_instance_mut<'a>(context: &crate::shared::ActionContext, locks:
 	Ok(None)
 }
 
-pub async fn save_profile(device: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
-	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let device = DEVICES.get(device).ok_or_else(|| anyhow!("device not found"))?;
+pub async fn save_profile(device_id: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
+	let selected_profile = locks.device_stores.get_selected_profile(device_id)?;
+	let device = DEVICES.get(device_id).ok_or_else(|| anyhow!("device not found"))?;
 	let store = locks.profile_stores.get_profile_store_mut(&device, &selected_profile).await?;
 	store.value.profile_stale = true;
 	Ok(())
 }
 
-pub async fn save_profile_now(device: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
-	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let device_info = DEVICES.get(device).ok_or_else(|| anyhow!("device not found"))?;
-	let store = locks.profile_stores.get_profile_store_mut(&device_info, &selected_profile).await?;
+pub async fn save_profile_now(device_id: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
+	let selected_profile = locks.device_stores.get_selected_profile(device_id)?;
+	let device = DEVICES.get(device_id).ok_or_else(|| anyhow!("device not found"))?;
+	let store = locks.profile_stores.get_profile_store_mut(&device, &selected_profile).await?;
 
 	if store.value.profile_stale {
-		debug!("Saving profile: {}", store.value.id);
 		store.save()?;
 		store.value.profile_stale = false;
 	}
@@ -396,7 +394,6 @@ pub async fn flush_stale_profiles() -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
 	for store in locks.profile_stores.stores.values_mut() {
 		if store.value.profile_stale {
-			debug!("Flushing Stale Profile: {}", store.value.id);
 			store.save()?;
 			store.value.profile_stale = false;
 		}

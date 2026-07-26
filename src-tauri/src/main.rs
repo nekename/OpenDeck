@@ -21,6 +21,7 @@ use shared::PRODUCT_NAME;
 
 use std::sync::OnceLock;
 use std::time::Duration;
+
 use tauri::{
 	AppHandle, Builder, Manager, WindowEvent,
 	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},

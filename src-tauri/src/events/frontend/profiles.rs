@@ -37,6 +37,7 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 	}
 
 	let selected_profile = locks.device_stores.get_selected_profile(&device)?;
+
 	if selected_profile != id {
 		let old_profile = &locks.profile_stores.get_profile_store(&DEVICES.get(&device).unwrap(), &selected_profile)?.value;
 		for instance in old_profile

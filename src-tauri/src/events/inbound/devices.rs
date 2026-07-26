@@ -71,7 +71,7 @@ pub async fn deregister_device(uuid: &str, event: PayloadEvent<String>) -> Resul
 			let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
 		}
 
-		// Flush any pending profile writes before removing the device
+		// Flush any pending profile writes before removing the device.
 		if let Err(error) = crate::store::profiles::save_profile_now(&event.payload, &mut locks).await {
 			log::error!("Failed to flush profile for device {}: {error}", event.payload);
 		}
