@@ -36,6 +36,7 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 
 	let Some(instance) = get_slot_mut(&context, &mut locks).await? else { return Ok(()) };
 	if instance.action.uuid == "opendeck.multiaction" {
+		let children = instance.children.clone().unwrap_or_default();
 		let delays: Vec<u64> = instance
 			.settings
 			.get("delays")
@@ -43,8 +44,6 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			.map(|arr| arr.iter().filter_map(|v| v.as_u64()).collect())
 			.unwrap_or_default();
 
-		let mut children = instance.children.take().unwrap_or_default();
-		let _ = instance;
 		drop(locks);
 
 		for (i, child) in children.iter().enumerate() {
@@ -84,19 +83,18 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 
 		let mut locks = acquire_locks_mut().await;
 
-		for child in &mut children {
-			if child.states.len() == 2 && !child.action.disable_automatic_states {
-				child.current_state = (child.current_state + 1) % (child.states.len() as u16);
+		if let Some(instance) = get_slot_mut(&context, &mut locks).await?
+			&& let Some(children) = &mut instance.children
+		{
+			for child in &mut *children {
+				if child.states.len() == 2 && !child.action.disable_automatic_states {
+					child.current_state = (child.current_state + 1) % (child.states.len() as u16);
+				}
 			}
-		}
 
-		let child_contexts: Vec<crate::shared::ActionContext> = children.iter().map(|x| x.context.clone()).collect();
-		if let Some(instance) = get_slot_mut(&context, &mut locks).await? {
-			instance.children = Some(children);
-		}
-
-		for child in child_contexts {
-			let _ = update_state(crate::APP_HANDLE.get().unwrap(), child, &mut locks).await;
+			for child in children.iter().map(|x| x.context.clone()).collect::<Vec<_>>() {
+				let _ = update_state(crate::APP_HANDLE.get().unwrap(), child, &mut locks).await;
+			}
 		}
 
 		mark_profile_stale(device, &mut locks).await?;
