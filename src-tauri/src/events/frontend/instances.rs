@@ -234,7 +234,7 @@ pub async fn set_child_delay(parent_context: ActionContext, index: usize, delay_
 	let delays = parent.settings.get_mut("delays").and_then(|v| v.as_array_mut());
 	if let Some(arr) = delays {
 		if arr.len() <= index {
-			arr.resize(index + 1, serde_json::json!(0));
+			arr.resize(index + 1, serde_json::json!(100));
 		}
 		arr[index] = serde_json::json!(delay_ms);
 	} else {
@@ -242,7 +242,7 @@ pub async fn set_child_delay(parent_context: ActionContext, index: usize, delay_
 			parent.settings = serde_json::Value::Object(serde_json::Map::new());
 		}
 		let map = parent.settings.as_object_mut().unwrap();
-		let mut arr = vec![serde_json::json!(0); index + 1];
+		let mut arr = vec![serde_json::json!(100); index + 1];
 		arr[index] = serde_json::json!(delay_ms);
 		map.insert("delays".to_string(), serde_json::Value::Array(arr));
 	}

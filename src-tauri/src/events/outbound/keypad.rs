@@ -73,9 +73,7 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			)
 			.await?;
 
-			tokio::time::sleep(Duration::from_millis(100)).await;
-
-			let delay = delays.get(i).copied().unwrap_or(0);
+			let delay = delays.get(i).copied().unwrap_or(100);
 			if delay > 0 {
 				tokio::time::sleep(Duration::from_millis(delay)).await;
 			}

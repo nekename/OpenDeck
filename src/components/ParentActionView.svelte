@@ -77,7 +77,7 @@
 
 	async function setDelay(index: number, event: Event) {
 		const target = event.currentTarget as HTMLInputElement;
-		const val = Math.max(0, parseInt(target.value) || 0);
+		const val = Math.max(0, parseInt(target.value) || 100);
 		const settings = await invoke<any>("set_child_delay", { parentContext, index, delayMs: val });
 		profile.keys[$inspectedParentAction!.position]!.settings = settings;
 	}
@@ -179,7 +179,7 @@
 					min="0"
 					max="300000"
 					step="100"
-					value={parentSettings?.delays?.[index] ?? 0}
+					value={parentSettings?.delays?.[index] ?? 100}
 					on:input={(e) => setDelay(index, e)}
 					class="no-spinner w-20 px-1 py-0.5 text-center text-sm text-neutral-300 bg-neutral-900 border border-neutral-600 rounded"
 					aria-label={$t("parent_action_view.delay.aria", { name: children[index + 1].action.name })}
