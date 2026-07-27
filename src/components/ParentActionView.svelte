@@ -62,6 +62,12 @@
 		children.splice(index, 1);
 		profile.keys[$inspectedParentAction!.position]!.children = children;
 
+		if (index == 0) {
+			profile.keys[$inspectedParentAction!.position]!.settings.delays?.splice(0, 1);
+		} else {
+			profile.keys[$inspectedParentAction!.position]!.settings.delays?.splice(index - 1, 1);
+		}
+
 		if (!refocus) return;
 
 		await tick();

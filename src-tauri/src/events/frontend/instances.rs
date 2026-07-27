@@ -171,11 +171,25 @@ pub async fn remove_instance(context: ActionContext) -> Result<(), Error> {
 		*slot = None;
 	} else {
 		let children = instance.children.as_mut().unwrap();
-		for (index, instance) in children.iter().enumerate() {
-			if instance.context == context {
-				let _ = crate::events::outbound::will_appear::will_disappear(instance, true).await;
-				let _ = remove_dir_all(instance_images_dir(&instance.context)).await;
+		for (index, child) in children.iter().enumerate() {
+			if child.context == context {
+				let _ = crate::events::outbound::will_appear::will_disappear(child, true).await;
+				let _ = remove_dir_all(instance_images_dir(&child.context)).await;
 				children.remove(index);
+
+				if instance.action.uuid == "opendeck.multiaction"
+					&& let Some(settings) = instance.settings.as_object_mut()
+					&& let Some(delays) = settings.get_mut("delays").and_then(|v| v.as_array_mut())
+				{
+					if index == 0 {
+						if !delays.is_empty() {
+							delays.remove(0);
+						}
+					} else if index - 1 < delays.len() {
+						delays.remove(index - 1);
+					}
+				}
+
 				break;
 			}
 		}
