@@ -41,6 +41,7 @@
 	"no_devices_detected.title": "Inga enheter hittades",
 	"parent_action_view.child": "underåtgärd",
 	"parent_action_view.children": "underåtgärder",
+	"parent_action_view.delay_label": "Fördröjning:",
 	"parent_action_view.drag_copy": "Dra en ny åtgärd hit eller kopiera en med Control+C och klistra in med Control+V.",
 	"parent_action_view.drag_paste": "Släpp eller klistra in åtgärder här",
 	"parent_action_view.multi": "Flera åtgärder",
