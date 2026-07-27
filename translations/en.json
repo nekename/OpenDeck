@@ -41,6 +41,8 @@
 	"no_devices_detected.title": "No devices detected",
 	"parent_action_view.child": "child",
 	"parent_action_view.children": "children",
+	"parent_action_view.delay.aria": "Delay for {{name}}",
+	"parent_action_view.delay.label": "Delay:",
 	"parent_action_view.drag_copy": "Drag a new action here or copy one with Control+C and paste with Control+V.",
 	"parent_action_view.drag_paste": "Drop or paste actions here",
 	"parent_action_view.multi": "Multi Action",

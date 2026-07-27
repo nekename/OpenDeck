@@ -36,7 +36,17 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 
 	let Some(instance) = get_slot_mut(&context, &mut locks).await? else { return Ok(()) };
 	if instance.action.uuid == "opendeck.multiaction" {
-		for child in instance.children.as_mut().unwrap() {
+		let children = instance.children.clone().unwrap_or_default();
+		let delays: Vec<u64> = instance
+			.settings
+			.get("delays")
+			.and_then(|v| v.as_array())
+			.map(|arr| arr.iter().filter_map(|v| v.as_u64()).collect())
+			.unwrap_or_default();
+
+		drop(locks);
+
+		for (i, child) in children.iter().enumerate() {
 			send_to_plugin(
 				&child.action.plugin,
 				&KeyEvent {
@@ -51,10 +61,6 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 
 			tokio::time::sleep(Duration::from_millis(100)).await;
 
-			if child.states.len() == 2 && !child.action.disable_automatic_states {
-				child.current_state = (child.current_state + 1) % (child.states.len() as u16);
-			}
-
 			send_to_plugin(
 				&child.action.plugin,
 				&KeyEvent {
@@ -67,12 +73,26 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			)
 			.await?;
 
-			tokio::time::sleep(Duration::from_millis(100)).await;
+			let delay = delays.get(i).copied().unwrap_or(100);
+			if delay > 0 {
+				tokio::time::sleep(Duration::from_millis(delay)).await;
+			}
 		}
 
-		let contexts = instance.children.as_ref().unwrap().iter().map(|x| x.context.clone()).collect::<Vec<_>>();
-		for child in contexts {
-			let _ = update_state(crate::APP_HANDLE.get().unwrap(), child, &mut locks).await;
+		let mut locks = acquire_locks_mut().await;
+
+		if let Some(instance) = get_slot_mut(&context, &mut locks).await?
+			&& let Some(children) = &mut instance.children
+		{
+			for child in &mut *children {
+				if child.states.len() == 2 && !child.action.disable_automatic_states {
+					child.current_state = (child.current_state + 1) % (child.states.len() as u16);
+				}
+			}
+
+			for child in children.iter().map(|x| x.context.clone()).collect::<Vec<_>>() {
+				let _ = update_state(crate::APP_HANDLE.get().unwrap(), child, &mut locks).await;
+			}
 		}
 
 		mark_profile_stale(device, &mut locks).await?;

@@ -24,6 +24,10 @@
 	$: children = profile.keys[$inspectedParentAction!.position]!.children!;
 	let parentUuid: string;
 	$: parentUuid = profile.keys[$inspectedParentAction!.position]!.action.uuid;
+	let parentContext: string;
+	$: parentContext = profile.keys[$inspectedParentAction!.position]!.context;
+	let parentSettings: any;
+	$: parentSettings = profile.keys[$inspectedParentAction!.position]!.settings;
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
@@ -58,6 +62,12 @@
 		children.splice(index, 1);
 		profile.keys[$inspectedParentAction!.position]!.children = children;
 
+		if (index == 0) {
+			profile.keys[$inspectedParentAction!.position]!.settings.delays?.splice(0, 1);
+		} else {
+			profile.keys[$inspectedParentAction!.position]!.settings.delays?.splice(index - 1, 1);
+		}
+
 		if (!refocus) return;
 
 		await tick();
@@ -69,6 +79,13 @@
 			items[i].tabIndex = i == targetIndex ? 0 : -1;
 		}
 		items[targetIndex]?.focus();
+	}
+
+	async function setDelay(index: number, event: Event) {
+		const target = event.currentTarget as HTMLInputElement;
+		const val = Math.max(0, parseInt(target.value) || 0);
+		const settings = await invoke<any>("set_child_delay", { parentContext, index, delayMs: val });
+		profile.keys[$inspectedParentAction!.position]!.settings = settings;
 	}
 
 	function handleListKeydown(event: KeyboardEvent) {
@@ -126,7 +143,8 @@
 	{#each children as instance, index}
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 		<div
-			class="flex flex-row items-center mx-4 my-2 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
+			class="flex flex-row items-center mx-4 my-1 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
+			class:my-2={parentUuid == "opendeck.toggleaction"}
 			on:click|stopPropagation={() => ($inspectedInstance = instance.context)}
 			on:focus|stopPropagation={() => ($inspectedInstance = instance.context)}
 			on:keydown={(e) => {
@@ -158,6 +176,23 @@
 				<Trash size="32" class="text-neutral-400" />
 			</button>
 		</div>
+
+		{#if parentUuid == "opendeck.multiaction" && index < children.length - 1}
+			<div class="flex flex-row items-center gap-2 mx-14 my-1 px-3 py-2 bg-neutral-800 border border-dashed border-neutral-600 rounded-lg">
+				<span class="text-xs text-neutral-400">{$t("parent_action_view.delay.label")}</span>
+				<input
+					type="number"
+					min="0"
+					max="300000"
+					step="100"
+					value={parentSettings?.delays?.[index] ?? 100}
+					on:input={(e) => setDelay(index, e)}
+					class="no-spinner w-20 px-1 py-0.5 text-center text-sm text-neutral-300 bg-neutral-900 border border-neutral-600 rounded"
+					aria-label={$t("parent_action_view.delay.aria", { name: children[index + 1].action.name })}
+				/>
+				<span class="text-xs text-neutral-500">ms</span>
+			</div>
+		{/if}
 	{/each}
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 	<div
@@ -177,3 +212,15 @@
 		<p class="ml-4 text-xl text-neutral-400">{$t("parent_action_view.drag_paste")}</p>
 	</div>
 </div>
+
+<style>
+	:global(.no-spinner::-webkit-outer-spin-button),
+	:global(.no-spinner::-webkit-inner-spin-button) {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+	:global(.no-spinner[type="number"]) {
+		-moz-appearance: textfield;
+		appearance: textfield;
+	}
+</style>
