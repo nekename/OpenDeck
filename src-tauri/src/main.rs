@@ -395,7 +395,7 @@ If you have already donated, thank you so much for your support!"#,
 			futures::executor::block_on(plugins::deactivate_plugins());
 
 			let flush_future = store::profiles::flush_stale_profiles();
-			match tauri::async_runtime::block_on(flush_future) {
+			match futures::executor::block_on(flush_future) {
 				Ok(_) => log::info!("Successfully flushed all stale profiles on exit"),
 				Err(error) => log::error!("Failed to flush stale profiles on exit: {error}"),
 			}
