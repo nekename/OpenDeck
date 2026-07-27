@@ -77,7 +77,7 @@
 
 	async function setDelay(index: number, event: Event) {
 		const target = event.currentTarget as HTMLInputElement;
-		const val = Math.max(0, parseInt(target.value) || 100);
+		const val = Math.max(0, parseInt(target.value) || 0);
 		const settings = await invoke<any>("set_child_delay", { parentContext, index, delayMs: val });
 		profile.keys[$inspectedParentAction!.position]!.settings = settings;
 	}
