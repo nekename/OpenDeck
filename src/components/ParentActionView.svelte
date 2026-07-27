@@ -173,7 +173,7 @@
 
 		{#if parentUuid == "opendeck.multiaction" && index < children.length - 1}
 			<div class="flex flex-row items-center gap-2 mx-14 my-1 px-3 py-2 bg-neutral-800 border border-dashed border-neutral-600 rounded-lg">
-				<span class="text-xs text-neutral-400">{$t("parent_action_view.delay_label")}</span>
+				<span class="text-xs text-neutral-400">{$t("parent_action_view.delay.label")}</span>
 				<input
 					type="number"
 					min="0"
@@ -182,6 +182,7 @@
 					value={parentSettings?.delays?.[index] ?? 0}
 					on:input={(e) => setDelay(index, e)}
 					class="no-spinner w-20 px-1 py-0.5 text-center text-sm text-neutral-300 bg-neutral-900 border border-neutral-600 rounded"
+					aria-label={$t("parent_action_view.delay.aria", { name: children[index + 1].action.name })}
 				/>
 				<span class="text-xs text-neutral-500">ms</span>
 			</div>
