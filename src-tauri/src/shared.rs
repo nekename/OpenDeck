@@ -478,6 +478,19 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 					}
 				))
 				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Double Click",
+						"icon": "opendeck/double-click.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.doubleclickaction",
+						"tooltip": "Run different actions on single and double click",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/double-click.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
 			],
 		},
 	);

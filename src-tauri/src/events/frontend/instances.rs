@@ -58,7 +58,7 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 			states: action.states.clone(),
 			current_state: 0,
 			settings: serde_json::Value::Object(serde_json::Map::new()),
-			children: if matches!(action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
+			children: if matches!(action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction" | "opendeck.doubleclickaction") {
 				Some(vec![])
 			} else {
 				None
@@ -260,6 +260,23 @@ pub async fn set_child_delay(parent_context: ActionContext, index: usize, delay_
 		arr[index] = serde_json::json!(delay_ms);
 		map.insert("delays".to_string(), serde_json::Value::Array(arr));
 	}
+	let parent_settings = parent.settings.clone();
+
+	save_profile_now(&parent_context.device, &mut locks).await?;
+	Ok(parent_settings)
+}
+
+#[command]
+pub async fn set_double_click_window(parent_context: ActionContext, window_ms: u64) -> Result<serde_json::Value, Error> {
+	let mut locks = acquire_locks_mut().await;
+	let Some(parent) = get_instance_mut(&parent_context, &mut locks).await? else {
+		return Ok(serde_json::Value::Null);
+	};
+
+	if !parent.settings.is_object() {
+		parent.settings = serde_json::Value::Object(serde_json::Map::new());
+	}
+	parent.settings.as_object_mut().unwrap().insert("double_click_window".to_string(), serde_json::json!(window_ms));
 	let parent_settings = parent.settings.clone();
 
 	save_profile_now(&parent_context.device, &mut locks).await?;

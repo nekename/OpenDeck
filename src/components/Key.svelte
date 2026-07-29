@@ -65,7 +65,7 @@
 			$inspectedInstance = context;
 			return;
 		}
-		if (slot.action.uuid == "opendeck.multiaction" || slot.action.uuid == "opendeck.toggleaction") {
+		if (slot.action.uuid == "opendeck.multiaction" || slot.action.uuid == "opendeck.toggleaction" || slot.action.uuid == "opendeck.doubleclickaction") {
 			$inspectedParentAction = context;
 		} else {
 			$inspectedInstance = slot.context;
@@ -78,7 +78,7 @@
 			$inspectedInstance = context;
 			return;
 		}
-		if (slot.action.uuid != "opendeck.multiaction" && slot.action.uuid != "opendeck.toggleaction") {
+		if (slot.action.uuid != "opendeck.multiaction" && slot.action.uuid != "opendeck.toggleaction" && slot.action.uuid != "opendeck.doubleclickaction") {
 			$inspectedInstance = slot.context;
 		} else {
 			$inspectedInstance = context;

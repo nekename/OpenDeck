@@ -28,6 +28,13 @@
 	$: parentContext = profile.keys[$inspectedParentAction!.position]!.context;
 	let parentSettings: any;
 	$: parentSettings = profile.keys[$inspectedParentAction!.position]!.settings;
+	let parentName: string;
+	$: parentName =
+		parentUuid == "opendeck.toggleaction"
+			? $t("parent_action_view.toggle")
+			: parentUuid == "opendeck.doubleclickaction"
+				? $t("parent_action_view.double_click")
+				: $t("parent_action_view.multi");
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
@@ -35,9 +42,11 @@
 	}
 
 	async function addAction(action: Action) {
+		const parentActionUuids = ["opendeck.multiaction", "opendeck.toggleaction", "opendeck.doubleclickaction"];
 		if (
 			(parentUuid == "opendeck.multiaction" && !action.supported_in_multi_actions) ||
-			(parentUuid == "opendeck.toggleaction" && (action.uuid == "opendeck.multiaction" || action.uuid == "opendeck.toggleaction"))
+			((parentUuid == "opendeck.toggleaction" || parentUuid == "opendeck.doubleclickaction") && parentActionUuids.includes(action.uuid)) ||
+			(parentUuid == "opendeck.doubleclickaction" && children.length >= 2)
 		) {
 			return;
 		}
@@ -88,6 +97,13 @@
 		profile.keys[$inspectedParentAction!.position]!.settings = settings;
 	}
 
+	async function setDoubleClickWindow(event: Event) {
+		const target = event.currentTarget as HTMLInputElement;
+		const val = Math.max(100, parseInt(target.value) || 400);
+		const settings = await invoke<any>("set_double_click_window", { parentContext, windowMs: val });
+		profile.keys[$inspectedParentAction!.position]!.settings = settings;
+	}
+
 	function handleListKeydown(event: KeyboardEvent) {
 		if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
 		const list = event.currentTarget as HTMLElement;
@@ -128,8 +144,25 @@
 
 <div class="px-6 pt-6 pb-4 text-neutral-300">
 	<button class="float-right text-xl" on:click={() => ($inspectedParentAction = null)} aria-label={$t("settings.close")}>✕</button>
-	<h1 class="font-semibold text-2xl">{parentUuid == "opendeck.toggleaction" ? $t("parent_action_view.toggle") : $t("parent_action_view.multi")}</h1>
+	<h1 class="font-semibold text-2xl">{parentName}</h1>
 </div>
+
+{#if parentUuid == "opendeck.doubleclickaction"}
+	<div class="flex flex-row items-center gap-2 mx-4 mb-1 px-3 py-2 bg-neutral-800 border border-dashed border-neutral-600 rounded-lg">
+		<span class="text-xs text-neutral-400">{$t("parent_action_view.window.label")}</span>
+		<input
+			type="number"
+			min="100"
+			max="2000"
+			step="50"
+			value={parentSettings?.double_click_window ?? 400}
+			on:input={setDoubleClickWindow}
+			class="no-spinner w-20 px-1 py-0.5 text-center text-sm text-neutral-300 bg-neutral-900 border border-neutral-600 rounded"
+			aria-label={$t("parent_action_view.window.label")}
+		/>
+		<span class="text-xs text-neutral-500">ms</span>
+	</div>
+{/if}
 
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <div
@@ -137,7 +170,7 @@
 	class="flex flex-col h-128 overflow-auto"
 	on:click={() => ($inspectedInstance = null)}
 	role="list"
-	aria-label="{parentUuid == 'opendeck.toggleaction' ? $t('parent_action_view.toggle') : $t('parent_action_view.multi')} {$t('parent_action_view.children')}"
+	aria-label="{parentName} {$t('parent_action_view.children')}"
 	on:keydown={handleListKeydown}
 >
 	{#each children as instance, index}
@@ -160,13 +193,16 @@
 				scale={3 / 4}
 				role="presentation"
 				tabindex={-1}
-				label={(parentUuid == "opendeck.toggleaction" ? $t("parent_action_view.toggle") : $t("parent_action_view.multi")) +
-					" " +
-					$t("parent_action_view.child") +
-					" " +
-					(index + 1)}
+				label={parentName + " " + $t("parent_action_view.child") + " " + (index + 1)}
 			/>
-			<p class="ml-4 text-xl text-neutral-300">{instance.action.name}</p>
+			<p class="ml-4 text-xl text-neutral-300">
+				{#if parentUuid == "opendeck.doubleclickaction"}
+					<span class="block text-sm text-neutral-400"
+						>{index == 0 ? $t("parent_action_view.single_click_label") : $t("parent_action_view.double_click_label")}</span
+					>
+				{/if}
+				{instance.action.name}
+			</p>
 			<button
 				class="ml-auto mr-10"
 				on:click|stopPropagation={() => removeInstance(index)}
@@ -194,23 +230,25 @@
 			</div>
 		{/if}
 	{/each}
-	<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
-	<div
-		class="flex flex-row items-center mx-4 mt-2 mb-4 p-3 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-dashed border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
-		on:dragover={handleDragOver}
-		on:drop={handleDrop}
-		on:click={() => ($inspectedInstance = null)}
-		on:focus={() => ($inspectedInstance = null)}
-		on:keydown={(e) => {
-			if ((e.ctrlKey || e.metaKey) && e.key == "v") handlePaste();
-		}}
-		role="listitem"
-		tabindex={children.length == 0 ? 0 : -1}
-		aria-label={$t("parent_action_view.drag_copy")}
-	>
-		<img src="/cube.png" class="m-2 w-24 rounded-xl" alt="" />
-		<p class="ml-4 text-xl text-neutral-400">{$t("parent_action_view.drag_paste")}</p>
-	</div>
+	{#if !(parentUuid == "opendeck.doubleclickaction" && children.length >= 2)}
+		<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
+		<div
+			class="flex flex-row items-center mx-4 mt-2 mb-4 p-3 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-dashed border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
+			on:dragover={handleDragOver}
+			on:drop={handleDrop}
+			on:click={() => ($inspectedInstance = null)}
+			on:focus={() => ($inspectedInstance = null)}
+			on:keydown={(e) => {
+				if ((e.ctrlKey || e.metaKey) && e.key == "v") handlePaste();
+			}}
+			role="listitem"
+			tabindex={children.length == 0 ? 0 : -1}
+			aria-label={$t("parent_action_view.drag_copy")}
+		>
+			<img src="/cube.png" class="m-2 w-24 rounded-xl" alt="" />
+			<p class="ml-4 text-xl text-neutral-400">{$t("parent_action_view.drag_paste")}</p>
+		</div>
+	{/if}
 </div>
 
 <style>
