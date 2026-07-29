@@ -9,7 +9,7 @@ use base64::Engine as _;
 use elgato_streamdeck::{
 	AsyncStreamDeck, DeviceStateUpdate,
 	images::{ImageRect, convert_image_with_format_async},
-	info::Kind,
+	info::{ImageRotation, Kind},
 };
 use image::GenericImageView as _;
 use tokio::sync::RwLock;
@@ -39,8 +39,17 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
 			if context.controller == "Encoder" {
-				let img = generate_encoder_image(context, &bytes).await?;
-				device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image(img)?).await?;
+				let mut img = generate_encoder_image(context, &bytes).await?;
+				let Some(format) = device.kind().lcd_image_format() else {
+					return Err(anyhow::anyhow!("Failed to get LCD image format"));
+				};
+				img = match format.rotation {
+					ImageRotation::Rot0 => img,
+					ImageRotation::Rot90 => img.rotate90(),
+					ImageRotation::Rot180 => img.rotate180(),
+					ImageRotation::Rot270 => img.rotate270(),
+				};
+				device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img)?).await?;
 			} else if context.controller == "Infobar" {
 				let img = image::load_from_memory(&bytes)?;
 				let Some(format) = device.kind().lcd_image_format() else {
@@ -55,9 +64,17 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 				device.set_button_image(context.position, image::load_from_memory(&bytes)?).await?;
 			}
 		} else if context.controller == "Encoder" {
-			device
-				.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
-				.await?;
+			let mut img = image::DynamicImage::new_rgb8(200, 100);
+			let Some(format) = device.kind().lcd_image_format() else {
+				return Err(anyhow::anyhow!("Failed to get LCD image format"));
+			};
+			img = match format.rotation {
+				ImageRotation::Rot0 => img,
+				ImageRotation::Rot90 => img.rotate90(),
+				ImageRotation::Rot180 => img.rotate180(),
+				ImageRotation::Rot270 => img.rotate270(),
+			};
+			device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(img)?).await?;
 		} else if context.controller == "Infobar" {
 			let Some(format) = device.kind().lcd_image_format() else {
 				return Err(anyhow::anyhow!("Failed to get LCD image format"));
