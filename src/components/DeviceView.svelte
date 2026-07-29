@@ -89,6 +89,7 @@
 	];
 	$: encoderRowIndex = device.rows;
 	$: touchpointRowIndex = device.rows + (device.encoders > 0 ? 1 : 0);
+	$: keypadRowWidth = device.columns * 132;
 
 	function flatIndexFromRowCol(row: number, col: number): number {
 		let index = 0;
@@ -162,7 +163,7 @@
 	<span id="grid-description" class="sr-only">{$t("device_view.grid_description")}</span>
 	<div
 		class="flex flex-col justify-center grow px-16 py-6 overflow-auto"
-		class:items-center={device.columns <= 8}
+		class:items-center={device.columns <= 9}
 		class:hidden={$inspectedParentAction || selectedDevice != device.id}
 		class:device-fade-x={overflowsX && !overflowsY}
 		class:device-fade-y={overflowsY && !overflowsX}
@@ -196,7 +197,7 @@
 			{/each}
 		</div>
 
-		<div class="flex flex-row" role="row">
+		<div class="flex flex-row justify-between" role="row" style={`width: ${keypadRowWidth}px;`}>
 			{#each { length: device.encoders } as _, i}
 				<Key
 					context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
