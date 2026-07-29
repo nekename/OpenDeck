@@ -85,6 +85,7 @@ async fn main() {
 			frontend::instances::set_state,
 			frontend::instances::set_child_delay,
 			frontend::instances::set_double_click_window,
+			frontend::instances::set_go_to_page,
 			frontend::instances::update_image,
 			frontend::instances::trigger_virtual_press,
 			frontend::profiles::get_profiles,

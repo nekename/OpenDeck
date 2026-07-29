@@ -491,6 +491,58 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 					}
 				))
 				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Previous Page",
+						"icon": "opendeck/previous-page.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.previouspage",
+						"tooltip": "Switch to the previous page of this profile",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/previous-page.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Next Page",
+						"icon": "opendeck/next-page.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.nextpage",
+						"tooltip": "Switch to the next page of this profile",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/next-page.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Go to Page",
+						"icon": "opendeck/go-to-page.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.gotopage",
+						"tooltip": "Switch to a specific page of this profile",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/go-to-page.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Main Page",
+						"icon": "opendeck/main-page.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.mainpage",
+						"tooltip": "Return to the main page of this profile",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/main-page.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
 			],
 		},
 	);

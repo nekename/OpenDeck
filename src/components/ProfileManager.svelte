@@ -3,25 +3,33 @@
 	import type { Profile } from "$lib/Profile";
 
 	import Browsers from "phosphor-svelte/lib/Browsers";
+	import CaretLeft from "phosphor-svelte/lib/CaretLeft";
+	import CaretRight from "phosphor-svelte/lib/CaretRight";
 	import Copy from "phosphor-svelte/lib/Copy";
 	import FloppyDisk from "phosphor-svelte/lib/FloppyDisk";
 	import Pencil from "phosphor-svelte/lib/Pencil";
+	import Plus from "phosphor-svelte/lib/Plus";
 	import Trash from "phosphor-svelte/lib/Trash";
 	import Popup from "./Popup.svelte";
 
 	import { t } from "$lib/i18n";
+	import { isPage, pageId, pageParts } from "$lib/pages";
 	import { inspectedInstance } from "$lib/propertyInspector";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { message } from "@tauri-apps/plugin-dialog";
 
+	const MAX_PAGES = 10;
+
 	let folders: { [name: string]: string[] } = {};
+	let allProfiles: string[] = [];
 	let value: string;
 	async function getProfiles(device: DeviceInfo) {
-		let profiles: string[] = await invoke("get_profiles", { device: device.id });
+		allProfiles = await invoke("get_profiles", { device: device.id });
 		folders = {};
-		for (const id of profiles) {
+		for (const id of allProfiles) {
+			if (isPage(id)) continue;
 			let folder = id.includes("/") ? id.split("/")[0] : "";
 			if (folders[folder]) folders[folder].push(id);
 			else folders[folder] = [id];
@@ -44,13 +52,53 @@
 		await invoke("set_selected_profile", { device: device.id, id });
 		profile = await invoke("get_selected_profile", { device: device.id });
 
-		let folder = id.includes("/") ? id.split("/")[0] : "";
-		if (folders[folder]) {
-			if (!folders[folder].includes(id)) folders[folder].push(id);
-		} else folders[folder] = [id];
-		folders = folders;
+		if (!allProfiles.includes(id)) allProfiles = [...allProfiles, id];
+		if (!isPage(id)) {
+			let folder = id.includes("/") ? id.split("/")[0] : "";
+			if (folders[folder]) {
+				if (!folders[folder].includes(id)) folders[folder].push(id);
+			} else folders[folder] = [id];
+			folders = folders;
+		}
 
 		$inspectedInstance = null;
+	}
+
+	let currentBase = "";
+	let currentPage = 1;
+	$: [currentBase, currentPage] = pageParts(value ?? "");
+	$: pageCount = value ? allProfiles.map(pageParts).reduce((max, [base, page]) => (base == currentBase ? Math.max(max, page) : max), 1) : 1;
+
+	async function switchToPage(id: string) {
+		if (!device || !id) return;
+		oldValue = id;
+		value = id;
+		await invoke("set_selected_profile", { device: device.id, id });
+		profile = await invoke("get_selected_profile", { device: device.id });
+		if (!allProfiles.includes(id)) allProfiles = [...allProfiles, id];
+		$inspectedInstance = null;
+	}
+
+	async function addPage() {
+		if (!value || pageCount >= MAX_PAGES) return;
+		await switchToPage(pageId(currentBase, pageCount + 1));
+	}
+
+	async function deletePage() {
+		if (currentPage <= 1) return;
+		const base = currentBase;
+		const deleted = currentPage;
+		const maxPage = pageCount;
+
+		await switchToPage(pageId(base, deleted - 1));
+		await invoke("delete_profile", { device: device.id, profile: pageId(base, deleted) });
+		allProfiles = allProfiles.filter((id) => id != pageId(base, deleted));
+
+		// Renumber the following pages so that page numbers stay contiguous.
+		for (let n = deleted + 1; n <= maxPage; n++) {
+			await invoke("rename_profile", { device: device.id, oldId: pageId(base, n), newId: pageId(base, n - 1), retain: false });
+			allProfiles = allProfiles.map((id) => (id == pageId(base, n) ? pageId(base, n - 1) : id));
+		}
 	}
 
 	listen("rerender_images", async () => {
@@ -66,7 +114,11 @@
 				applicationProfiles = applicationProfiles;
 			}
 		}
-		await invoke("delete_profile", { device: device.id, profile: id });
+		const ids = [id, ...allProfiles.filter((p) => isPage(p) && pageParts(p)[0] == id)];
+		for (const p of ids) {
+			await invoke("delete_profile", { device: device.id, profile: p });
+		}
+		allProfiles = allProfiles.filter((p) => !ids.includes(p));
 		let folder = id.includes("/") ? id.split("/")[0] : "";
 		folders[folder].splice(folders[folder].indexOf(id), 1);
 		folders = folders;
@@ -84,14 +136,22 @@
 		}
 
 		// Check if a profile with the new ID already exists
-		const allProfiles = Object.values(folders).flat();
-		if (allProfiles.includes(newId)) {
+		const bases = Object.values(folders).flat();
+		if (bases.includes(newId)) {
 			message($t("profile_manager.rename.exists", { id: newId }), { title: $t("profile_manager.rename.failed"), buttons: { ok: $t("dialog.ok") } });
 			return;
 		}
 
 		try {
 			await invoke("rename_profile", { device: device.id, oldId, newId, retain: false });
+
+			// Rename any pages of the profile alongside it.
+			for (const p of allProfiles.filter((p) => isPage(p) && pageParts(p)[0] == oldId)) {
+				const renamed = pageId(newId, pageParts(p)[1]);
+				await invoke("rename_profile", { device: device.id, oldId: p, newId: renamed, retain: false });
+				allProfiles = allProfiles.map((id) => (id == p ? renamed : id));
+			}
+			allProfiles = allProfiles.map((id) => (id == oldId ? newId : id));
 		} catch (error: any) {
 			message(error, { title: $t("profile_manager.rename.failed"), buttons: { ok: $t("dialog.ok") } });
 			console.error(error);
@@ -129,14 +189,18 @@
 		let newId = id + $t("profile_manager.duplicate.suffix");
 
 		// Check if a profile with the new ID already exists
-		const allProfiles = Object.values(folders).flat();
+		const bases = Object.values(folders).flat();
 		let counter = 1;
-		while (allProfiles.includes(newId)) {
+		while (bases.includes(newId)) {
 			counter++;
 			newId = `${id}${$t("profile_manager.duplicate.suffix")} ${counter}`;
 		}
 
 		await invoke("rename_profile", { device: device.id, oldId: id, newId, retain: true });
+		// Duplicate any pages of the profile alongside it.
+		for (const p of allProfiles.filter((p) => isPage(p) && pageParts(p)[0] == id)) {
+			await invoke("rename_profile", { device: device.id, oldId: p, newId: pageId(newId, pageParts(p)[1]), retain: true });
+		}
 		await getProfiles(device);
 	}
 
@@ -184,29 +248,74 @@
 	let measure: HTMLSpanElement;
 	let selectWidth = 0;
 	$: if (value && measure) {
-		measure.textContent = value.includes("/") ? value.split("/")[1] : value;
+		measure.textContent = currentBase.includes("/") ? currentBase.split("/")[1] : currentBase;
 		selectWidth = measure.offsetWidth + 18;
 	}
 </script>
 
-<div class="select-profile-wrapper">
-	<span bind:this={measure} class="invisible fixed whitespace-pre pointer-events-none" aria-hidden="true"></span>
-	<select bind:value style:width="{selectWidth}px" aria-label={$t("profile_manager.label")}>
-		{#each Object.entries(folders).sort() as [id, profiles]}
-			{#if id && profiles.length}
-				<optgroup label={id}>
-					{#each profiles.sort() as profile}
-						<option value={profile}>{profile.split("/")[1]}</option>
-					{/each}
-				</optgroup>
-			{:else}
-				{#each profiles.sort() as profile}
-					<option value={profile}>{profile}</option>
-				{/each}
+<div class="flex flex-row items-center space-x-2">
+	<div class="select-profile-wrapper">
+		<span bind:this={measure} class="invisible fixed whitespace-pre pointer-events-none" aria-hidden="true"></span>
+		<select bind:value style:width="{selectWidth}px" aria-label={$t("profile_manager.label")}>
+			{#if value && isPage(value)}
+				<option {value} hidden>{currentBase.includes("/") ? currentBase.split("/")[1] : currentBase}</option>
 			{/if}
-		{/each}
-		<option value="opendeck_edit_profiles">{$t("profile_manager.edit")}</option>
-	</select>
+			{#each Object.entries(folders).sort() as [id, profiles]}
+				{#if id && profiles.length}
+					<optgroup label={id}>
+						{#each profiles.sort() as profile}
+							<option value={profile}>{profile.split("/")[1]}</option>
+						{/each}
+					</optgroup>
+				{:else}
+					{#each profiles.sort() as profile}
+						<option value={profile}>{profile}</option>
+					{/each}
+				{/if}
+			{/each}
+			<option value="opendeck_edit_profiles">{$t("profile_manager.edit")}</option>
+		</select>
+	</div>
+
+	{#if value}
+		<div class="flex flex-row items-center space-x-1 text-neutral-400">
+			<button
+				class="disabled:opacity-30"
+				disabled={currentPage <= 1}
+				on:click={() => switchToPage(pageId(currentBase, currentPage - 1))}
+				title={$t("profile_manager.pages.previous")}
+				aria-label={$t("profile_manager.pages.previous")}
+			>
+				<CaretLeft size={16} />
+			</button>
+			<span class="text-sm tabular-nums" aria-label={$t("profile_manager.pages.indicator", { current: currentPage, total: pageCount })}>
+				{currentPage}/{pageCount}
+			</span>
+			<button
+				class="disabled:opacity-30"
+				disabled={currentPage >= pageCount}
+				on:click={() => switchToPage(pageId(currentBase, currentPage + 1))}
+				title={$t("profile_manager.pages.next")}
+				aria-label={$t("profile_manager.pages.next")}
+			>
+				<CaretRight size={16} />
+			</button>
+			<button
+				class="disabled:opacity-30"
+				disabled={pageCount >= MAX_PAGES}
+				on:click={addPage}
+				title={$t("profile_manager.pages.add")}
+				aria-label={$t("profile_manager.pages.add")}
+			>
+				<Plus size={16} />
+			</button>
+			{#if currentPage > 1}
+				<button on:click={deletePage} title={$t("profile_manager.pages.delete")} aria-label={$t("profile_manager.pages.delete")}>
+					<Trash size={16} />
+				</button>
+			{/if}
+		</div>
+	{/if}
 </div>
 
 <svelte:window
@@ -289,7 +398,7 @@
 						<button on:click={() => duplicateProfile(profile)} title={$t("profile_manager.duplicate")} aria-label={$t("profile_manager.duplicate")}>
 							<Copy size="20" class="text-neutral-400" />
 						</button>
-						{#if profile != value}
+						{#if profile != currentBase}
 							<button on:click={() => (renamingProfile = newId = profile)} title={$t("profile_manager.rename")} aria-label={$t("profile_manager.rename")}>
 								<Pencil size="20" class="text-neutral-400" />
 							</button>

@@ -235,6 +235,27 @@ impl DeviceStores {
 	}
 }
 
+/// Separator between a profile ID and its page number. Page IDs look like `Profile~2`.
+/// User-created profile names cannot contain this character (enforced by the frontend).
+pub const PAGE_SEPARATOR: char = '~';
+
+/// Splits a profile ID into its base profile ID and page number (1 for the main page).
+pub fn profile_page_parts(id: &str) -> (&str, u32) {
+	if let Some((base, page)) = id.rsplit_once(PAGE_SEPARATOR)
+		&& let Ok(number) = page.parse::<u32>()
+		&& number >= 2
+	{
+		(base, number)
+	} else {
+		(id, 1)
+	}
+}
+
+/// Constructs a profile ID from a base profile ID and a page number.
+pub fn profile_page_id(base: &str, page: u32) -> String {
+	if page <= 1 { base.to_owned() } else { format!("{base}{PAGE_SEPARATOR}{page}") }
+}
+
 pub fn get_device_profiles(device: &str) -> Result<Vec<String>, anyhow::Error> {
 	let mut profiles: Vec<String> = vec![];
 

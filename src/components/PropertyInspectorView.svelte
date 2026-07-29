@@ -7,6 +7,13 @@
 	import { getWebserverUrl, getWebSocketPort } from "$lib/ports";
 	import { inspectedInstance } from "$lib/propertyInspector";
 
+	async function setGoToPage(instance: ActionInstance, event: Event) {
+		const target = event.currentTarget as HTMLInputElement;
+		const page = Math.max(1, Math.min(10, parseInt(target.value) || 1));
+		instance.settings.page = page;
+		await invoke("set_go_to_page", { context: instance.context, page });
+	}
+
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 
@@ -197,7 +204,21 @@
 		✕
 	</button>
 	{#each instances as instance (instance.context)}
-		{#if instance.action.property_inspector}
+		{#if instance.action.uuid == "opendeck.gotopage"}
+			<div class="hidden p-4 text-neutral-300" class:block!={$inspectedInstance == instance.context}>
+				<label class="flex flex-row items-center gap-2 text-sm">
+					{$t("property_inspector.go_to_page")}
+					<input
+						type="number"
+						min="1"
+						max="10"
+						value={instance.settings.page ?? 1}
+						on:input={(event) => setGoToPage(instance, event)}
+						class="w-20 px-1 py-0.5 text-center text-sm text-neutral-300 bg-neutral-900 border border-neutral-600 rounded"
+					/>
+				</label>
+			</div>
+		{:else if instance.action.property_inspector}
 			<iframe
 				title={$t("property_inspector.title")}
 				class="w-full h-full hidden"
