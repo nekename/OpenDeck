@@ -24,7 +24,5 @@ document.addEventListener("keydown", (event) => {
 });
 globalThis.addEventListener("blur", () => openContextMenu.set(null));
 
-export type CopiedItem =
-	| { type: "instance"; source: Context }
-	| { type: "action"; action: Action };
+export type CopiedItem = { type: "instance"; source: Context } | { type: "action"; action: Action };
 export const copiedItem: Writable<CopiedItem | null> = writable(null);

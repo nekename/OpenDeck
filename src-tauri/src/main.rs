@@ -4,8 +4,10 @@
 mod application_watcher;
 mod device_sleep;
 mod elgato;
+mod encoder_layouts;
 mod events;
 mod plugins;
+mod power_events;
 mod shared;
 mod store;
 mod zip_extract;
@@ -18,6 +20,7 @@ use events::frontend;
 use shared::PRODUCT_NAME;
 
 use std::sync::OnceLock;
+use std::time::Duration;
 
 use tauri::{
 	AppHandle, Builder, Manager, WindowEvent,
@@ -27,6 +30,7 @@ use tauri::{
 use tauri_plugin_log::{Target, TargetKind};
 
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
+const SAVE_PROBE: Duration = Duration::from_secs(30);
 
 fn show_window(app: &AppHandle) -> Result<(), tauri::Error> {
 	#[cfg(target_os = "macos")]
@@ -79,6 +83,7 @@ async fn main() {
 			frontend::instances::move_instance,
 			frontend::instances::remove_instance,
 			frontend::instances::set_state,
+			frontend::instances::set_child_delay,
 			frontend::instances::update_image,
 			frontend::instances::trigger_virtual_press,
 			frontend::profiles::get_profiles,
@@ -194,9 +199,20 @@ If you have already donated, thank you so much for your support!"#,
 					tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 				}
 			});
+
+			tokio::spawn(async {
+				loop {
+					tokio::time::sleep(SAVE_PROBE).await;
+					if let Err(error) = store::profiles::flush_stale_profiles().await {
+						log::error!("Failed to flush stale profiles: {error}");
+					}
+				}
+			});
+
 			plugins::initialise_plugins();
 			application_watcher::init_application_watcher();
 			device_sleep::init_device_sleep();
+			power_events::init_power_events();
 
 			let label = IconMenuItemBuilder::with_id("label", PRODUCT_NAME)
 				.icon(app.default_window_icon().unwrap().clone())
@@ -282,7 +298,7 @@ If you have already donated, thank you so much for your support!"#,
 			tauri_plugin_log::Builder::default()
 				.targets([Target::new(TargetKind::LogDir { file_name: None }), Target::new(TargetKind::Stdout)])
 				.level(log::LevelFilter::Info)
-				.level_for("opendeck", log::LevelFilter::Trace)
+				.level_for("opendeck", log::LevelFilter::Debug)
 				.build(),
 		)
 		.plugin(tauri_plugin_cors_fetch::init())
@@ -332,7 +348,7 @@ If you have already donated, thank you so much for your support!"#,
 						if args.len() > pos + 1 {
 							let device_id = args[pos + 1].clone();
 							std::thread::spawn(move || {
-								if let Err(error) = tauri::async_runtime::block_on(device_sleep::note_activity(&device_id)) {
+								if let Err(error) = tauri::async_runtime::block_on(device_sleep::wake_device(&device_id)) {
 									log::error!("Failed to wake device: {error}");
 								}
 							});
@@ -377,6 +393,13 @@ If you have already donated, thank you so much for your support!"#,
 		if let tauri::RunEvent::Exit = event {
 			#[cfg(windows)]
 			futures::executor::block_on(plugins::deactivate_plugins());
+
+			let flush_future = store::profiles::flush_stale_profiles();
+			match futures::executor::block_on(flush_future) {
+				Ok(_) => log::info!("Successfully flushed all stale profiles on exit"),
+				Err(error) => log::error!("Failed to flush stale profiles on exit: {error}"),
+			}
+
 			tokio::spawn(elgato::reset_devices());
 			use tauri_plugin_aptabase::EventTracker;
 			app.flush_events_blocking();

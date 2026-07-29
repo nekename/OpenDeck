@@ -30,19 +30,21 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 
 > [!TIP]
 > If you're using a Debian, Ubuntu, Fedora, Fedora Atomic, openSUSE or Arch-based distribution, you can try the automated installation script:
+>
 > ```bash
 > curl -sSL https://raw.githubusercontent.com/nekename/OpenDeck/main/install_opendeck.sh | bash
 > ```
+>
 > The script installs OpenDeck from a released .deb or .rpm file, the AUR, or Flathub, appropriately, and also installs and reloads the appropriate udev subsystem rules. Additionally, you can choose to install Wine and/or Node.js from your distribution during the process.
 
 - Download the latest release from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
-	- You should avoid AppImage releases of OpenDeck as they tend to have problems (you should also just avoid AppImages in general).
-	- For users of Arch-based distributions, there are the `opendeck` and `opendeck-bin` AUR packages for the latest release, as well as the `opendeck-git` AUR package for the latest commit on the `main` branch of this repository.
+  - You should avoid AppImage releases of OpenDeck as they tend to have problems (you should also just avoid AppImages in general).
+  - For users of Arch-based distributions, there are the `opendeck` and `opendeck-bin` AUR packages for the latest release, as well as the `opendeck-git` AUR package for the latest commit on the `main` branch of this repository.
 - Install OpenDeck using your package manager of choice.
 - Install the appropriate udev subsystem rules from [here](https://raw.githubusercontent.com/OpenActionAPI/rust-elgato-streamdeck/main/40-streamdeck.rules):
-	- If you're using a `.deb` or `.rpm` release artifact, this file should be installed automatically.
-	- Otherwise, download and copy it to the correct location with `sudo cp 40-streamdeck.rules /etc/udev/rules.d/`.
-	- In both cases, you will need to reload your udev subsystem rules with `sudo udevadm control --reload-rules && sudo udevadm trigger`.
+  - If you're using a `.deb` or `.rpm` release artifact, this file should be installed automatically.
+  - Otherwise, download and copy it to the correct location with `sudo cp 40-streamdeck.rules /etc/udev/rules.d/`.
+  - In both cases, you will need to reload your udev subsystem rules with `sudo udevadm control --reload-rules && sudo udevadm trigger`.
 - If you intend to use some compiled plugins that are not compiled for Linux, you will need to have [Wine](https://www.winehq.org/) installed on your system. Some plugins may also depend on Wine Mono (which is sometimes, but not always included, in your distro's packaging of Wine).
 
 > [!NOTE]
@@ -57,14 +59,14 @@ Special thanks go to the developers of [Tauri](https://github.com/tauri-apps/tau
 
 - Download the latest release from [GitHub Releases](https://github.com/nekename/OpenDeck/releases/latest).
 - If you downloaded a `.dmg`, open the downloaded disk image and drag the application inside into your Applications folder; otherwise, extract the `.tar.gz` to your Applications folder.
-- Open the installed application. Note: if you receive a warning about OpenDeck being distributed by an unknown developer, *right-click the app in Finder and then click Open* to suppress the warning.
+- Open the installed application. Note: if you receive a warning about OpenDeck being distributed by an unknown developer, _right-click the app in Finder and then click Open_ to suppress the warning.
 - If you intend to use plugins that are only compiled for Windows, you will need to have [Wine](https://www.winehq.org/) installed on your system.
 
 ## Support
 
 ### How do I...?
 
-To edit an action's settings, left-click on it to display its *property inspector*. To remove an action, right-click on it and choose "Delete" from the context menu.
+To edit an action's settings, left-click on it to display its _property inspector_. To remove an action, right-click on it and choose "Delete" from the context menu.
 
 To edit an action's appearance, right-click on it and select "Edit" from the context menu. You can then customise the image and text for each of its states. Left-click on the image to choose an image from your filesystem or right-click on the image to reset it to the plugin-provided default.
 
@@ -77,13 +79,13 @@ To change other options, open Settings. From here, you can also view information
 - Ensure you are running the latest version of OpenDeck, as well as recent versions of related software (e.g. Spotify or OBS).
 - Check the [FAQ](https://github.com/nekename/OpenDeck/wiki/0.-FAQ) and [GitHub Issues](https://github.com/nekename/OpenDeck/issues) to see if there's a fix for your problem already.
 - Check the OpenDeck log file for any important messages. This file should be included with any support request.
-	- You can also run OpenDeck from the terminal to see the logs directly if it's easier than finding the log file or if the log file is empty or missing details.
-	- For issues with plugins, you can also check the plugin's logs (in the same folder, sometimes as well as a file named `plugin.log` or similar in the plugin's own folder).
-	- The log directory can be opened from the settings page of OpenDeck, or alternatively located manually at the paths below:
-		- Linux: `~/.local/share/opendeck/logs/`
-		- Flatpak: `~/.var/app/me.amankhanna.opendeck/data/opendeck/logs/`
-		- Windows: `%appdata%\opendeck\logs\`
-		- macOS: `~/Library/Logs/opendeck/`
+  - You can also run OpenDeck from the terminal to see the logs directly if it's easier than finding the log file or if the log file is empty or missing details.
+  - For issues with plugins, you can also check the plugin's logs (in the same folder, sometimes as well as a file named `plugin.log` or similar in the plugin's own folder).
+  - The log directory can be opened from the settings page of OpenDeck, or alternatively located manually at the paths below:
+    - Linux: `~/.local/share/opendeck/logs/`
+    - Flatpak: `~/.var/app/me.amankhanna.opendeck/data/opendeck/logs/`
+    - Windows: `%appdata%\opendeck\logs\`
+    - macOS: `~/Library/Logs/opendeck/`
 - When trying to run compiled plugins built for Windows on Linux or macOS, please ensure you have the latest version of Wine (and Wine Mono) installed on your system.
 - If your device isn't showing up, ensure you have the correct permissions to access it (e.g. on Linux, installing udev subsystem rules and restarting your system), and that you have restarted OpenDeck since connecting it.
 
@@ -101,11 +103,12 @@ To change other options, open Settings. From here, you can also view information
 You'll need to ensure that all of the [prerequisites for building a Tauri application](https://tauri.app/start/prerequisites) are satisfied to build OpenDeck, as well as making sure that [Deno](https://deno.com/) is installed. On Linux, you'll also need `libudev` and `libdbus` installed for your distribution. After running `deno install`, you can use `deno task tauri dev` and `deno task tauri build` to work with OpenDeck.
 
 Before each commit, please ensure that all of the following are completed:
+
 1. Rust code has been linted using `cargo clippy` and it discovers no violations
 2. Rust code has been formatted using `cargo fmt`
 3. TypeScript code has been checked using `deno check` and linted using `deno lint` and they discover no violations
 4. Svelte code has been linted using `deno task check` and it discovers no violations
-5. Frontend code has been formatted using `deno fmt --unstable-component`
+5. Frontend code has been formatted using `deno task format`
 
 When submitting contributions, please adhere to the [Conventional Commits specification](https://conventionalcommits.org/) for commit messages. You will also need to [sign your commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits). Feel free to reach out on the support channels above for guidance when contributing!
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ActionInstance } from "$lib/ActionInstance";
 
+	import { t } from "$lib/i18n";
 	import { renderImage, resizeImage } from "$lib/rendererHelper";
 
 	import { invoke } from "@tauri-apps/api/core";
@@ -52,6 +53,9 @@
 	}
 	$: update(instance);
 	$: invoke("set_state", { context: instance.context, index: state, state: instance.states[state] });
+
+	let canvas: HTMLCanvasElement;
+	$: renderImage(canvas, null, instance.states[state], instance.action.states[state]?.image ?? instance.action.icon, false, false, true, false, false, 0);
 </script>
 
 <svelte:window
@@ -63,13 +67,13 @@
 <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-2 text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg z-10">
 	<div class="flex flex-row">
 		<div class="select-wrapper m-1 w-full">
-			<select class="w-full bg-neutral-600! border-neutral-500!" bind:value={state} aria-label="State">
+			<select class="w-full bg-neutral-600! border-neutral-500!" bind:value={state} aria-label={$t("instance_editor.state")}>
 				{#each instance.states as _, i}
-					<option value={i}>State {i + 1}</option>
+					<option value={i}>{$t("instance_editor.state.n", { n: i + 1 })}</option>
 				{/each}
 			</select>
 		</div>
-		<button class="ml-2 mr-1 float-right text-xl text-neutral-300" on:click={() => showEditor = false} aria-label="Close">✕</button>
+		<button class="ml-2 mr-1 float-right text-xl text-neutral-300" on:click={() => (showEditor = false)} aria-label={$t("settings.close")}>✕</button>
 	</div>
 	<div class="flex flex-row mx-1">
 		<div class="flex flex-col justify-center items-center mt-2 mb-1">
@@ -87,25 +91,24 @@
 					event.preventDefault();
 					instance.states[state].image = instance.action.states[state]?.image ?? instance.action.icon;
 				}}
-				title="Click to select an image, or right-click to reset to the default image."
-				aria-label="Click to select an image, or right-click to reset to the default image."
+				title={$t("instance_editor.image.hint")}
+				aria-label={$t("instance_editor.image.hint")}
 			>
-				{#await renderImage(null, null, instance.states[state], instance.action.states[state]?.image ?? instance.action.icon, false, false, true, false, false, 0, true)}
-					<div class="w-32 min-w-32 h-32 bg-neutral-800 animate-pulse border border-neutral-600 rounded-xl"></div>
-				{:then resolvedSrc}
-					<img
-						src={resolvedSrc}
-						class="my-auto w-32 min-w-32 h-min aspect-square bg-black border border-neutral-600 rounded-xl cursor-pointer"
-						alt="State {state + 1} image"
-					/>
-				{/await}
+				<canvas
+					bind:this={canvas}
+					class="bg-black border border-neutral-600 rounded-xl cursor-pointer"
+					width={144}
+					height={144}
+					style={`transform: scale(${128 / 144}); margin: ${(128 - 144) / 2}px;`}
+					aria-label={$t("instance_editor.image.n", { n: state + 1 })}
+				/>
 			</button>
 			<div class="flex flex-row items-center justify-center mt-1 space-x-1 text-neutral-300">
 				<button
 					on:click={() => adjustImageScale(-10)}
 					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md"
-					title="Decrease image scale"
-					aria-label="Decrease image scale"
+					title={$t("instance_editor.image.scale.decrease")}
+					aria-label={$t("instance_editor.image.scale.decrease")}
 				>
 					-
 				</button>
@@ -115,8 +118,8 @@
 				<button
 					on:click={() => adjustImageScale(10)}
 					class="w-6 h-6 text-sm bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-md"
-					title="Increase image scale"
-					aria-label="Increase image scale"
+					title={$t("instance_editor.image.scale.increase")}
+					aria-label={$t("instance_editor.image.scale.increase")}
 				>
 					+
 				</button>
@@ -137,13 +140,8 @@
 				}}
 				class="mt-1 px-0.5 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-lg"
 			>
-				Set background
-				<input
-					bind:this={backgroundColourInput}
-					type="color"
-					bind:value={instance.states[state].background_colour}
-					class="absolute invisible w-0 h-0"
-				/>
+				{$t("instance_editor.background")}
+				<input bind:this={backgroundColourInput} type="color" bind:value={instance.states[state].background_colour} class="absolute invisible w-0 h-0" />
 			</button>
 			<button
 				on:click={() => solidColourInput.click()}
@@ -161,7 +159,7 @@
 				}}
 				class="mt-1 px-0.5 text-sm text-neutral-300 bg-neutral-600 hover:bg-neutral-500 transition-colors border border-neutral-500 rounded-lg"
 			>
-				Use solid colour
+				{$t("instance_editor.solid_colour")}
 				<input
 					bind:this={solidColourInput}
 					type="color"
@@ -204,7 +202,7 @@
 
 		<div class="flex flex-col justify-center pl-4 pr-2 pt-4 pb-2 space-y-2">
 			<div class="flex flex-row items-center space-x-2">
-				<label for="editor-text">Text</label>
+				<label for="editor-text">{$t("instance_editor.text")}</label>
 				<textarea
 					bind:value={instance.states[state].text}
 					placeholder={instance.action.states[state]?.text || instance.action.name}
@@ -214,39 +212,30 @@
 				/>
 			</div>
 			<div class="flex flex-row items-center">
-				<label for="editor-colour" class="mr-2">Colour</label>
+				<label for="editor-colour" class="mr-2">{$t("instance_editor.colour")}</label>
 				<input
 					type="color"
 					bind:value={instance.states[state].colour}
 					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg"
 					id="editor-colour"
 				/>
-				<label for="editor-show" class="mr-2">Show</label>
-				<input
-					type="checkbox"
-					bind:checked={instance.states[state].show}
-					class="mr-4 mt-1 scale-125"
-					id="editor-show"
-				/>
-				<select
-					bind:value={instance.states[state].alignment}
-					class="px-1! py-0.5!"
-					aria-label="Alignment"
-				>
-					<option value="top">Top</option>
-					<option value="middle">Middle</option>
-					<option value="bottom">Bottom</option>
+				<label for="editor-show" class="mr-2">{$t("instance_editor.show")}</label>
+				<input type="checkbox" bind:checked={instance.states[state].show} class="mr-4 mt-1 scale-125" id="editor-show" />
+				<select bind:value={instance.states[state].alignment} class="px-1! py-0.5!" aria-label={$t("instance_editor.alignment")}>
+					<option value="top">{$t("instance_editor.alignment.top")}</option>
+					<option value="middle">{$t("instance_editor.alignment.middle")}</option>
+					<option value="bottom">{$t("instance_editor.alignment.bottom")}</option>
 				</select>
 			</div>
 			<div class="flex flex-row items-center">
-				<label for="editor-stroke" class="mr-2">Stroke</label>
+				<label for="editor-stroke" class="mr-2">{$t("instance_editor.stroke")}</label>
 				<input
 					type="color"
 					bind:value={instance.states[state].stroke_colour}
 					class="mr-2 px-0.5 bg-neutral-600 border border-neutral-500 rounded-lg"
 					id="editor-stroke"
 				/>
-				<label for="editor-outline" class="mr-2">Outline</label>
+				<label for="editor-outline" class="mr-2">{$t("instance_editor.outline")}</label>
 				<input
 					type="number"
 					bind:value={instance.states[state].stroke_size}
@@ -255,11 +244,11 @@
 				/>
 			</div>
 			<div class="flex flex-row items-center">
-				<label for="editor-font" class="mr-2">Font</label>
+				<label for="editor-font" class="mr-2">{$t("instance_editor.font")}</label>
 				<input
 					list="families"
 					bind:value={instance.states[state].family}
-					placeholder="Font family"
+					placeholder={$t("instance_editor.font.placeholder")}
 					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg"
 					id="editor-font"
 				/>
@@ -284,7 +273,7 @@
 				<input
 					type="checkbox"
 					bind:checked={bold}
-					on:change={() => instance.states[state].style = bold && italic ? "Bold Italic" : bold ? "Bold" : italic ? "Italic" : "Regular"}
+					on:change={() => (instance.states[state].style = bold && italic ? "Bold Italic" : bold ? "Bold" : italic ? "Italic" : "Regular")}
 					class="mr-4 mt-1 scale-125"
 					id="editor-bold"
 				/>
@@ -292,18 +281,13 @@
 				<input
 					type="checkbox"
 					bind:checked={italic}
-					on:change={() => instance.states[state].style = bold && italic ? "Bold Italic" : bold ? "Bold" : italic ? "Italic" : "Regular"}
+					on:change={() => (instance.states[state].style = bold && italic ? "Bold Italic" : bold ? "Bold" : italic ? "Italic" : "Regular")}
 					class="mr-4 mt-1 scale-125"
 					id="editor-italic"
 				/>
 				<label for="editor-underline" class="mr-3 underline">U</label>
-				<input
-					type="checkbox"
-					bind:checked={instance.states[state].underline}
-					class="mr-4 mt-1 scale-125"
-					id="editor-underline"
-				/>
-				<label for="editor-size" class="mr-2">Size</label>
+				<input type="checkbox" bind:checked={instance.states[state].underline} class="mr-4 mt-1 scale-125" id="editor-underline" />
+				<label for="editor-size" class="mr-2">{$t("instance_editor.font.size")}</label>
 				<input
 					type="number"
 					bind:value={instance.states[state].size}

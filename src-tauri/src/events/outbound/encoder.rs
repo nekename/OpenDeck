@@ -7,6 +7,7 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 struct DialRotatePayload {
+	controller: &'static str,
 	settings: serde_json::Value,
 	coordinates: Coordinates,
 	ticks: i16,
@@ -42,11 +43,9 @@ pub async fn dial_rotate(device: &str, index: u8, ticks: i16) -> Result<(), anyh
 			context: instance.context.clone(),
 			device: instance.context.device.clone(),
 			payload: DialRotatePayload {
+				controller: "Encoder",
 				settings: instance.settings.clone(),
-				coordinates: Coordinates {
-					row: instance.context.position / 3,
-					column: instance.context.position % 3,
-				},
+				coordinates: Coordinates { row: 0, column: index },
 				ticks,
 				pressed: false,
 			},
@@ -94,10 +93,57 @@ pub async fn dial_press(device: &str, event: &'static str, index: u8) -> Result<
 			payload: DialPressPayload {
 				controller: "Encoder",
 				settings: instance.settings.clone(),
-				coordinates: Coordinates {
-					row: instance.context.position / 3,
-					column: instance.context.position % 3,
-				},
+				coordinates: Coordinates { row: 0, column: index },
+			},
+		},
+	)
+	.await
+}
+
+#[derive(Serialize)]
+#[allow(non_snake_case)]
+struct TouchTapPayload {
+	controller: &'static str,
+	settings: serde_json::Value,
+	coordinates: Coordinates,
+	tapPos: (u16, u16),
+	hold: bool,
+}
+
+#[derive(Serialize)]
+struct TouchTapEvent {
+	event: &'static str,
+	action: String,
+	context: ActionContext,
+	device: String,
+	payload: TouchTapPayload,
+}
+
+pub async fn touch_tap(device: &str, index: u8, x: u16, y: u16, hold: bool) -> Result<(), anyhow::Error> {
+	let mut locks = acquire_locks_mut().await;
+	let selected_profile = locks.device_stores.get_selected_profile(device)?;
+	let context = ActionContext {
+		device: device.to_owned(),
+		profile: selected_profile.to_owned(),
+		controller: "Encoder".to_owned(),
+		position: index,
+		index: 0,
+	};
+	let Some(instance) = get_instance_mut(&context, &mut locks).await? else { return Ok(()) };
+
+	send_to_plugin(
+		&instance.action.plugin,
+		&TouchTapEvent {
+			event: "touchTap",
+			action: instance.action.uuid.clone(),
+			context: instance.context.clone(),
+			device: instance.context.device.clone(),
+			payload: TouchTapPayload {
+				controller: "Encoder",
+				settings: instance.settings.clone(),
+				coordinates: Coordinates { row: 0, column: index },
+				tapPos: (x, y),
+				hold,
 			},
 		},
 	)

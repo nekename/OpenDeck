@@ -13,5 +13,8 @@ export default defineConfig({
 		watch: {
 			ignored: ["**/src-tauri/**", "**/target/**"],
 		},
+		fs: {
+			allow: ["./translations"],
+		},
 	},
 });

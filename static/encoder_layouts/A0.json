@@ -1,0 +1,25 @@
+{
+	"$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+	"id": "$A0",
+	"items": [
+		{
+			"key": "full-canvas",
+			"type": "pixmap",
+			"rect": [0, 0, 200, 100]
+		},
+		{
+			"key": "title",
+			"type": "text",
+			"rect": [16, 10, 168, 24],
+			"zOrder": 1,
+			"font": { "size": 16, "weight": 600 },
+			"alignment": "left"
+		},
+		{
+			"key": "canvas",
+			"type": "pixmap",
+			"rect": [16, 34, 168, 54],
+			"zOrder": 1
+		}
+	]
+}

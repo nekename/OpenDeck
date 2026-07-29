@@ -1,15 +1,19 @@
 use super::Error;
 
 use crate::shared::{Action, ActionContext, ActionInstance, ActionState, Context, config_dir};
-use crate::store::profiles::{LocksMut, acquire_locks, acquire_locks_mut, get_instance_mut, get_slot, get_slot_mut, save_profile};
+use crate::store::profiles::{LocksMut, acquire_locks, acquire_locks_mut, get_instance_mut, get_slot, get_slot_mut, save_profile_now};
 
 use tauri::{AppHandle, Emitter, Manager, command};
 use tokio::fs::remove_dir_all;
 
 #[command]
-pub async fn create_instance(app: AppHandle, action: Action, context: Context) -> Result<Option<ActionInstance>, Error> {
+pub async fn create_instance(app: AppHandle, mut action: Action, context: Context) -> Result<Option<ActionInstance>, Error> {
 	if !action.controllers.contains(&context.controller) {
 		return Ok(None);
+	}
+
+	if context.controller == "Encoder" {
+		let _ = crate::shared::initialise_encoder_layout(&mut action, None);
 	}
 
 	let mut locks = acquire_locks_mut().await;
@@ -40,7 +44,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 			let _ = update_state(&app, parent.context.clone(), &mut locks).await;
 		}
 
-		save_profile(&context.device, &mut locks).await?;
+		save_profile_now(&context.device, &mut locks).await?;
 		drop(locks);
 		let _ = crate::events::outbound::will_appear::will_appear(&instance).await;
 
@@ -64,7 +68,7 @@ pub async fn create_instance(app: AppHandle, action: Action, context: Context) -
 		*slot = Some(instance.clone());
 		let slot = slot.clone();
 
-		save_profile(&context.device, &mut locks).await?;
+		save_profile_now(&context.device, &mut locks).await?;
 		let _ = crate::events::outbound::will_appear::will_appear(&instance).await;
 
 		Ok(slot)
@@ -142,7 +146,7 @@ pub async fn move_instance(source: Context, destination: Context, retain: bool) 
 
 	let _ = crate::events::outbound::will_appear::will_appear(&new).await;
 
-	save_profile(&destination.device, &mut locks).await?;
+	save_profile_now(&destination.device, &mut locks).await?;
 
 	Ok(Some(new))
 }
@@ -167,11 +171,25 @@ pub async fn remove_instance(context: ActionContext) -> Result<(), Error> {
 		*slot = None;
 	} else {
 		let children = instance.children.as_mut().unwrap();
-		for (index, instance) in children.iter().enumerate() {
-			if instance.context == context {
-				let _ = crate::events::outbound::will_appear::will_disappear(instance, true).await;
-				let _ = remove_dir_all(instance_images_dir(&instance.context)).await;
+		for (index, child) in children.iter().enumerate() {
+			if child.context == context {
+				let _ = crate::events::outbound::will_appear::will_disappear(child, true).await;
+				let _ = remove_dir_all(instance_images_dir(&child.context)).await;
 				children.remove(index);
+
+				if instance.action.uuid == "opendeck.multiaction"
+					&& let Some(settings) = instance.settings.as_object_mut()
+					&& let Some(delays) = settings.get_mut("delays").and_then(|v| v.as_array_mut())
+				{
+					if index == 0 {
+						if !delays.is_empty() {
+							delays.remove(0);
+						}
+					} else if index - 1 < delays.len() {
+						delays.remove(index - 1);
+					}
+				}
+
 				break;
 			}
 		}
@@ -186,7 +204,7 @@ pub async fn remove_instance(context: ActionContext) -> Result<(), Error> {
 		}
 	}
 
-	save_profile(&context.device, &mut locks).await?;
+	save_profile_now(&context.device, &mut locks).await?;
 
 	Ok(())
 }
@@ -215,9 +233,37 @@ pub async fn set_state(context: ActionContext, index: u16, state: ActionState) -
 	let reference = get_instance_mut(&context, &mut locks).await?.unwrap();
 	reference.states[index as usize] = state;
 	let clone = reference.clone();
-	save_profile(&context.device, &mut locks).await?;
+	save_profile_now(&context.device, &mut locks).await?;
 	crate::events::outbound::states::title_parameters_did_change(&clone, index).await?;
 	Ok(())
+}
+
+#[command]
+pub async fn set_child_delay(parent_context: ActionContext, index: usize, delay_ms: u64) -> Result<serde_json::Value, Error> {
+	let mut locks = acquire_locks_mut().await;
+	let Some(parent) = get_instance_mut(&parent_context, &mut locks).await? else {
+		return Ok(serde_json::Value::Null);
+	};
+
+	let delays = parent.settings.get_mut("delays").and_then(|v| v.as_array_mut());
+	if let Some(arr) = delays {
+		if arr.len() <= index {
+			arr.resize(index + 1, serde_json::json!(100));
+		}
+		arr[index] = serde_json::json!(delay_ms);
+	} else {
+		if !parent.settings.is_object() {
+			parent.settings = serde_json::Value::Object(serde_json::Map::new());
+		}
+		let map = parent.settings.as_object_mut().unwrap();
+		let mut arr = vec![serde_json::json!(100); index + 1];
+		arr[index] = serde_json::json!(delay_ms);
+		map.insert("delays".to_string(), serde_json::Value::Array(arr));
+	}
+	let parent_settings = parent.settings.clone();
+
+	save_profile_now(&parent_context.device, &mut locks).await?;
+	Ok(parent_settings)
 }
 
 #[command]

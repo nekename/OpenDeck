@@ -8,6 +8,7 @@
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
 
+	import { t } from "$lib/i18n";
 	import { settings } from "$lib/settings";
 	import { PRODUCT_NAME } from "$lib/singletons";
 
@@ -17,7 +18,7 @@
 
 	let showPopup: boolean;
 	let buildInfo: string;
-	(async () => buildInfo = await invoke("get_build_info"))();
+	(async () => (buildInfo = await invoke("get_build_info")))();
 
 	listen("device_brightness", ({ payload }: { payload: { action: string; value: number } }) => {
 		if (!$settings) return;
@@ -37,33 +38,23 @@
 	});
 
 	async function backupConfig() {
-		await message(
-			"You will be prompted to select a location to save the backup to. The config directory will be compressed and saved there. This may take a while if you have many plugins or profiles.",
-			{ title: "Backing up configuration" },
-		);
+		await message($t("settings.backup_config.prompt"), { title: $t("settings.backup_config.title"), buttons: { ok: $t("dialog.ok") } });
 		if (await invoke("backup_config_directory")) {
-			await message(
-				"Successfully backed up the config directory.",
-				{ title: "Backup complete" },
-			);
+			await message($t("settings.backup_config.success.prompt"), { title: $t("settings.backup_config.success.title"), buttons: { ok: $t("dialog.ok") } });
 		}
 	}
 
 	async function restoreConfig() {
-		await message(
-			"You will be prompted to select a location to restore the backup from. This may take a while if you have many plugins or profiles. The application will restart after the restoration is complete.\n\n" +
-				"You may encounter issues if you attempt to restore a backup from a different operating system or architecture.",
-			{ title: "Restoring configuration" },
-		);
+		await message($t("settings.restore_config.prompt"), { title: $t("settings.restore_config.title"), buttons: { ok: $t("dialog.ok") } });
 		await invoke("restore_config_directory");
 	}
 </script>
 
 <button
 	class="px-3 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
-	on:click={() => showPopup = true}
+	on:click={() => (showPopup = true)}
 >
-	Settings
+	{$t("settings.button")}
 </button>
 
 <svelte:window
@@ -72,97 +63,113 @@
 	}}
 />
 
-<Popup show={showPopup} label="Settings">
-	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => showPopup = false} aria-label="Close">✕</button>
-	<h2 class="m-2 font-semibold text-xl text-neutral-300">Settings</h2>
+<Popup show={showPopup} label={$t("settings.button")}>
+	<svelte:fragment slot="header">
+		<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={() => (showPopup = false)} aria-label={$t("settings.close")}>✕</button>
+		<h2 class="m-2 font-semibold text-xl text-neutral-300">{$t("settings.button")}</h2>
+	</svelte:fragment>
+
 	{#if $settings}
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-language" class="text-neutral-400">Language:</label>
+		<div class="flex flex-row items-center mx-2 mb-2 space-x-2">
+			<label for="settings-language" class="text-neutral-400">{$t("settings.language")}</label>
 			<div class="select-wrapper">
-				<select bind:value={$settings.language} class="w-32" id="settings-language">
+				<select bind:value={$settings.language} class="w-auto pr-10!" id="settings-language">
+					<option value="de">Deutsch</option>
 					<option value="en">English</option>
 					<option value="es">Español</option>
-					<option value="zh_CN">中文</option>
 					<option value="fr">Français</option>
-					<option value="de">Deutsch</option>
+					<option value="pt_BR">Português (Brasil)</option>
+					<option value="sv">Svenska</option>
+					<option value="uk">Українська</option>
+					<option value="zh_CN">中文</option>
 					<option value="ja">日本語</option>
 					<option value="ko">韓国語</option>
 				</select>
 			</div>
 			<Tooltip>
-				{PRODUCT_NAME} itself is not yet translated. Changing this setting will translate the text from installed plugins into your language for those that support it.
+				{$t("settings.language.tooltip", { PRODUCT_NAME })}
 			</Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-brightness" class="text-neutral-400">Device brightness:</label>
+			<label for="settings-brightness" class="text-neutral-400">{$t("settings.brightness")}</label>
 			<input type="range" min="0" max="100" bind:value={$settings.brightness} id="settings-brightness" />
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-sleep_timeout_minutes" class="text-neutral-400">Sleep after inactivity:</label>
-			<input type="number" min="0" bind:value={$settings.sleep_timeout_minutes} class="w-12 px-1 text-neutral-300 border border-neutral-600 rounded-lg" id="settings-sleep_timeout_minutes" />
-			<span class="text-neutral-400">minutes</span>
-			<Tooltip> This option controls how many minutes of inactivity will cause devices to enter sleep mode, where a value of 0 disables sleeping automatically. </Tooltip>
+			<label for="settings-sleep_timeout_minutes" class="text-neutral-400">{$t("settings.sleep_timeout_minutes")}</label>
+			<input
+				type="number"
+				min="0"
+				bind:value={$settings.sleep_timeout_minutes}
+				class="w-12 px-1 text-neutral-300 border border-neutral-600 rounded-lg"
+				id="settings-sleep_timeout_minutes"
+			/>
+			<span class="text-neutral-400">{$t("settings.sleep_timeout_minutes.minutes")}</span>
+			<Tooltip>{$t("settings.sleep_timeout_minutes.tooltip")}</Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-rotation" class="text-neutral-400">Image rotation:</label>
+			<label for="settings-sleep_when_computer_locked" class="text-neutral-400">{$t("settings.sleep_when_computer_locked")}</label>
+			<input type="checkbox" bind:checked={$settings.sleep_when_computer_locked} id="settings-sleep_when_computer_locked" />
+			<Tooltip>{$t("settings.sleep_when_computer_locked.tooltip")}</Tooltip>
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-rotation" class="text-neutral-400">{$t("settings.rotation")}</label>
 			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} id="settings-rotation" />
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-background" class="text-neutral-400">Run in background:</label>
+			<label for="settings-background" class="text-neutral-400">{$t("settings.background")}</label>
 			<input type="checkbox" bind:checked={$settings.background} id="settings-background" />
-			<Tooltip> If this option is enabled, {PRODUCT_NAME} will minimise to the tray and run in the background. </Tooltip>
+			<Tooltip>{$t("settings.background.tooltip", { PRODUCT_NAME })}</Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-autolaunch" class="text-neutral-400">Start at login:</label>
+			<label for="settings-autolaunch" class="text-neutral-400">{$t("settings.autolaunch")}</label>
 			<input type="checkbox" bind:checked={$settings.autolaunch} id="settings-autolaunch" />
 			<Tooltip>
-				If this option is enabled, {PRODUCT_NAME} will automatically start at login.
+				{$t("settings.autolaunch.tooltip.1", { PRODUCT_NAME })}
 				{#if buildInfo?.split("</summary>")[0]?.includes("linux")}
 					<br />
-					If you used Flatpak to install {PRODUCT_NAME}, this option may not function as intended.
+					{$t("settings.autolaunch.tooltip.2", { PRODUCT_NAME })}
 				{/if}
 			</Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-updatecheck" class="text-neutral-400">Check for updates:</label>
+			<label for="settings-updatecheck" class="text-neutral-400">{$t("settings.updatecheck")}</label>
 			<input type="checkbox" bind:checked={$settings.updatecheck} id="settings-updatecheck" />
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-statistics" class="text-neutral-400">Contribute statistics:</label>
+			<label for="settings-statistics" class="text-neutral-400">{$t("settings.statistics")}</label>
 			<input type="checkbox" bind:checked={$settings.statistics} id="settings-statistics" />
 		</div>
 
 		{#if !buildInfo?.split("</summary>")[0]?.includes("windows")}
 			<div class="flex flex-row items-center m-2 space-x-2">
-				<label for="settings-separatewine" class="text-neutral-400">Create separate Wine prefixes:</label>
+				<label for="settings-separatewine" class="text-neutral-400">{$t("settings.separatewine")}</label>
 				<input type="checkbox" bind:checked={$settings.separatewine} id="settings-separatewine" />
 				<Tooltip>
-					If this option is enabled, {PRODUCT_NAME} will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when
-					initialised.
+					{$t("settings.separatewine.tooltip", { PRODUCT_NAME })}
 				</Tooltip>
 			</div>
 		{/if}
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-developer" class="text-neutral-400">Enable developer mode:</label>
+			<label for="settings-developer" class="text-neutral-400">{$t("settings.developer")}</label>
 			<input type="checkbox" bind:checked={$settings.developer} id="settings-developer" />
 			<Tooltip>
-				This option enables features that make plugin development and debugging easier. Additionally, this option exposes all file paths on your device on the local webserver to allow symbolic linking
-				of plugins, so you should disable it if it is not in use.
+				{$t("settings.developer.tooltip")}
 			</Tooltip>
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-disableelgato" class="text-neutral-400">Disable Elgato device discovery:</label>
+			<label for="settings-disableelgato" class="text-neutral-400">{$t("settings.disableelgato")}</label>
 			<input type="checkbox" bind:checked={$settings.disableelgato} id="settings-disableelgato" />
-			<Tooltip> This option disables discovery of Elgato devices so that they can be managed by other software. </Tooltip>
+			<Tooltip>{$t("settings.disableelgato.tooltip")}</Tooltip>
 		</div>
 	{/if}
 
@@ -173,47 +180,49 @@
 				on:click={() => backupConfig()}
 			>
 				<ClockCounterClockwise class="mr-1" />
-				Back up config
+				{$t("settings.backup_config.button")}
 			</button>
 			<button
 				class="flex flex-row items-center px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
 				on:click={() => restoreConfig()}
 			>
 				<ClockClockwise class="mr-1" />
-				Restore config
+				{$t("settings.restore_config.button")}
 			</button>
 			<button
 				class="flex flex-row items-center px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
 				on:click={() => invoke("open_config_directory")}
 			>
 				<Gear class="mr-1" />
-				Open config
+				{$t("settings.open_config")}
 			</button>
 			<button
 				class="flex flex-row items-center px-2 py-1 text-sm text-neutral-300 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
 				on:click={() => invoke("open_log_directory")}
 			>
 				<Scroll class="mr-1" />
-				Open logs
+				{$t("settings.open_logs")}
 			</button>
 		</div>
 
 		<span class="text-xs text-neutral-400">
 			{@html buildInfo}
 		</span>
+	</div>
 
-		<div class="absolute bottom-6 flex flex-row items-center text-sm text-neutral-400">
+	<svelte:fragment slot="footer">
+		<div class="flex flex-row items-center mt-4 text-sm text-neutral-400">
 			<span class="mr-1">
-				Please leave a
-				<button on:click={() => invoke("open_url", { url: "https://github.com/nekename/OpenDeck" })} class="underline">star on GitHub</button>
+				{$t("settings.footer.1")}
+				<button on:click={() => invoke("open_url", { url: "https://github.com/nekename/OpenDeck" })} class="underline">{$t("settings.footer.2")}</button>
 			</span>
 			<Star weight="fill" fill="yellow" />
 			<span class="mx-1">
-				or
-				<button on:click={() => invoke("open_url", { url: "https://github.com/sponsors/nekename" })} class="underline">sponsor me</button>
+				{$t("settings.footer.3")}
+				<button on:click={() => invoke("open_url", { url: "https://github.com/sponsors/nekename" })} class="underline">{$t("settings.footer.4")}</button>
 			</span>
 			<Heart weight="fill" fill="fuchsia" />
-			<span class="ml-1">for my work :)</span>
+			<span class="ml-1">{$t("settings.footer.5")}</span>
 		</div>
-	</div>
+	</svelte:fragment>
 </Popup>

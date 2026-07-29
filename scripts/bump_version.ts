@@ -51,20 +51,18 @@ async function bumpStarterPackManifestVersion(version: string) {
 	await Deno.writeTextFile(STARTERPACK_MANIFEST, updated);
 }
 
-function xmlEscape(s: string): string {
-	const map: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" };
-	return s.replace(/[&<>"']/g, (m) => map[m]);
-}
-
 async function prependMetainfoRelease(version: string) {
 	const fromRef = await run("git", ["describe", "--tags", "--abbrev=0"]);
 	const subjectsRaw = await run("git", ["log", "--reverse", "--pretty=format:%s", `${fromRef}..HEAD`]);
-	const subjects = subjectsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+	const subjects = subjectsRaw
+		.split(/\r?\n/)
+		.map((s) => s.trim())
+		.filter(Boolean);
 
 	const xml = await Deno.readTextFile(METAINFO);
 	if (xml.includes(`version="${version}"`)) throw new Error(`opendeck.metainfo.xml already contains ${version}`);
 
-	const li = subjects.map((s) => `\t\t\t\t\t<li>${xmlEscape(s)}</li>`).join("\n");
+	const li = subjects.map((s) => `\t\t\t\t\t<li>${s}</li>`).join("\n");
 	const block = [
 		`\t\t<release version="${version}" date="${new Date().toISOString().split("T")[0]}">`,
 		`\t\t\t<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v${version}</url>`,

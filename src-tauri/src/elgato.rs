@@ -1,3 +1,4 @@
+use crate::encoder_layouts::generate_encoder_image;
 use crate::events::inbound;
 
 use std::collections::HashMap;
@@ -15,27 +16,6 @@ use tokio::sync::RwLock;
 
 static ELGATO_DEVICES: LazyLock<RwLock<HashMap<String, AsyncStreamDeck>>> = LazyLock::new(|| RwLock::new(HashMap::new()));
 static HIDAPI: LazyLock<RwLock<Option<Arc<hidapi::HidApi>>>> = LazyLock::new(|| RwLock::new(None));
-
-fn encoder_lcd_segment_rect(kind: Kind, position: u8) -> Option<(u16, u16, u32, u32)> {
-	let (lcd_width, lcd_height) = kind.lcd_strip_size()?;
-	let encoder_count = kind.encoder_count() as usize;
-	let position = position as usize;
-	if position >= encoder_count {
-		return None;
-	}
-
-	let segment_width = lcd_width / encoder_count;
-	Some(((position * segment_width) as u16, 0, segment_width as u32, lcd_height as u32))
-}
-
-fn encoder_lcd_icon_rect(kind: Kind, position: u8) -> Option<(u16, u16, u32, u32)> {
-	let (segment_x, segment_y, segment_width, segment_height) = encoder_lcd_segment_rect(kind, position)?;
-	let icon_size = 72u32;
-	let icon_x = segment_x + ((segment_width.saturating_sub(icon_size) / 2) as u16);
-	let icon_y = segment_y + ((segment_height.saturating_sub(icon_size) / 2) as u16);
-
-	Some((icon_x, icon_y, icon_size, icon_size))
-}
 
 /// Extract the average colour from an image.
 fn extract_average_colour(img: &image::DynamicImage) -> (u8, u8, u8) {
@@ -59,16 +39,15 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 			let data = image.split_once(',').unwrap().1;
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
 			if context.controller == "Encoder" {
-				let Some((x, y, width, height)) = encoder_lcd_icon_rect(kind, context.position) else {
-					return Ok(());
+				let img = generate_encoder_image(context, &bytes).await?;
+				device.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image(img)?).await?;
+			} else if context.controller == "Infobar" {
+				let img = image::load_from_memory(&bytes)?;
+				let Some(format) = device.kind().lcd_image_format() else {
+					return Err(anyhow::anyhow!("Failed to get LCD image format"));
 				};
-				device
-					.write_lcd(
-						x,
-						y,
-						&ImageRect::from_image_async(image::load_from_memory(&bytes)?.resize(width, height, image::imageops::FilterType::Nearest))?,
-					)
-					.await?;
+				let data = convert_image_with_format_async(format, img.resize_exact(248, 58, image::imageops::FilterType::Lanczos3))?;
+				device.write_lcd_fill(&data).await?;
 			} else if is_touch_point {
 				let (r, g, b) = extract_average_colour(&image::load_from_memory(&bytes)?);
 				device.set_touchpoint_color(context.position - key_count, r, g, b).await?;
@@ -76,10 +55,15 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 				device.set_button_image(context.position, image::load_from_memory(&bytes)?).await?;
 			}
 		} else if context.controller == "Encoder" {
-			let Some((x, y, width, height)) = encoder_lcd_segment_rect(kind, context.position) else {
-				return Ok(());
+			device
+				.write_lcd(context.position as u16 * 200, 0, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(200, 100))?)
+				.await?;
+		} else if context.controller == "Infobar" {
+			let Some(format) = device.kind().lcd_image_format() else {
+				return Err(anyhow::anyhow!("Failed to get LCD image format"));
 			};
-			device.write_lcd(x, y, &ImageRect::from_image_async(image::DynamicImage::new_rgb8(width, height))?).await?;
+			let data = convert_image_with_format_async(format, image::DynamicImage::new_rgb8(248, 58))?;
+			device.write_lcd_fill(&data).await?;
 		} else if is_touch_point {
 			device.set_touchpoint_color(context.position - key_count, 0, 0, 0).await?;
 		} else {
@@ -133,6 +117,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 		return;
 	}
 
+	let device_name = device.product().await.unwrap();
 	let kind = device.kind();
 	let device_type = match kind {
 		Kind::Original | Kind::OriginalV2 | Kind::Mk2 | Kind::Mk2Scissor | Kind::Mk2Module => 0,
@@ -146,17 +131,23 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 	clear_all_touchpoints(&device).await;
 	let _ = device.set_brightness(crate::store::get_settings().value.brightness).await;
 	let _ = device.flush().await;
+
+	let reader = device.get_reader();
+	ELGATO_DEVICES.write().await.insert(device_id.clone(), device);
+	let _ = clear_screen(&device_id).await;
+
 	crate::events::inbound::devices::register_device(
 		"",
 		crate::events::inbound::PayloadEvent {
 			payload: crate::shared::DeviceInfo {
 				id: device_id.clone(),
 				plugin: String::new(),
-				name: device.product().await.unwrap(),
+				name: device_name,
 				rows: kind.row_count(),
 				columns: kind.column_count(),
 				encoders: kind.encoder_count(),
 				touchpoints: kind.touchpoint_count(),
+				infobars: if kind == Kind::Neo { 1 } else { 0 },
 				r#type: device_type,
 			},
 		},
@@ -164,8 +155,6 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 	.await
 	.unwrap();
 
-	let reader = device.get_reader();
-	ELGATO_DEVICES.write().await.insert(device_id.clone(), device);
 	let press = |position| inbound::PayloadEvent {
 		payload: inbound::devices::PressPayload { device: device_id.clone(), position },
 	};
@@ -174,6 +163,15 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 			device: device_id.clone(),
 			position,
 			ticks: ticks.into(),
+		},
+	};
+	let touchscreen_press = |position, x, y, hold| inbound::PayloadEvent {
+		payload: inbound::devices::TouchscreenPressPayload {
+			device: device_id.clone(),
+			position,
+			x,
+			y,
+			hold,
 		},
 	};
 	loop {
@@ -190,6 +188,20 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				DeviceStateUpdate::EncoderTwist(dial, ticks) => inbound::devices::encoder_change(encoder(dial, ticks)).await,
 				DeviceStateUpdate::EncoderDown(dial) => inbound::devices::encoder_down(press(dial)).await,
 				DeviceStateUpdate::EncoderUp(dial) => inbound::devices::encoder_up(press(dial)).await,
+				DeviceStateUpdate::TouchScreenPress(x, y) => {
+					let (position, x, y) = match kind {
+						Kind::Plus => ((x / 200) as u8, x % 200, y),
+						_ => continue,
+					};
+					inbound::devices::touchscreen_press(touchscreen_press(position, x, y, false)).await
+				}
+				DeviceStateUpdate::TouchScreenLongPress(x, y) => {
+					let (position, x, y) = match kind {
+						Kind::Plus => ((x / 200) as u8, x % 200, y),
+						_ => continue,
+					};
+					inbound::devices::touchscreen_press(touchscreen_press(position, x, y, true)).await
+				}
 				_ => Ok(()),
 			} {
 				Ok(_) => (),
@@ -243,33 +255,5 @@ pub async fn initialise_devices() {
 			}
 			Err(error) => log::warn!("Failed to connect to Elgato device: {error}"),
 		}
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn plus_encoder_lcd_regions_are_horizontal() {
-		assert_eq!(encoder_lcd_segment_rect(Kind::Plus, 0), Some((0, 0, 200, 100)));
-		assert_eq!(encoder_lcd_segment_rect(Kind::Plus, 3), Some((600, 0, 200, 100)));
-		assert_eq!(encoder_lcd_icon_rect(Kind::Plus, 0), Some((64, 14, 72, 72)));
-		assert_eq!(encoder_lcd_icon_rect(Kind::Plus, 3), Some((664, 14, 72, 72)));
-	}
-
-	#[test]
-	fn plus_xl_encoder_lcd_regions_are_horizontal() {
-		assert_eq!(encoder_lcd_segment_rect(Kind::PlusXl, 0), Some((0, 0, 16, 1200)));
-		assert_eq!(encoder_lcd_segment_rect(Kind::PlusXl, 5), Some((80, 0, 16, 1200)));
-		assert_eq!(encoder_lcd_icon_rect(Kind::PlusXl, 0), Some((0, 564, 72, 72)));
-		assert_eq!(encoder_lcd_icon_rect(Kind::PlusXl, 5), Some((80, 564, 72, 72)));
-	}
-
-	#[test]
-	fn encoder_lcd_regions_reject_invalid_positions_and_non_lcd_devices() {
-		assert_eq!(encoder_lcd_segment_rect(Kind::Plus, 4), None);
-		assert_eq!(encoder_lcd_icon_rect(Kind::PlusXl, 6), None);
-		assert_eq!(encoder_lcd_segment_rect(Kind::Mk2, 0), None);
 	}
 }

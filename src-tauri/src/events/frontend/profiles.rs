@@ -1,7 +1,7 @@
 use super::Error;
 
 use crate::shared::DEVICES;
-use crate::store::profiles::{PROFILE_SAVE_DEBOUNCE, PROFILE_STORES, acquire_locks_mut, get_device_profiles, save_profile};
+use crate::store::profiles::{PROFILE_STORES, acquire_locks_mut, get_device_profiles, save_profile_now};
 
 use tauri::{AppHandle, Emitter, Manager, command};
 
@@ -32,27 +32,21 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 	}
 
 	// If a profile save is pending for this device, save it immediately to prevent losing profile data
-	let entries = PROFILE_SAVE_DEBOUNCE
-		.iter()
-		.filter(|entry| entry.key().device == device)
-		.map(|entry| entry.key().clone())
-		.collect::<Vec<_>>();
-	if !entries.is_empty() {
-		for context in &entries {
-			if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(context) {
-				handle.abort();
-			}
-		}
-		if let Err(error) = save_profile(&device, &mut locks).await {
-			log::error!("Failed to save profile for device {device}: {error}");
-		}
+	if let Err(error) = save_profile_now(&device, &mut locks).await {
+		log::error!("Failed to save profile for device {device}: {error}");
 	}
 
 	let selected_profile = locks.device_stores.get_selected_profile(&device)?;
 
 	if selected_profile != id {
 		let old_profile = &locks.profile_stores.get_profile_store(&DEVICES.get(&device).unwrap(), &selected_profile)?.value;
-		for instance in old_profile.keys.iter().flatten().chain(&mut old_profile.sliders.iter().flatten()) {
+		for instance in old_profile
+			.keys
+			.iter()
+			.flatten()
+			.chain(&mut old_profile.sliders.iter().flatten())
+			.chain(&mut old_profile.infobars.iter().flatten())
+		{
 			if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
 				let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
 			} else {
@@ -67,7 +61,13 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 	// We must use the mutable version of get_profile_store in order to create the store if it does not exist.
 	let store = locks.profile_stores.get_profile_store_mut(&DEVICES.get(&device).unwrap(), &id).await?;
 	let new_profile = &store.value;
-	for instance in new_profile.keys.iter().flatten().chain(&mut new_profile.sliders.iter().flatten()) {
+	for instance in new_profile
+		.keys
+		.iter()
+		.flatten()
+		.chain(&mut new_profile.sliders.iter().flatten())
+		.chain(&mut new_profile.infobars.iter().flatten())
+	{
 		if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		} else {

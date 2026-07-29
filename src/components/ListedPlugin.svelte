@@ -10,10 +10,7 @@
 	export let secondaryActionLabel: string = "";
 </script>
 
-<div
-	class="flex flex-row items-center m-2 p-2 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg"
-	class:hidden
->
+<div class="flex flex-row items-center m-2 p-2 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg" class:hidden>
 	<img src={icon} class="w-24 h-24 rounded-lg" class:opacity-75={disconnected} alt={name} loading="lazy" />
 	<div class="ml-4 mr-2 text-neutral-300 wrap-anywhere" class:opacity-75={disconnected}>
 		<p class="font-semibold">{name}</p>

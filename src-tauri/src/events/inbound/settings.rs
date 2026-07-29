@@ -1,6 +1,6 @@
 use crate::events::outbound::settings as outbound;
 use crate::shared::ActionContext;
-use crate::store::profiles::{acquire_locks, acquire_locks_mut, get_instance, get_instance_mut, save_profile};
+use crate::store::profiles::{acquire_locks, acquire_locks_mut, get_instance, get_instance_mut, mark_profile_stale};
 
 use std::io::Write;
 use std::str::FromStr;
@@ -11,7 +11,7 @@ pub async fn set_settings(event: super::ContextAndPayloadEvent<serde_json::Value
 	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {
 		instance.settings = event.payload;
 		outbound::did_receive_settings(instance, !from_property_inspector).await?;
-		save_profile(&event.context.device, &mut locks).await?;
+		mark_profile_stale(&event.context.device, &mut locks).await?;
 	}
 
 	Ok(())

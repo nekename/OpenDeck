@@ -17,4 +17,5 @@ try {
 }
 
 await copy("assets", outDir);
-if (!(await new Deno.Command("cargo", { args: ["install", "--path", ".", "--target", target, "--root", join(outDir, target)] }).spawn().status).success) Deno.exit(1);
+if (!(await new Deno.Command("cargo", { args: ["install", "--path", ".", "--target", target, "--root", join(outDir, target)] }).spawn().status).success)
+	Deno.exit(1);

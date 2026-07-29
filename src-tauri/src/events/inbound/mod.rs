@@ -50,6 +50,7 @@ pub enum InboundEventType {
 	EncoderChange(PayloadEvent<devices::TicksPayload>),
 	EncoderDown(PayloadEvent<devices::PressPayload>),
 	EncoderUp(PayloadEvent<devices::PressPayload>),
+	TouchscreenPress(PayloadEvent<devices::TouchscreenPressPayload>),
 	SetSettings(ContextAndPayloadEvent<serde_json::Value>),
 	GetSettings(ContextEvent),
 	SetGlobalSettings(ContextAndPayloadEvent<serde_json::Value, String>),
@@ -58,6 +59,8 @@ pub enum InboundEventType {
 	LogMessage(PayloadEvent<misc::LogMessageEvent>),
 	SetTitle(ContextAndPayloadEvent<states::SetTitlePayload>),
 	SetImage(ContextAndPayloadEvent<states::SetImagePayload>),
+	SetFeedbackLayout(ContextAndPayloadEvent<states::SetFeedbackLayoutPayload>),
+	SetFeedback(ContextAndPayloadEvent<serde_json::Value>),
 	SetState(ContextAndPayloadEvent<states::SetStatePayload>),
 	ShowAlert(ContextEvent),
 	ShowOk(ContextEvent),
@@ -71,7 +74,14 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 	if let Ok(Message::Text(text)) = data {
 		let decoded: InboundEventType = match serde_json::from_str(&text) {
 			Ok(event) => event,
-			Err(_) => return,
+			Err(error) => {
+				if uuid.is_empty() {
+					warn!("Failed to decode incoming event: {}", error);
+				} else {
+					warn!("Failed to decode incoming event from plugin {}: {}", uuid, error);
+				}
+				return;
+			}
 		};
 
 		if !(uuid.is_empty() && skip_auth) {
@@ -118,6 +128,7 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 			InboundEventType::EncoderChange(event) => devices::encoder_change(event).await,
 			InboundEventType::EncoderDown(event) => devices::encoder_down(event).await,
 			InboundEventType::EncoderUp(event) => devices::encoder_up(event).await,
+			InboundEventType::TouchscreenPress(event) => devices::touchscreen_press(event).await,
 			InboundEventType::SetSettings(event) => settings::set_settings(event, false).await,
 			InboundEventType::GetSettings(event) => settings::get_settings(event, false).await,
 			InboundEventType::SetGlobalSettings(event) => settings::set_global_settings(event, false).await,
@@ -126,6 +137,8 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 			InboundEventType::LogMessage(event) => misc::log_message(Some(uuid), event).await,
 			InboundEventType::SetTitle(event) => states::set_title(event).await,
 			InboundEventType::SetImage(event) => states::set_image(event).await,
+			InboundEventType::SetFeedbackLayout(event) => states::set_feedback_layout(event).await,
+			InboundEventType::SetFeedback(event) => states::set_feedback(event).await,
 			InboundEventType::SetState(event) => states::set_state(event).await,
 			InboundEventType::ShowAlert(event) => misc::show_alert(event).await,
 			InboundEventType::ShowOk(event) => misc::show_ok(event).await,
@@ -144,7 +157,10 @@ pub async fn process_incoming_message_pi(data: Result<Message, Error>, uuid: &st
 	if let Ok(Message::Text(text)) = data {
 		let decoded: InboundEventType = match serde_json::from_str(&text) {
 			Ok(event) => event,
-			Err(_) => return,
+			Err(error) => {
+				warn!("Failed to decode incoming event from property inspector {}: {}", uuid, error);
+				return;
+			}
 		};
 
 		if let Some(context) = match &decoded {

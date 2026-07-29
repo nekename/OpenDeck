@@ -1,6 +1,6 @@
 use super::Store;
 
-use crate::shared::{ActionInstance, DEVICES, DeviceInfo, Profile, config_dir, copy_dir};
+use crate::shared::{ActionInstance, DEVICES, DeviceInfo, Profile, config_dir, copy_dir, initialise_encoder_layout};
 
 use std::collections::HashMap;
 use std::fs;
@@ -8,10 +8,8 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 
 use anyhow::{Context, anyhow};
-use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use tokio::task::JoinHandle;
 
 pub struct ProfileStores {
 	stores: HashMap<String, Store<Profile>>,
@@ -39,11 +37,15 @@ impl ProfileStores {
 				id: id.to_owned(),
 				keys: Vec::new(),
 				sliders: Vec::new(),
+				infobars: Vec::new(),
+
+				stale: false,
 			};
 
 			let mut store = Store::new(&canonical_id, &config_dir().join("profiles"), default).context(format!("Failed to create store for profile {}", canonical_id))?;
 			store.value.keys.resize((device.rows * device.columns + device.touchpoints) as usize, None);
 			store.value.sliders.resize(device.encoders as usize, None);
+			store.value.infobars.resize(device.infobars as usize, None);
 
 			let categories = crate::shared::CATEGORIES.read().await;
 			let actions = categories.values().flat_map(|v| v.actions.iter()).collect::<Vec<_>>();
@@ -53,7 +55,7 @@ impl ProfileStores {
 				instance.action.plugin == "opendeck"
 					|| (plugins_dir.join(&instance.action.plugin).exists() && (!registered.contains(&instance.action.plugin) || actions.iter().any(|v| v.uuid == instance.action.uuid)))
 			};
-			for slot in store.value.keys.iter_mut().chain(store.value.sliders.iter_mut()) {
+			for slot in store.value.keys.iter_mut().chain(store.value.sliders.iter_mut()).chain(store.value.infobars.iter_mut()) {
 				if let Some(instance) = slot {
 					if !keep_instance(instance) {
 						*slot = None;
@@ -62,6 +64,20 @@ impl ProfileStores {
 					}
 				}
 			}
+
+			// We need to populate instances from a profile without encoders or without parsed layouts with them
+			for instance in store.value.sliders.iter_mut().flatten() {
+				// Populate encoder data using the manifest action if missing
+				if instance.action.encoder.is_none()
+					&& let Some(action) = actions.iter().find(|a| a.uuid == *instance.action.uuid)
+				{
+					instance.action.encoder = action.encoder.clone();
+				}
+
+				// Load encoder layout if not yet parsed
+				let _ = initialise_encoder_layout(&mut instance.action, None);
+			}
+
 			store.save()?;
 
 			self.stores.insert(canonical_id.clone(), store);
@@ -157,7 +173,7 @@ impl ProfileStores {
 	pub fn all_from_plugin(&self, plugin: &str) -> Vec<crate::shared::ActionContext> {
 		let mut all = vec![];
 		for store in self.stores.values() {
-			for instance in store.value.keys.iter().chain(&store.value.sliders).flatten() {
+			for instance in store.value.keys.iter().chain(&store.value.sliders).chain(&store.value.infobars).flatten() {
 				if instance.action.plugin == plugin {
 					all.push(instance.context.clone());
 				} else if let Some(children) = &instance.children {
@@ -301,6 +317,7 @@ pub async fn get_slot<'a>(context: &crate::shared::Context, locks: &'a Locks<'_>
 
 	let configured = match &context.controller[..] {
 		"Encoder" => store.value.sliders.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
+		"Infobar" => store.value.infobars.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 		_ => store.value.keys.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 	};
 
@@ -313,6 +330,7 @@ pub async fn get_slot_mut<'a>(context: &crate::shared::Context, locks: &'a mut L
 
 	let configured = match &context.controller[..] {
 		"Encoder" => store.value.sliders.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
+		"Infobar" => store.value.infobars.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 		_ => store.value.keys.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 	};
 
@@ -351,27 +369,32 @@ pub async fn get_instance_mut<'a>(context: &crate::shared::ActionContext, locks:
 	Ok(None)
 }
 
-pub async fn save_profile(device: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
-	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let device = DEVICES.get(device).ok_or_else(|| anyhow!("device not found"))?;
-	let store = locks.profile_stores.get_profile_store(&device, &selected_profile)?;
-	store.save()
+pub async fn mark_profile_stale(device_id: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
+	let selected_profile = locks.device_stores.get_selected_profile(device_id)?;
+	let device = DEVICES.get(device_id).ok_or_else(|| anyhow!("device not found"))?;
+	let store = locks.profile_stores.get_profile_store_mut(&device, &selected_profile).await?;
+	store.value.stale = true;
+	Ok(())
 }
 
-pub static PROFILE_SAVE_DEBOUNCE: LazyLock<DashMap<crate::shared::ActionContext, JoinHandle<()>>> = LazyLock::new(DashMap::new);
-pub fn debounce_profile_save(context: crate::shared::ActionContext) {
-	if let Some((_, handle)) = PROFILE_SAVE_DEBOUNCE.remove(&context) {
-		handle.abort();
+pub async fn save_profile_now(device_id: &str, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
+	let selected_profile = locks.device_stores.get_selected_profile(device_id)?;
+	let device = DEVICES.get(device_id).ok_or_else(|| anyhow!("device not found"))?;
+	let store = locks.profile_stores.get_profile_store_mut(&device, &selected_profile).await?;
+
+	store.save()?;
+	store.value.stale = false;
+
+	Ok(())
+}
+
+pub async fn flush_stale_profiles() -> Result<(), anyhow::Error> {
+	let mut locks = acquire_locks_mut().await;
+	for store in locks.profile_stores.stores.values_mut() {
+		if store.value.stale {
+			store.save()?;
+			store.value.stale = false;
+		}
 	}
-	PROFILE_SAVE_DEBOUNCE.insert(
-		context.clone(),
-		tokio::spawn(async move {
-			tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-			let mut locks = acquire_locks_mut().await;
-			if let Err(error) = save_profile(&context.device, &mut locks).await {
-				log::error!("Failed to save profile for device {}: {error}", context.device);
-			}
-			PROFILE_SAVE_DEBOUNCE.remove(&context);
-		}),
-	);
+	Ok(())
 }

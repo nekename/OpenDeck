@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<script>
@@ -8,10 +8,12 @@
 				const websocket = new WebSocket("ws://localhost:" + inPort);
 				inActionInfo = JSON.parse(inActionInfo);
 				websocket.onopen = () => {
-					websocket.send(JSON.stringify({
-						event: inRegisterEvent,
-						uuid: inPropertyInspectorUUID,
-					}));
+					websocket.send(
+						JSON.stringify({
+							event: inRegisterEvent,
+							uuid: inPropertyInspectorUUID,
+						}),
+					);
 				};
 
 				const down = document.getElementById("down");
@@ -32,16 +34,18 @@
 				}
 
 				update = () => {
-					websocket.send(JSON.stringify({
-						event: "setSettings",
-						context: inActionInfo.context,
-						payload: {
-							down: down.value,
-							up: up.value,
-							anticlockwise: anticlockwise.value,
-							clockwise: clockwise.value,
-						},
-					}));
+					websocket.send(
+						JSON.stringify({
+							event: "setSettings",
+							context: inActionInfo.context,
+							payload: {
+								down: down.value,
+								up: up.value,
+								anticlockwise: anticlockwise.value,
+								clockwise: clockwise.value,
+							},
+						}),
+					);
 				};
 
 				websocket.onmessage = (event) => {
@@ -72,18 +76,30 @@
 		<div id="encoder" style="display: none">
 			<div class="sdpi-item">
 				<div class="sdpi-item-label">Dial rotate anticlockwise</div>
-				<input id="anticlockwise" oninput="update()" class="sdpi-item-value" style="font-family: monospace" placeholder="Input to be executed on dial rotate anticlockwise" />
+				<input
+					id="anticlockwise"
+					oninput="update()"
+					class="sdpi-item-value"
+					style="font-family: monospace"
+					placeholder="Input to be executed on dial rotate anticlockwise"
+				/>
 			</div>
 			<div class="sdpi-item">
 				<div class="sdpi-item-label">Dial rotate clockwise</div>
-				<input id="clockwise" oninput="update()" class="sdpi-item-value" style="font-family: monospace" placeholder="Input to be executed on dial rotate clockwise" />
+				<input
+					id="clockwise"
+					oninput="update()"
+					class="sdpi-item-value"
+					style="font-family: monospace"
+					placeholder="Input to be executed on dial rotate clockwise"
+				/>
 			</div>
 		</div>
 		<details open>
 			<summary style="margin-bottom: 0.25rem; font-size: 1.25rem">Details</summary>
 			<code style="word-break: break-all">[t("hello world!"),m(10,10,r),s(5),b(l),k(ctrl,p),k(uni('a')),k(ctrl,r)]</code>
 			<p>The example above becomes something like this:</p>
-			<!-- deno-fmt-ignore -->
+			<!-- prettier-ignore -->
 			<code style="white-space: pre;">[
 	Text("hello world!"),
 	MoveMouse(10, 10, Relative),
@@ -94,10 +110,10 @@
 	Key(Control, Release),
 ]</code>
 			<p>
-				As you can see, <code>Vertical</code> is the default for the <code>Scroll</code> action if an axis is not specified,
-				<code>Click</code> (press followed by release) is the default for the <code>Button</code> and <code>Key</code> actions if a direction is not specified, and so on.
+				As you can see, <code>Vertical</code> is the default for the <code>Scroll</code> action if an axis is not specified, <code>Click</code> (press followed
+				by release) is the default for the <code>Button</code> and <code>Key</code> actions if a direction is not specified, and so on.
 			</p>
-			<!-- deno-fmt-ignore -->
+			<!-- prettier-ignore -->
 			<p>
 				You can find a list of all of the keycodes
 				<span style="color: dodgerblue; cursor: pointer;" onclick="window.open('https://github.com/enigo-rs/enigo/blob/v0.5.0/src/keycodes.rs', '_blank');">here</span>.

@@ -53,6 +53,40 @@
 	</branding>
 
 	<releases>
+		<release version="2.13.1" date="2026-06-27">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.13.1</url>
+			<description>
+				<ul>
+					<li>fix: resolve missing localisation keys in ParentActionView and consolidate its key namespace</li>
+					<li>fix: accept string values for bars and correctly canonicalise comparison path for encoder layouts (#372)</li>
+					<li>fix: update psp to latest upstream to ensure SessionUnlocked event is triggered on KDE Plasma sessions</li>
+				</ul>
+			</description>
+		</release>
+		<release version="2.13.0" date="2026-06-26">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.13.0</url>
+			<description>
+				<ul>
+					<li>chore: sync formatting changes introduced by a Deno formatter update</li>
+					<li>feat: support disabling devices while the computer screen is locked (#325)</li>
+					<li>feat: implement the `systemDidWakeUp` event</li>
+					<li>feat: implement support for the infobar display on the Stream Deck Neo (#253)</li>
+					<li>docs: add "Token Efficiency" section to and remove "Critical Workflows" section from AGENTS.md</li>
+					<li>feat: implement rendering encoder feedback layouts to the touchstrip of the Stream Deck Plus (#356)</li>
+					<li>fix: don't save parsed encoder layout data to the profile (#362)</li>
+					<li>refactor: ensure all encoder layout loads follow the same path (#363)</li>
+					<li>fix: correct handling of undefined and inaccessible encoder layouts (#365)</li>
+					<li>feat: implement the `touchTap` event</li>
+					<li>fix: lower the log level setFeedback payload issues are surfaced at</li>
+					<li>perf: don't hold global locks while rendering encoder layout images</li>
+					<li>feat: add support for localising text in the frontend and add German language data (#360)</li>
+					<li>fix: remove XML character escaping logic from the version bump script</li>
+					<li>fix: prevent selecting pre-release assets when installing plugins from GitHub repository releases</li>
+					<li>fix: render directly to a canvas in the instance editor to avoid flickering during image loads</li>
+					<li>chore: reformat codebase using Prettier due to frequent instability in the Deno formatter</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.12.1" date="2026-05-30">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.12.1</url>
 			<description>

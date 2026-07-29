@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<script>
@@ -8,10 +8,12 @@
 				const websocket = new WebSocket("ws://localhost:" + inPort);
 				inActionInfo = JSON.parse(inActionInfo);
 				websocket.onopen = () => {
-					websocket.send(JSON.stringify({
-						event: inRegisterEvent,
-						uuid: inPropertyInspectorUUID,
-					}));
+					websocket.send(
+						JSON.stringify({
+							event: inRegisterEvent,
+							uuid: inPropertyInspectorUUID,
+						}),
+					);
 				};
 
 				const down = document.getElementById("down");
@@ -30,16 +32,18 @@
 				}
 
 				update = () => {
-					websocket.send(JSON.stringify({
-						event: "setSettings",
-						context: inActionInfo.context,
-						payload: {
-							down: down.value,
-							up: up.value,
-							anticlockwise: anticlockwise.value,
-							clockwise: clockwise.value,
-						},
-					}));
+					websocket.send(
+						JSON.stringify({
+							event: "setSettings",
+							context: inActionInfo.context,
+							payload: {
+								down: down.value,
+								up: up.value,
+								anticlockwise: anticlockwise.value,
+								clockwise: clockwise.value,
+							},
+						}),
+					);
 				};
 			}
 		</script>

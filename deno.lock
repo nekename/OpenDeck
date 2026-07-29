@@ -19,6 +19,8 @@
     "npm:marked-base-url@^1.1.0": "1.1.8_marked@17.0.1",
     "npm:marked@17": "17.0.1",
     "npm:phosphor-svelte@2": "2.0.1_svelte@4.2.20",
+    "npm:prettier-plugin-svelte@^3.5.0": "3.5.2_prettier@3.8.4_svelte@4.2.20",
+    "npm:prettier@^3.8.0": "3.8.4",
     "npm:svelte-check@^4.3.0": "4.3.6_svelte@4.2.20_typescript@5.9.3",
     "npm:svelte@^4.2.0": "4.2.20",
     "npm:tailwindcss@^4.1.0": "4.1.18",
@@ -919,6 +921,17 @@
         "source-map-js"
       ]
     },
+    "prettier-plugin-svelte@3.5.2_prettier@3.8.4_svelte@4.2.20": {
+      "integrity": "sha512-ItFouLvzSFE3ulNl4DKoWM3BGcbDCNVpIyy/Y3F2gC3aNiGLxtFUdffVqO5Z5hhYG+DFT5KULWaxmeFFpdbvaQ==",
+      "dependencies": [
+        "prettier",
+        "svelte"
+      ]
+    },
+    "prettier@3.8.4": {
+      "integrity": "sha512-N2MylSdi48+5N/6S5j+maeHbUSIzzZ5uOcX5Hm4QpV8Dkb1HFjfAKTKX6yNPJQD9AhcT3ifHNB66tWTTJDi11Q==",
+      "bin": true
+    },
     "readdirp@4.1.2": {
       "integrity": "sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg=="
     },
@@ -1071,6 +1084,8 @@
         "npm:marked-base-url@^1.1.0",
         "npm:marked@17",
         "npm:phosphor-svelte@2",
+        "npm:prettier-plugin-svelte@^3.5.0",
+        "npm:prettier@^3.8.0",
         "npm:svelte-check@^4.3.0",
         "npm:svelte@^4.2.0",
         "npm:tailwindcss@^4.1.0",

@@ -10,6 +10,7 @@
 	import Trash from "phosphor-svelte/lib/Trash";
 	import InstanceEditor from "./InstanceEditor.svelte";
 
+	import { t } from "$lib/i18n";
 	import { copiedItem, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
 	import { CanvasLock, renderImage } from "$lib/rendererHelper";
 	import { settings } from "$lib/settings";
@@ -26,8 +27,11 @@
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
 	let slot: ActionInstance | null;
+	let lastInslot: ActionInstance | null | undefined;
 	const update = (inslot: ActionInstance | null) => {
+		if (inslot === lastInslot) return;
 		if (inslot && context && inslot.context.split(".")[0] != context.device) return;
+		lastInslot = inslot;
 		slot = inslot;
 	};
 	$: update(inslot);
@@ -86,8 +90,8 @@
 		event.preventDefault();
 		if (!active || !context) return;
 		const rect = canvas.getBoundingClientRect();
-		let x = (event instanceof MouseEvent && event.x) ? event.x : rect.left;
-		let y = (event instanceof MouseEvent && event.y) ? event.y : rect.bottom;
+		let x = event instanceof MouseEvent && event.x ? event.x : rect.left;
+		let y = event instanceof MouseEvent && event.y ? event.y : rect.bottom;
 		$openContextMenu = { context, x, y };
 		await tick();
 		contextMenuEl?.querySelector("button")?.focus();
@@ -133,19 +137,22 @@
 		timeouts.forEach(clearTimeout);
 		showOk = false;
 		showAlert = true;
-		timeouts.push(setTimeout(() => showAlert = false, 1.5e3));
+		timeouts.push(setTimeout(() => (showAlert = false), 1.5e3));
 	});
 	listen("show_ok", ({ payload }: { payload: string }) => {
 		if (!slot || payload != slot.context) return;
 		timeouts.forEach(clearTimeout);
 		showAlert = false;
 		showOk = true;
-		timeouts.push(setTimeout(() => showOk = false, 1.5e3));
+		timeouts.push(setTimeout(() => (showOk = false), 1.5e3));
 	});
 
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
+	// Canvas resolution defaults to a square `size`, but rectangular controllers (e.g. the Neo's infobar) can override this.
+	export let width: number = size;
+	export let height: number = size;
 	$: (async () => {
 		const sl = structuredClone(slot);
 		if (!sl) {
@@ -184,19 +191,17 @@
 	$: accessibleLabel = label + (slot ? ": " + slot.action.name + (state?.show && state?.text ? " - " + state.text : "") : "");
 </script>
 
-<div
-	class="relative"
-	style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}
->
+<div class="relative" style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}>
 	<canvas
 		bind:this={canvas}
 		class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
-		style={`margin: ${-((size + 3 * 2 /* border */ - 132 /* desired outer size */) / 2)}px;`}
+		style={`margin: ${-((size + 3 * 2 /* border */ - 132) /* desired outer size */ / 2)}px;`}
 		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
 		class:rounded-full!={context?.controller == "Encoder"}
+		class:rounded-lg!={context?.controller == "Infobar"}
 		class:bg-black={slot != null}
-		width={size}
-		height={size}
+		{width}
+		{height}
 		draggable={slot != null}
 		{tabindex}
 		{role}
@@ -234,34 +239,22 @@
 		style={`left: ${$openContextMenu.x}px; top: ${$openContextMenu.y}px;`}
 	>
 		{#if !slot}
-			<button
-				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-lg cursor-pointer"
-				on:click|stopPropagation={paste}
-			>
+			<button class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-lg cursor-pointer" on:click|stopPropagation={paste}>
 				<Clipboard size="18" class="text-neutral-300" />
-				<span class="ml-2"> Paste </span>
+				<span class="ml-2">{$t("key.paste")}</span>
 			</button>
 		{:else}
-			<button
-				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-t-lg cursor-pointer"
-				on:click|stopPropagation={edit}
-			>
+			<button class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-t-lg cursor-pointer" on:click|stopPropagation={edit}>
 				<Pencil size="18" class="text-neutral-300" />
-				<span class="ml-2"> Edit </span>
+				<span class="ml-2">{$t("key.edit")}</span>
 			</button>
-			<button
-				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors cursor-pointer"
-				on:click|stopPropagation={copy}
-			>
+			<button class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors cursor-pointer" on:click|stopPropagation={copy}>
 				<Copy size="18" class="text-neutral-300" />
-				<span class="ml-2"> Copy </span>
+				<span class="ml-2">{$t("key.copy")}</span>
 			</button>
-			<button
-				class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-b-lg cursor-pointer"
-				on:click|stopPropagation={clear}
-			>
+			<button class="flex flex-row items-center w-full p-2 hover:bg-neutral-600 transition-colors rounded-b-lg cursor-pointer" on:click|stopPropagation={clear}>
 				<Trash size="18" class="text-red-400" />
-				<span class="ml-2"> Delete </span>
+				<span class="ml-2">{$t("key.delete")}</span>
 			</button>
 		{/if}
 	</div>

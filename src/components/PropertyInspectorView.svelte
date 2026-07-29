@@ -3,6 +3,7 @@
 	import type { DeviceInfo } from "$lib/DeviceInfo";
 	import type { Profile } from "$lib/Profile";
 
+	import { t } from "$lib/i18n";
 	import { getWebserverUrl, getWebSocketPort } from "$lib/ports";
 	import { inspectedInstance } from "$lib/propertyInspector";
 
@@ -17,8 +18,8 @@
 	export let device: DeviceInfo;
 	export let profile: Profile;
 
-	async function iframeOnLoad(instance: ActionInstance) {
-		const iframe = iframes[instance.context];
+	async function iframeOnLoad(event: Event, instance: ActionInstance) {
+		const iframe = iframes[instance.context] ?? event.target;
 		const split = instance.context.split(".");
 
 		const position = parseInt(split[3]);
@@ -29,30 +30,33 @@
 			coordinates = { row: Math.floor(position / device.columns), column: position % device.columns };
 		}
 
-		if (instance == null || !iframe.src || !iframe.src.startsWith(getWebserverUrl())) return;
+		if (instance == null || !iframe?.src || !iframe.src.startsWith(getWebserverUrl())) return;
 		const info = JSON.stringify(await invoke("make_info", { plugin: instance.action.plugin }));
 
-		iframe?.contentWindow?.postMessage({
-			event: "connect",
-			payload: [
-				getWebSocketPort(),
-				instance.context,
-				"registerPropertyInspector",
-				info,
-				JSON.stringify({
-					action: instance.action.uuid,
-					context: instance.context,
-					device: split[0],
-					payload: {
-						settings: instance.settings,
-						coordinates,
-						controller: split[2],
-						state: instance.current_state,
-						isInMultiAction: parseInt(split[4]) != 0,
-					},
-				}),
-			],
-		}, getWebserverUrl());
+		iframe?.contentWindow?.postMessage(
+			{
+				event: "connect",
+				payload: [
+					getWebSocketPort(),
+					instance.context,
+					"registerPropertyInspector",
+					info,
+					JSON.stringify({
+						action: instance.action.uuid,
+						context: instance.context,
+						device: split[0],
+						payload: {
+							settings: instance.settings,
+							coordinates,
+							controller: split[2],
+							state: instance.current_state,
+							isInMultiAction: parseInt(split[4]) != 0,
+						},
+					}),
+				],
+			},
+			getWebserverUrl(),
+		);
 	}
 
 	const closePopup = (context: string) => {
@@ -119,43 +123,50 @@
 				return mergedArray;
 			}
 
-			// @ts-expect-error
-			window.fetchCORS(...data.payload.args).then(async (response: Response) => {
-				const chunks = [];
-				if (response.body) {
-					const reader = response.body.getReader();
-					while (true) {
-						const { done, value } = await reader.read();
-						if (done) break;
-						chunks.push(value);
+			window
+				// @ts-expect-error
+				.fetchCORS(...data.payload.args)
+				.then(async (response: Response) => {
+					const chunks = [];
+					if (response.body) {
+						const reader = response.body.getReader();
+						while (true) {
+							const { done, value } = await reader.read();
+							if (done) break;
+							chunks.push(value);
+						}
 					}
-				}
-				const body = combineUint8Arrays(chunks);
+					const body = combineUint8Arrays(chunks);
 
-				iframes[data.payload.context]?.contentWindow?.postMessage({
-					event: "fetchResponse",
-					payload: {
-						id: data.payload.id,
-						response: {
-							url: response.url,
-							body,
-							headers: response.headers.entries().toArray(),
-							status: response.status,
-							statusText: response.statusText,
+					iframes[data.payload.context]?.contentWindow?.postMessage(
+						{
+							event: "fetchResponse",
+							payload: {
+								id: data.payload.id,
+								response: {
+									url: response.url,
+									body,
+									headers: response.headers.entries().toArray(),
+									status: response.status,
+									statusText: response.statusText,
+								},
+							},
 						},
-					},
-				}, getWebserverUrl());
-			}).catch((error: any) => {
-				iframes[data.payload.context]?.contentWindow?.postMessage({ event: "fetchError", payload: { id: data.payload.id, error } }, getWebserverUrl());
-			});
+						getWebserverUrl(),
+					);
+				})
+				.catch((error: any) => {
+					iframes[data.payload.context]?.contentWindow?.postMessage({ event: "fetchError", payload: { id: data.payload.id, error } }, getWebserverUrl());
+				});
 		}
 	});
 
-	const nonNull = <T>(o: T | null): o is T => o != null;
-	$: instances = profile
-		.keys.filter(nonNull)
+	const nonNull = <T,>(o: T | null): o is T => o != null;
+	$: instances = profile.keys
+		.filter(nonNull)
 		.reduce((prev, current) => prev.concat(current.children ? [current, ...current.children] : current), [] as ActionInstance[])
-		.concat(profile.sliders.filter(nonNull));
+		.concat(profile.sliders.filter(nonNull))
+		.concat(profile.infobars.filter(nonNull));
 
 	listen("plugin_reloaded", ({ payload }: { payload: string }) => {
 		for (const instance of instances) {
@@ -188,13 +199,13 @@
 	{#each instances as instance (instance.context)}
 		{#if instance.action.property_inspector}
 			<iframe
-				title="Property inspector"
+				title={$t("property_inspector.title")}
 				class="w-full h-full hidden"
 				class:block!={$inspectedInstance == instance.context}
 				src={getWebserverUrl(instance.action.property_inspector + "|opendeck_property_inspector")}
 				name={instance.context}
 				bind:this={iframes[instance.context]}
-				on:load={() => iframeOnLoad(instance)}
+				on:load={(event) => iframeOnLoad(event, instance)}
 			/>
 		{/if}
 	{/each}

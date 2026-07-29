@@ -6,6 +6,7 @@
 	import Trash from "phosphor-svelte/lib/Trash";
 	import Key from "./Key.svelte";
 
+	import { t } from "$lib/i18n";
 	import { copiedItem, inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
 
 	import { invoke } from "@tauri-apps/api/core";
@@ -23,6 +24,10 @@
 	$: children = profile.keys[$inspectedParentAction!.position]!.children!;
 	let parentUuid: string;
 	$: parentUuid = profile.keys[$inspectedParentAction!.position]!.action.uuid;
+	let parentContext: string;
+	$: parentContext = profile.keys[$inspectedParentAction!.position]!.context;
+	let parentSettings: any;
+	$: parentSettings = profile.keys[$inspectedParentAction!.position]!.settings;
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
@@ -32,10 +37,7 @@
 	async function addAction(action: Action) {
 		if (
 			(parentUuid == "opendeck.multiaction" && !action.supported_in_multi_actions) ||
-			(
-				parentUuid == "opendeck.toggleaction" &&
-				(action.uuid == "opendeck.multiaction" || action.uuid == "opendeck.toggleaction")
-			)
+			(parentUuid == "opendeck.toggleaction" && (action.uuid == "opendeck.multiaction" || action.uuid == "opendeck.toggleaction"))
 		) {
 			return;
 		}
@@ -60,6 +62,12 @@
 		children.splice(index, 1);
 		profile.keys[$inspectedParentAction!.position]!.children = children;
 
+		if (index == 0) {
+			profile.keys[$inspectedParentAction!.position]!.settings.delays?.splice(0, 1);
+		} else {
+			profile.keys[$inspectedParentAction!.position]!.settings.delays?.splice(index - 1, 1);
+		}
+
 		if (!refocus) return;
 
 		await tick();
@@ -71,6 +79,13 @@
 			items[i].tabIndex = i == targetIndex ? 0 : -1;
 		}
 		items[targetIndex]?.focus();
+	}
+
+	async function setDelay(index: number, event: Event) {
+		const target = event.currentTarget as HTMLInputElement;
+		const val = Math.max(0, parseInt(target.value) || 0);
+		const settings = await invoke<any>("set_child_delay", { parentContext, index, delayMs: val });
+		profile.keys[$inspectedParentAction!.position]!.settings = settings;
 	}
 
 	function handleListKeydown(event: KeyboardEvent) {
@@ -112,25 +127,26 @@
 />
 
 <div class="px-6 pt-6 pb-4 text-neutral-300">
-	<button class="float-right text-xl" on:click={() => $inspectedParentAction = null} aria-label="Close">✕</button>
-	<h1 class="font-semibold text-2xl">{parentUuid == "opendeck.toggleaction" ? "Toggle Action" : "Multi Action"}</h1>
+	<button class="float-right text-xl" on:click={() => ($inspectedParentAction = null)} aria-label={$t("settings.close")}>✕</button>
+	<h1 class="font-semibold text-2xl">{parentUuid == "opendeck.toggleaction" ? $t("parent_action_view.toggle") : $t("parent_action_view.multi")}</h1>
 </div>
 
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <div
 	bind:this={listEl}
 	class="flex flex-col h-128 overflow-auto"
-	on:click={() => $inspectedInstance = null}
+	on:click={() => ($inspectedInstance = null)}
 	role="list"
-	aria-label="{parentUuid == 'opendeck.toggleaction' ? 'Toggle Action' : 'Multi Action'} children"
+	aria-label="{parentUuid == 'opendeck.toggleaction' ? $t('parent_action_view.toggle') : $t('parent_action_view.multi')} {$t('parent_action_view.children')}"
 	on:keydown={handleListKeydown}
 >
 	{#each children as instance, index}
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 		<div
-			class="flex flex-row items-center mx-4 my-2 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
-			on:click|stopPropagation={() => $inspectedInstance = instance.context}
-			on:focus|stopPropagation={() => $inspectedInstance = instance.context}
+			class="flex flex-row items-center mx-4 my-1 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
+			class:my-2={parentUuid == "opendeck.toggleaction"}
+			on:click|stopPropagation={() => ($inspectedInstance = instance.context)}
+			on:focus|stopPropagation={() => ($inspectedInstance = instance.context)}
 			on:keydown={(e) => {
 				if (e.key == "Delete") removeInstance(index, true);
 			}}
@@ -144,34 +160,67 @@
 				scale={3 / 4}
 				role="presentation"
 				tabindex={-1}
-				label={(parentUuid == "opendeck.toggleaction" ? "Toggle Action" : "Multi Action") + " action " + (index + 1)}
+				label={(parentUuid == "opendeck.toggleaction" ? $t("parent_action_view.toggle") : $t("parent_action_view.multi")) +
+					" " +
+					$t("parent_action_view.child") +
+					" " +
+					(index + 1)}
 			/>
 			<p class="ml-4 text-xl text-neutral-300">{instance.action.name}</p>
 			<button
 				class="ml-auto mr-10"
 				on:click|stopPropagation={() => removeInstance(index)}
 				tabindex={-1}
-				aria-label="Remove {instance.action.name}"
+				aria-label={$t("parent_action_view.remove", { name: instance.action.name })}
 			>
 				<Trash size="32" class="text-neutral-400" />
 			</button>
 		</div>
+
+		{#if parentUuid == "opendeck.multiaction" && index < children.length - 1}
+			<div class="flex flex-row items-center gap-2 mx-14 my-1 px-3 py-2 bg-neutral-800 border border-dashed border-neutral-600 rounded-lg">
+				<span class="text-xs text-neutral-400">{$t("parent_action_view.delay.label")}</span>
+				<input
+					type="number"
+					min="0"
+					max="300000"
+					step="100"
+					value={parentSettings?.delays?.[index] ?? 100}
+					on:input={(e) => setDelay(index, e)}
+					class="no-spinner w-20 px-1 py-0.5 text-center text-sm text-neutral-300 bg-neutral-900 border border-neutral-600 rounded"
+					aria-label={$t("parent_action_view.delay.aria", { name: children[index + 1].action.name })}
+				/>
+				<span class="text-xs text-neutral-500">ms</span>
+			</div>
+		{/if}
 	{/each}
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex a11y-no-noninteractive-element-interactions -->
 	<div
 		class="flex flex-row items-center mx-4 mt-2 mb-4 p-3 bg-neutral-700 hover:bg-neutral-600 transition-colors border border-dashed border-neutral-600 rounded-lg focus-within:outline-solid focus-within:outline-offset-2 focus-within:outline-blue-500"
 		on:dragover={handleDragOver}
 		on:drop={handleDrop}
-		on:click={() => $inspectedInstance = null}
-		on:focus={() => $inspectedInstance = null}
+		on:click={() => ($inspectedInstance = null)}
+		on:focus={() => ($inspectedInstance = null)}
 		on:keydown={(e) => {
 			if ((e.ctrlKey || e.metaKey) && e.key == "v") handlePaste();
 		}}
 		role="listitem"
 		tabindex={children.length == 0 ? 0 : -1}
-		aria-label="Drag a new action here or copy one with Control+C and paste with Control+V."
+		aria-label={$t("parent_action_view.drag_copy")}
 	>
 		<img src="/cube.png" class="m-2 w-24 rounded-xl" alt="" />
-		<p class="ml-4 text-xl text-neutral-400">Drop or paste actions here</p>
+		<p class="ml-4 text-xl text-neutral-400">{$t("parent_action_view.drag_paste")}</p>
 	</div>
 </div>
+
+<style>
+	:global(.no-spinner::-webkit-outer-spin-button),
+	:global(.no-spinner::-webkit-inner-spin-button) {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+	:global(.no-spinner[type="number"]) {
+		-moz-appearance: textfield;
+		appearance: textfield;
+	}
+</style>

@@ -1,14 +1,6 @@
 {
 	"identifier": "main",
 	"local": true,
-	"windows": [
-		"main"
-	],
-	"permissions": [
-		"core:default",
-		"core:window:allow-set-min-size",
-		"core:window:allow-set-size",
-		"dialog:default",
-		"deep-link:default"
-	]
+	"windows": ["main"],
+	"permissions": ["core:default", "core:window:allow-set-min-size", "core:window:allow-set-size", "dialog:default", "deep-link:default"]
 }

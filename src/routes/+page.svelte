@@ -29,19 +29,10 @@
 	<div class="flex flex-col grow min-w-0">
 		<nav class="flex flex-row justify-between items-center p-3" class:hidden={$inspectedParentAction}>
 			<div class="flex flex-col items-start space-y-1">
-				<DeviceSelector
-					bind:devices
-					bind:value={selectedDevice}
-					bind:selectedProfiles
-					bind:this={$deviceSelector}
-				/>
+				<DeviceSelector bind:devices bind:value={selectedDevice} bind:selectedProfiles bind:this={$deviceSelector} />
 				{#key selectedDevice}
 					{#if selectedDevice && devices[selectedDevice]}
-						<ProfileManager
-							bind:device={devices[selectedDevice]}
-							bind:profile={selectedProfiles[selectedDevice]}
-							bind:this={$profileManager}
-						/>
+						<ProfileManager bind:device={devices[selectedDevice]} bind:profile={selectedProfiles[selectedDevice]} bind:this={$profileManager} />
 					{/if}
 				{/key}
 			</div>

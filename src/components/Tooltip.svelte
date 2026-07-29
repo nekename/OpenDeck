@@ -5,11 +5,7 @@
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div
-	class="inline-block cursor-help"
-	on:mouseenter={() => show = true}
-	on:mouseleave={() => show = false}
->
+<div class="inline-block cursor-help" on:mouseenter={() => (show = true)} on:mouseleave={() => (show = false)}>
 	<Question size="24" class="text-neutral-500" />
 	{#if show}
 		<div class="absolute mt-2 p-2 w-96 text-xs text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg">

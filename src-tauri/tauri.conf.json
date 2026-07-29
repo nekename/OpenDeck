@@ -30,11 +30,7 @@
 		"shortDescription": "Use stream controllers",
 		"longDescription": "OpenDeck is a desktop application for using stream controller devices like the Elgato Stream Deck. OpenDeck supports plugins made for the original Stream Deck SDK, allowing many plugins made for the Elgato software ecosystem to be used.",
 		"category": "Productivity",
-		"icon": [
-			"icons/icon.png",
-			"icons/icon.icns",
-			"icons/icon.ico"
-		],
+		"icon": ["icons/icon.png", "icons/icon.icns", "icons/icon.ico"],
 		"macOS": {
 			"exceptionDomain": "localhost",
 			"signingIdentity": "-"

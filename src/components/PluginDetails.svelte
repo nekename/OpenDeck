@@ -3,6 +3,7 @@
 	import DownloadSimple from "phosphor-svelte/lib/DownloadSimple";
 	import Popup from "./Popup.svelte";
 
+	import { t } from "$lib/i18n.ts";
 	import "$lib/shims.ts";
 
 	import { invoke } from "@tauri-apps/api/core";
@@ -14,7 +15,7 @@
 
 	export let id: string;
 	export let details: { repository: string; name: string; author: string; download_url: string | undefined };
-	let readme = "<strong>Loading plugin details...</strong>";
+	let readme = `<strong>${$t("plugin_details.loading")}</strong>`;
 	let downloadCount = 0;
 
 	export let install: () => void;
@@ -44,7 +45,7 @@
 				return await marked.parse(DOMPurify.sanitize(await response.text()).replace(/<a/g, '<a target="_blank" '));
 			}
 		}
-		return await marked.parse("**Plugin README file not found**\n\n[View plugin on GitHub](https://github.com/" + repo + ")");
+		return await marked.parse($t("plugin_details.readme.not_found", { repo }));
 	}
 
 	function handleReadmeClick(event: MouseEvent | KeyboardEvent) {
@@ -70,23 +71,15 @@
 	});
 </script>
 
-<Popup show label="{details.name} plugin details">
-	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={close} aria-label="Close">✕</button>
+<Popup show label={$t("plugin_details.title", { name: details.name })}>
+	<button class="mr-2 my-1 float-right text-xl text-neutral-300" on:click={close} aria-label={$t("settings.close")}>✕</button>
 	<div class="flex flex-row items-start">
-		<img
-			src={"https://openactionapi.github.io/plugins/icons/" + id + ".png"}
-			alt={details.name}
-			class="size-48 rounded-2xl"
-		/>
+		<img src={"https://openactionapi.github.io/plugins/icons/" + id + ".png"} alt={details.name} class="size-48 rounded-2xl" />
 		<div class="flex flex-col justify-center h-48 ml-8">
 			<div class="text-3xl text-neutral-200">{details.name}</div>
 			<div class="flex items-center mt-2 text-lg text-neutral-400">
-				<span class="mr-2">by</span>
-				<img
-					src={"https://avatars.githubusercontent.com/" + details.repository.split("/")[3]}
-					alt="Author avatar"
-					class="size-7 mr-1.5 rounded-full"
-				/>
+				<span class="mr-2">{$t("plugin_details.by")}</span>
+				<img src={"https://avatars.githubusercontent.com/" + details.repository.split("/")[3]} alt="Author avatar" class="size-7 mr-1.5 rounded-full" />
 				<a
 					target="_blank"
 					href={"https://github.com/" + details.repository.split("/")[3]}
@@ -105,13 +98,13 @@
 					on:click={install}
 					class="px-8 py-3 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 hover:bg-indigo-500 transition-colors border border-indigo-500 rounded-l-lg"
 				>
-					Install
+					{$t("plugin_details.install")}
 				</button>
 
 				<button
 					on:click={() => invoke("open_url", { url: details.download_url ?? details.repository + "/releases/latest" })}
 					class="ml-1 p-3.5 active:translate-y-0.5 text-lg text-neutral-100 bg-indigo-600 hover:bg-indigo-500 transition-colors border border-indigo-500 rounded-r-lg"
-					aria-label="Download latest release from GitHub"
+					aria-label={$t("plugin_details.download_latest")}
 				>
 					<ArrowSquareOut size={24} />
 				</button>
