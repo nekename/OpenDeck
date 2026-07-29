@@ -382,10 +382,8 @@ pub async fn save_profile_now(device_id: &str, locks: &mut LocksMut<'_>) -> Resu
 	let device = DEVICES.get(device_id).ok_or_else(|| anyhow!("device not found"))?;
 	let store = locks.profile_stores.get_profile_store_mut(&device, &selected_profile).await?;
 
-	if store.value.stale {
-		store.save()?;
-		store.value.stale = false;
-	}
+	store.save()?;
+	store.value.stale = false;
 
 	Ok(())
 }
