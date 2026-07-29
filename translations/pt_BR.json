@@ -41,6 +41,8 @@
 	"no_devices_detected.title": "Sem dispositivos detectados",
 	"parent_action_view.child": "filho",
 	"parent_action_view.children": "filhos",
+	"parent_action_view.delay.aria": "Atraso para {{name}}",
+	"parent_action_view.delay.label": "Atraso:",
 	"parent_action_view.drag_copy": "Arraste uma nova ação para cá ou copie uma com Control+C e cole com Control+V.",
 	"parent_action_view.drag_paste": "Solte ou cole ações aqui",
 	"parent_action_view.multi": "Ação múltipla",

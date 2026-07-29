@@ -41,6 +41,8 @@
 	"no_devices_detected.title": "Пристроїв не виявлено",
 	"parent_action_view.child": "дочірній елемент",
 	"parent_action_view.children": "дочірні елементи",
+	"parent_action_view.delay.aria": "Затримка для {{name}}",
+	"parent_action_view.delay.label": "Затримка:",
 	"parent_action_view.drag_copy": "Перетягніть нову дію сюди або скопіюйте її за допомогою Ctrl+C і вставте за допомогою Ctrl+V.",
 	"parent_action_view.drag_paste": "Перетягніть або вставте дії сюди",
 	"parent_action_view.multi": "Множинна дія",
