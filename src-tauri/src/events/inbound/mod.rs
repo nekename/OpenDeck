@@ -74,7 +74,14 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 	if let Ok(Message::Text(text)) = data {
 		let decoded: InboundEventType = match serde_json::from_str(&text) {
 			Ok(event) => event,
-			Err(_) => return,
+			Err(error) => {
+				if uuid.is_empty() {
+					warn!("Failed to decode incoming event: {}", error);
+				} else {
+					warn!("Failed to decode incoming event from plugin {}: {}", uuid, error);
+				}
+				return;
+			}
 		};
 
 		if !(uuid.is_empty() && skip_auth) {
@@ -150,7 +157,10 @@ pub async fn process_incoming_message_pi(data: Result<Message, Error>, uuid: &st
 	if let Ok(Message::Text(text)) = data {
 		let decoded: InboundEventType = match serde_json::from_str(&text) {
 			Ok(event) => event,
-			Err(_) => return,
+			Err(error) => {
+				warn!("Failed to decode incoming event from property inspector {}: {}", uuid, error);
+				return;
+			}
 		};
 
 		if let Some(context) = match &decoded {
