@@ -220,10 +220,8 @@
 />
 
 <Popup show={showPopup} label="{device.name} {$t('profile_manager.profiles')}">
-	<svelte:fragment slot="header">
-		<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => (showPopup = false)} aria-label={$t("settings.close")}>✕</button>
-		<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
-	</svelte:fragment>
+	<button class="mr-1 float-right text-xl text-neutral-300" on:click={() => (showPopup = false)} aria-label={$t("settings.close")}>✕</button>
+	<h2 class="text-xl font-semibold text-neutral-300">{device.name}</h2>
 
 	<div class="flex flex-row mt-2 mb-1">
 		<input
