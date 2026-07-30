@@ -284,6 +284,22 @@ pub async fn set_double_click_window(parent_context: ActionContext, window_ms: u
 }
 
 #[command]
+pub async fn set_go_to_page(context: ActionContext, page: u32) -> Result<(), Error> {
+	let mut locks = acquire_locks_mut().await;
+	let Some(instance) = get_instance_mut(&context, &mut locks).await? else {
+		return Ok(());
+	};
+
+	if !instance.settings.is_object() {
+		instance.settings = serde_json::Value::Object(serde_json::Map::new());
+	}
+	instance.settings.as_object_mut().unwrap().insert("page".to_string(), serde_json::json!(page));
+
+	save_profile_now(&context.device, &mut locks).await?;
+	Ok(())
+}
+
+#[command]
 pub async fn update_image(context: Context, image: Option<String>) {
 	if Some(&context.profile) != crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(&context.device).ok().as_ref() {
 		return;

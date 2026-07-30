@@ -2,7 +2,7 @@ use super::{GenericInstancePayload, send_to_plugin};
 
 use crate::events::frontend::instances::{key_moved, update_state};
 use crate::shared::{ActionContext, ActionInstance, Context};
-use crate::store::profiles::{acquire_locks_mut, get_instance_mut, get_slot_mut, mark_profile_stale};
+use crate::store::profiles::{acquire_locks_mut, get_device_profiles, get_instance_mut, get_slot_mut, mark_profile_stale, profile_page_id, profile_page_parts};
 
 use std::sync::LazyLock;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -19,6 +19,8 @@ static DOUBLE_CLICK_GENERATION: AtomicU64 = AtomicU64::new(0);
 
 const DEFAULT_DOUBLE_CLICK_WINDOW: u64 = 400;
 
+const PAGE_ACTION_UUIDS: [&str; 4] = ["opendeck.previouspage", "opendeck.nextpage", "opendeck.gotopage", "opendeck.mainpage"];
+
 #[derive(Serialize)]
 struct KeyEvent {
 	event: &'static str,
@@ -26,6 +28,47 @@ struct KeyEvent {
 	context: ActionContext,
 	device: String,
 	payload: GenericInstancePayload,
+}
+
+#[derive(Clone, Serialize)]
+struct SwitchProfileEvent {
+	device: String,
+	profile: String,
+}
+
+/// Resolves the target page of a page navigation action and asks the frontend to switch to it.
+fn switch_page(device: &str, current_profile: &str, uuid: &str, settings: &serde_json::Value) -> Result<(), anyhow::Error> {
+	let (base, current_page) = profile_page_parts(current_profile);
+	let target_page = match uuid {
+		"opendeck.previouspage" => {
+			if current_page <= 1 {
+				return Ok(());
+			}
+			current_page - 1
+		}
+		"opendeck.nextpage" => current_page + 1,
+		"opendeck.gotopage" => settings.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as u32,
+		_ => 1,
+	};
+	if target_page == current_page {
+		return Ok(());
+	}
+
+	let target = profile_page_id(base, target_page);
+	if !get_device_profiles(device)?.contains(&target) {
+		return Ok(());
+	}
+
+	use tauri::{Emitter, Manager};
+	let app_handle = crate::APP_HANDLE.get().unwrap();
+	app_handle.get_webview_window("main").unwrap().emit(
+		"switch_profile",
+		SwitchProfileEvent {
+			device: device.to_owned(),
+			profile: target,
+		},
+	)?;
+	Ok(())
 }
 
 /// Sends a full key press (down + up) to a child of a Double Click action and updates its state.
@@ -161,8 +204,8 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 			},
 		)
 		.await?;
-	} else if instance.action.uuid == "opendeck.doubleclickaction" {
-		// Single versus double click is resolved on key up.
+	} else if instance.action.uuid == "opendeck.doubleclickaction" || PAGE_ACTION_UUIDS.contains(&instance.action.uuid.as_str()) {
+		// These built-in actions are handled on key up.
 	} else {
 		send_to_plugin(
 			&instance.action.plugin,
@@ -250,6 +293,8 @@ pub async fn key_up(device: &str, key: u8) -> Result<(), anyhow::Error> {
 				}
 			});
 		}
+	} else if PAGE_ACTION_UUIDS.contains(&instance.action.uuid.as_str()) {
+		switch_page(device, &context.profile, &instance.action.uuid, &instance.settings)?;
 	} else if instance.action.uuid != "opendeck.multiaction" {
 		if instance.states.len() == 2 && !instance.action.disable_automatic_states {
 			instance.current_state = (instance.current_state + 1) % (instance.states.len() as u16);

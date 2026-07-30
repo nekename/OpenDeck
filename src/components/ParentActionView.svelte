@@ -42,10 +42,10 @@
 	}
 
 	async function addAction(action: Action) {
-		const parentActionUuids = ["opendeck.multiaction", "opendeck.toggleaction", "opendeck.doubleclickaction"];
 		if (
 			(parentUuid == "opendeck.multiaction" && !action.supported_in_multi_actions) ||
-			((parentUuid == "opendeck.toggleaction" || parentUuid == "opendeck.doubleclickaction") && parentActionUuids.includes(action.uuid)) ||
+			// Built-in actions are handled natively rather than over WebSocket, so they cannot be children of other actions.
+			((parentUuid == "opendeck.toggleaction" || parentUuid == "opendeck.doubleclickaction") && action.plugin == "opendeck") ||
 			(parentUuid == "opendeck.doubleclickaction" && children.length >= 2)
 		) {
 			return;
