@@ -47,7 +47,7 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 			.chain(&mut old_profile.sliders.iter().flatten())
 			.chain(&mut old_profile.infobars.iter().flatten())
 		{
-			if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
+			if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction" | "opendeck.doubleclickaction") {
 				let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
 			} else {
 				for child in instance.children.as_ref().unwrap() {
@@ -68,7 +68,7 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 		.chain(&mut new_profile.sliders.iter().flatten())
 		.chain(&mut new_profile.infobars.iter().flatten())
 	{
-		if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
+		if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction" | "opendeck.doubleclickaction") {
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		} else {
 			for child in instance.children.as_ref().unwrap() {
