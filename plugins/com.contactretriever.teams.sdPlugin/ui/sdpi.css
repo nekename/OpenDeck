@@ -1,0 +1,624 @@
+/* This file does NOT contain the original contents of sdpi.css! It has been heavily modified to remove sections unused by the OpenDeck Starter Pack plugin. */
+
+html {
+	--sdpi-bgcolor: #2d2d2d;
+	--sdpi-background: #3d3d3d;
+	--sdpi-color: #d8d8d8;
+	--sdpi-bordercolor: #3a3a3a;
+	--sdpi-buttonbordercolor: #969696;
+	--sdpi-borderradius: 0px;
+	--sdpi-width: 224px;
+	--sdpi-fontweight: 600;
+	--sdpi-letterspacing: -0.25pt;
+	--sdpi-linecolor: #454545;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+	touch-action: none;
+}
+
+html,
+body {
+	font-family:
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		"Segoe UI",
+		Roboto,
+		Helvetica,
+		Arial,
+		sans-serif,
+		"Apple Color Emoji",
+		"Segoe UI Emoji",
+		"Segoe UI Symbol";
+	font-size: 9pt;
+	background-color: var(--sdpi-bgcolor);
+	color: #9a9a9a;
+}
+
+body {
+	height: 100%;
+	padding: 0;
+	overflow-x: hidden;
+	overflow-y: auto;
+	margin: 0;
+	-webkit-overflow-scrolling: touch;
+	-webkit-text-size-adjust: 100%;
+	-webkit-font-smoothing: antialiased;
+}
+
+.sdpi-item-value,
+option,
+input,
+select,
+button {
+	font-size: 10pt;
+	font-weight: var(--sdpi-fontweight);
+	letter-spacing: var(--sdpi-letterspacing);
+}
+
+.sdpi-item-value > :last-of-type,
+.sdpi-item-value:last-child {
+	margin-bottom: 4px;
+}
+
+select {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	-o-appearance: none;
+	appearance: none;
+	background: url(../assets/caret.svg) no-repeat 97% center;
+}
+
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+button,
+select {
+	color: var(--sdpi-color);
+	border: 1pt solid #303030;
+	font-size: 8pt;
+	background-color: var(--sdpi-background);
+	border-radius: var(--sdpi-borderradius);
+}
+
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+button {
+	border: 1pt solid var(--sdpi-buttonbordercolor);
+	border-radius: var(--sdpi-borderradius);
+	border-color: var(--sdpi-buttonbordercolor);
+	min-height: 23px !important;
+	height: 23px !important;
+	margin-right: 8px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+option {
+	height: 1.5em;
+	padding: 4px;
+}
+
+/* SDPI */
+
+.sdpi-wrapper {
+	overflow-x: hidden;
+	height: 100%;
+	margin-right: 1px; /* ensure scroller thumb is not clipped */
+}
+
+.sdpi-item {
+	display: flex;
+	flex-direction: row;
+	min-height: 30px;
+	align-items: first baseline;
+	margin-top: 2px;
+	-webkit-user-drag: none;
+}
+
+.sdpi-item[type="textarea"],
+.sdpi-item[type="color"],
+.sdpi-item[type="canvas"],
+.sdpi-item .aligncenter {
+	align-items: center;
+}
+
+.sdpi-item[type="color"] > .sdpi-item-label {
+	line-height: 22px;
+}
+
+.sdpi-item:first-child {
+	margin-top: -1px;
+}
+
+.sdpi-item:first-of-type {
+	margin-top: 2px;
+}
+
+.sdpi-item[type="radio"]:first-of-type,
+.sdpi-item[type="checkbox"]:first-of-type {
+	margin-top: -4px;
+}
+
+.sdpi-item:last-child {
+	margin-bottom: 0px;
+}
+
+.sdpi-item > *:not(.sdpi-item-label):not(meter):not(details):not(canvas) {
+	min-height: 26px;
+}
+
+.sdpi-item > *:not(.sdpi-item-label.empty):not(meter) {
+	min-height: 26px;
+}
+
+.sdpi-item > input {
+	padding: 0px 4px;
+}
+
+.sdpi-item-group {
+	padding: 0 !important;
+}
+
+.sdpi-item-label {
+	text-align: right;
+	flex: none;
+	width: 94px;
+	padding-right: 5px;
+	font-weight: 600;
+	-webkit-user-select: none;
+	line-height: normal;
+	margin-left: -1px;
+}
+
+.sdpi-item-label:after {
+	content: ": ";
+}
+
+.sdpi-item-label.empty:after {
+	content: "";
+}
+
+.sdpi-test,
+.sdpi-item-value {
+	flex: 1 0 0;
+	margin-right: 14px;
+	margin-left: 4px;
+	justify-content: space-evenly;
+}
+
+canvas.sdpi-item-value {
+	max-width: 144px;
+	max-height: 144px;
+	width: 144px;
+	height: 144px;
+	margin: 0 auto;
+	cursor: pointer;
+}
+
+input.sdpi-item-value {
+	margin-left: 5px;
+}
+
+.sdpi-item-value button,
+button.sdpi-item-value {
+	margin-left: 6px;
+	margin-right: 14px;
+}
+
+.sdpi-item-value.range {
+	margin-left: 0px;
+}
+
+.sdpi-item-value.select,
+.sdpi-item-value > select {
+	margin-right: 13px;
+	margin-left: 4px;
+	padding: 0px 4px;
+}
+
+.sdpi-item-child,
+.sdpi-item-group > .sdpi-item > input[type="color"] {
+	margin-top: 0.4em;
+	margin-right: 4px;
+	margin-left: 4px;
+}
+
+.full,
+.full *,
+.sdpi-item-value.full,
+.sdpi-item-child > full > *,
+.sdpi-item-child.full,
+.sdpi-item-child.full > *,
+.full > .sdpi-item-child,
+.full > .sdpi-item-child > * {
+	display: flex;
+	flex: 1 1 0;
+	margin-bottom: 4px;
+	margin-left: 0px;
+	width: 100%;
+	justify-content: space-evenly;
+}
+
+.sdpi-item-group > .sdpi-item > input[type="color"] {
+	margin-top: 0px;
+}
+
+::-webkit-calendar-picker-indicator:focus,
+button:focus,
+textarea:focus,
+input:focus,
+select:focus,
+option:focus,
+details:focus,
+summary:focus,
+.custom-select select {
+	outline: none;
+}
+
+summary {
+	cursor: default;
+	-webkit-user-select: none;
+}
+
+.pointer,
+summary .pointer {
+	cursor: pointer;
+}
+
+.sdpi-item.details {
+	align-items: first baseline;
+}
+
+details * {
+	font-size: 12px;
+	font-weight: normal;
+}
+
+details a {
+	background-position: right !important;
+	min-height: 24px;
+	display: inline-block;
+	line-height: 24px;
+	padding-right: 28px;
+}
+
+input:not([type="range"]),
+textarea {
+	-webkit-appearance: none;
+	background: var(--sdpi-background);
+	color: var(--sdpi-color);
+	font-weight: normal;
+	font-size: 9pt;
+	border: none;
+	margin-top: 2px;
+	margin-bottom: 2px;
+	min-width: 219px;
+}
+
+textarea + label {
+	display: flex;
+	justify-content: flex-end;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+	display: none;
+}
+
+input[type="radio"] + label,
+input[type="checkbox"] + label {
+	font-size: 9pt;
+	color: var(--sdpi-color);
+	font-weight: normal;
+	margin-right: 8px;
+	-webkit-user-select: none;
+}
+
+input[type="radio"] + label:after,
+input[type="checkbox"] + label:after {
+	content: " " !important;
+}
+
+.sdpi-item[type="radio"] > .sdpi-item-value,
+.sdpi-item[type="checkbox"] > .sdpi-item-value {
+	padding-top: 2px;
+}
+
+.sdpi-item[type="checkbox"] > .sdpi-item-value > * {
+	margin-top: 4px;
+}
+
+.sdpi-item[type="checkbox"] .sdpi-item-child,
+.sdpi-item[type="radio"] .sdpi-item-child {
+	display: inline-block;
+}
+
+.sdpi-item[type="range"] .sdpi-item-value,
+.sdpi-item[type="meter"] .sdpi-item-child,
+.sdpi-item[type="progress"] .sdpi-item-child {
+	display: flex;
+}
+
+.sdpi-item[type="range"] .sdpi-item-value {
+	min-height: 26px;
+}
+
+.sdpi-item[type="range"] .sdpi-item-value span,
+.sdpi-item[type="meter"] .sdpi-item-child span,
+.sdpi-item[type="progress"] .sdpi-item-child span {
+	margin-top: -2px;
+	min-width: 8px;
+	text-align: right;
+	cursor: pointer;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.sdpi-item[type="range"] .sdpi-item-value span {
+	margin-top: 7px;
+	text-align: right;
+}
+
+span + input[type="range"] {
+	display: flex;
+}
+
+span + .range-container > input[type="range"],
+span + input[type="range"] {
+	max-width: 168px;
+}
+
+.sdpi-item[type="range"] .sdpi-item-value span:first-child,
+.sdpi-item[type="meter"] .sdpi-item-child span:first-child,
+.sdpi-item[type="progress"] .sdpi-item-child span:first-child {
+	margin-right: 4px;
+}
+
+.sdpi-item[type="range"] .sdpi-item-value span:last-child,
+.sdpi-item[type="meter"] .sdpi-item-child span:last-child,
+.sdpi-item[type="progress"] .sdpi-item-child span:last-child {
+	margin-left: 4px;
+}
+
+.reverse {
+	transform: rotate(180deg);
+}
+
+.sdpi-item[type="radio"] > .sdpi-item-value > * {
+	margin-top: 2px;
+}
+
+details {
+	padding: 8px 18px 8px 12px;
+	min-width: 86px;
+}
+
+details > h4 {
+	border-bottom: 1px solid var(--sdpi-bordercolor);
+}
+
+legend {
+	display: none;
+}
+
+.sdpi-item-value > textarea {
+	padding: 0px;
+	width: 219px;
+	margin-left: 1px;
+	margin-top: 3px;
+	padding: 4px;
+}
+
+input[type="radio"] + label span,
+input[type="checkbox"] + label span {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin: 2px 4px 2px 0;
+	border-radius: 3px;
+	vertical-align: middle;
+	background: var(--sdpi-background);
+	cursor: pointer;
+	border: 1px solid rgb(0, 0, 0, 0.2);
+}
+
+input[type="radio"] + label span {
+	border-radius: 100%;
+}
+
+input[type="radio"]:checked + label span,
+input[type="checkbox"]:checked + label span {
+	background-color: #77f;
+	background-image: url(./check.svg);
+	background-repeat: no-repeat;
+	background-position: center center;
+	border: 1px solid rgb(0, 0, 0, 0.4);
+}
+
+input[type="radio"]:active:checked + label span,
+input[type="radio"]:active + label span,
+input[type="checkbox"]:active:checked + label span,
+input[type="checkbox"]:active + label span {
+	background-color: #303030;
+}
+
+input[type="radio"]:checked + label span {
+	background-image: url(../assets/rcheck.svg);
+}
+
+input[type="range"] {
+	width: var(--sdpi-width);
+	height: 30px;
+	overflow: hidden;
+	cursor: pointer;
+	background: transparent !important;
+}
+
+.sdpi-item > input[type="range"] {
+	margin-left: 2px;
+	max-width: var(--sdpi-width);
+	width: var(--sdpi-width);
+	padding: 0px;
+	margin-top: 2px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+	height: 5px;
+	background: #979797;
+	border-radius: 3px;
+	padding: 0px !important;
+	border: 1px solid var(--sdpi-background);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+	position: relative;
+	-webkit-appearance: none;
+	background-color: var(--sdpi-color);
+	width: 12px;
+	height: 12px;
+	border-radius: 20px;
+	margin-top: -5px;
+	border: none;
+}
+
+input[type="range" i] {
+	margin: 0;
+}
+
+input[type="range"]::-webkit-slider-thumb::before {
+	position: absolute;
+	content: "";
+	height: 5px; /* equal to height of runnable track or 1 less */
+	width: 500px; /* make this bigger than the widest range input element */
+	left: -502px; /* this should be -2px - width */
+	top: 8px; /* don't change this */
+	background: #77f;
+}
+
+input[type="color"] {
+	min-width: 32px;
+	min-height: 32px;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	background-color: var(--sdpi-bgcolor);
+	flex: none;
+}
+
+::-webkit-color-swatch {
+	min-width: 24px;
+}
+
+textarea {
+	height: 3em;
+	word-break: break-word;
+	line-height: 1.5em;
+}
+
+.textarea {
+	padding: 0px !important;
+}
+
+textarea {
+	width: 219px;
+	height: 96%;
+	min-height: 6em;
+	resize: none;
+	border-radius: var(--sdpi-borderradius);
+}
+
+::-webkit-scrollbar {
+	width: 8px;
+}
+
+::-webkit-scrollbar-track {
+	-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+	margin: 4px;
+	border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: #999999;
+	outline: 1px solid slategrey;
+	border-radius: 8px;
+}
+
+a {
+	color: #7397d2;
+}
+
+input[type="range"] {
+	-webkit-appearance: auto;
+	appearance: auto;
+	height: 6px;
+	margin-top: 12px;
+	z-index: 0;
+	overflow: visible;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+	border: 0px solid transparent;
+}
+
+:-webkit-slider-thumb {
+	-webkit-appearance: none;
+	background-color: var(--sdpi-color);
+	width: 16px;
+	height: 16px;
+	border-radius: 20px;
+	margin-top: -6px;
+	border: 1px solid #999999;
+}
+
+.sdpi-item[type="range"] .sdpi-item-group {
+	display: flex;
+	flex-direction: column;
+}
+
+.sdpi-item[type="range"] .sdpi-item-group span {
+	margin-left: 0px !important;
+}
+
+.sdpi-item[type="range"] .sdpi-item-group > .sdpi-item-child {
+	display: flex;
+	flex-direction: row;
+}
+
+.rangeLabel {
+	position: absolute;
+	font-weight: normal;
+	margin-top: 24px;
+}
+
+:disabled {
+	color: #993333;
+}
+
+select,
+select option {
+	color: var(--sdpi-color);
+}
+
+select.disabled,
+select option:disabled {
+	color: #fd9494;
+	font-style: italic;
+}
+
+.hidden {
+	display: none !important;
+}
+
+select {
+	min-width: 0px;
+	-webkit-appearance: media-slider;
+	text-overflow: ellipsis;
+}

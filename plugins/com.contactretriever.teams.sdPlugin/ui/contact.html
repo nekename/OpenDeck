@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Teams Contact</title>
+		<link rel="stylesheet" href="sdpi.css" />
+		<style>
+			.status {
+				margin: 4px 8px 8px;
+				padding: 6px 8px;
+				font-size: 8pt;
+				line-height: 1.35;
+				color: #bdbdbd;
+				background: #252525;
+				border: 1px solid #3a3a3a;
+				white-space: pre-wrap;
+				word-break: break-word;
+			}
+			.status.warn {
+				color: #f0c674;
+			}
+			.status.ok {
+				color: #b5bd68;
+			}
+			.results {
+				margin: 0 8px 8px;
+				max-height: 180px;
+				overflow-y: auto;
+				border: 1px solid #3a3a3a;
+			}
+			.results button {
+				display: block;
+				width: 100%;
+				text-align: left;
+				padding: 6px 8px;
+				margin: 0;
+				border: 0;
+				border-bottom: 1px solid #333;
+				background: #2d2d2d;
+				color: #d8d8d8;
+				cursor: pointer;
+				border-radius: 0;
+			}
+			.results button:hover {
+				background: #3a3a3a;
+			}
+			.results .mail {
+				display: block;
+				color: #8a8a8a;
+				font-size: 8pt;
+				font-weight: 500;
+			}
+			.hint {
+				margin: 0 8px 10px;
+				font-size: 8pt;
+				color: #8a8a8a;
+				line-height: 1.35;
+			}
+			textarea.sdpi-item-value {
+				min-height: 52px;
+				resize: vertical;
+				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				font-size: 8pt;
+			}
+			.selected {
+				margin: 4px 8px 8px;
+				padding: 6px 8px;
+				background: #252525;
+				border: 1px solid #3a3a3a;
+				color: #d8d8d8;
+				font-size: 9pt;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="sdpi-heading">Tokens (globaux)</div>
+		<div class="hint">
+			Valables ~1 h. Graph/Substrate = recherche. Skype (aud=api.spaces.skype.com) = photos Teams.
+			Voir README du plugin pour la procedure F12.
+		</div>
+
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Token recherche</div>
+			<textarea id="graphToken" class="sdpi-item-value" placeholder="JWT Graph ou Substrate (Powerbar)"></textarea>
+		</div>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Token photo</div>
+			<textarea id="skypeToken" class="sdpi-item-value" placeholder="JWT skype (cookie authtoken)"></textarea>
+		</div>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">TEAMS_PART</div>
+			<input id="teamsPart" class="sdpi-item-value" placeholder="emea-02" value="emea-02" />
+		</div>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Double-clic (ms)</div>
+			<input id="doubleClickMs" class="sdpi-item-value" type="number" min="200" max="1000" value="400" />
+		</div>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label"></div>
+			<button class="sdpi-item-value" id="saveTokens" type="button">Enregistrer tokens</button>
+		</div>
+		<div id="tokenStatus" class="status">Tokens non charges.</div>
+
+		<div class="sdpi-heading">Contact</div>
+		<div id="selected" class="selected">Aucun contact selectionne.</div>
+
+		<div class="sdpi-item">
+			<div class="sdpi-item-label">Rechercher</div>
+			<input id="query" class="sdpi-item-value" placeholder="Nom ou prenom" />
+		</div>
+		<div class="sdpi-item">
+			<div class="sdpi-item-label"></div>
+			<button class="sdpi-item-value" id="searchBtn" type="button">Chercher</button>
+		</div>
+		<div id="searchStatus" class="status" style="display: none"></div>
+		<div id="results" class="results" style="display: none"></div>
+
+		<div class="sdpi-item">
+			<div class="sdpi-item-label"></div>
+			<button class="sdpi-item-value" id="refreshPhoto" type="button">Rafraichir la photo</button>
+		</div>
+
+		<div class="hint">
+			Simple clic = chat Teams · Double clic = appel audio.
+		</div>
+
+		<script>
+			let websocket;
+			let actionInfo;
+			let pluginUUID;
+			let inspectorUUID;
+
+			function send(msg) {
+				if (websocket && websocket.readyState === WebSocket.OPEN) {
+					websocket.send(JSON.stringify(msg));
+				}
+			}
+
+			function sendToPlugin(payload) {
+				send({
+					event: "sendToPlugin",
+					action: actionInfo.action,
+					context: inspectorUUID,
+					payload,
+				});
+			}
+
+			function setStatus(el, text, cls) {
+				el.style.display = text ? "block" : "none";
+				el.className = "status" + (cls ? " " + cls : "");
+				el.textContent = text || "";
+			}
+
+			function renderSelected(settings) {
+				const box = document.getElementById("selected");
+				if (!settings || !settings.mail) {
+					box.textContent = "Aucun contact selectionne.";
+					return;
+				}
+				const photo = settings.hasPhoto === false ? "sans photo" : settings.photoSource ? `photo: ${settings.photoSource}` : settings.photoDataUrl ? "photo OK" : "photo ?";
+				box.textContent = `${settings.displayName || "?"} <${settings.mail}>\n${photo}`;
+			}
+
+			function renderResults(people) {
+				const box = document.getElementById("results");
+				box.innerHTML = "";
+				if (!people || !people.length) {
+					box.style.display = "none";
+					return;
+				}
+				box.style.display = "block";
+				for (const person of people) {
+					const btn = document.createElement("button");
+					btn.type = "button";
+					btn.innerHTML = `<strong>${escapeHtml(person.displayName || "?")}</strong><span class="mail">${escapeHtml(person.mail || "(pas d'email)")}</span>`;
+					btn.addEventListener("click", () => {
+						setStatus(document.getElementById("searchStatus"), "Telechargement photo…", "");
+						sendToPlugin({ event: "selectContact", person });
+					});
+					box.appendChild(btn);
+				}
+			}
+
+			function escapeHtml(s) {
+				return String(s)
+					.replace(/&/g, "&amp;")
+					.replace(/</g, "&lt;")
+					.replace(/>/g, "&gt;")
+					.replace(/"/g, "&quot;");
+			}
+
+			function saveTokens() {
+				sendToPlugin({
+					event: "saveGlobal",
+					graphToken: document.getElementById("graphToken").value,
+					skypeToken: document.getElementById("skypeToken").value,
+					teamsPart: document.getElementById("teamsPart").value,
+					doubleClickMs: document.getElementById("doubleClickMs").value,
+				});
+			}
+
+			function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
+				inspectorUUID = inPropertyInspectorUUID;
+				actionInfo = JSON.parse(inActionInfo);
+				const info = typeof inInfo === "string" ? JSON.parse(inInfo) : inInfo;
+				pluginUUID = info?.plugin?.uuid || actionInfo.action.split(".").slice(0, -1).join(".") + ".sdPlugin";
+
+				websocket = new WebSocket("ws://127.0.0.1:" + inPort);
+				websocket.onopen = () => {
+					send({ event: inRegisterEvent, uuid: inPropertyInspectorUUID });
+					send({ event: "getGlobalSettings", context: inPropertyInspectorUUID });
+					send({ event: "getSettings", context: inPropertyInspectorUUID });
+					sendToPlugin({ event: "getTokenStatus" });
+				};
+
+				websocket.onmessage = (evt) => {
+					let msg;
+					try {
+						msg = JSON.parse(evt.data);
+					} catch {
+						return;
+					}
+
+					if (msg.event === "didReceiveGlobalSettings") {
+						const g = msg.payload?.settings || {};
+						document.getElementById("graphToken").value = g.graphToken || "";
+						document.getElementById("skypeToken").value = g.skypeToken || "";
+						document.getElementById("teamsPart").value = g.teamsPart || "emea-02";
+						document.getElementById("doubleClickMs").value = g.doubleClickMs || 400;
+						return;
+					}
+
+					if (msg.event === "didReceiveSettings") {
+						renderSelected(msg.payload?.settings || {});
+						return;
+					}
+
+					if (msg.event !== "sendToPropertyInspector") return;
+					const p = msg.payload || {};
+
+					if (p.event === "tokenStatus" || p.event === "globalSaved") {
+						const lines = [];
+						if (p.hasGraphToken) {
+							lines.push(`Recherche: ${p.backend || "?"}`);
+							if (p.graphAud) lines.push(`aud: ${p.graphAud}`);
+							if (p.graphExp) lines.push(p.graphExp);
+						} else {
+							lines.push("Recherche: aucun token");
+						}
+						if (p.hasSkype) {
+							lines.push(`Photos: Teams profilepicturev2`);
+							if (p.skypeExp) lines.push(p.skypeExp);
+						} else {
+							lines.push("Photos: pas de token skype (fallback Graph si possible)");
+						}
+						if (p.teamsPart) lines.push(`TEAMS_PART=${p.teamsPart}`);
+						setStatus(document.getElementById("tokenStatus"), lines.join("\n"), p.hasGraphToken ? "ok" : "warn");
+						return;
+					}
+
+					if (p.event === "searchResults") {
+						if (!p.ok) {
+							setStatus(document.getElementById("searchStatus"), p.error || "Echec recherche", "warn");
+							renderResults([]);
+							return;
+						}
+						setStatus(
+							document.getElementById("searchStatus"),
+							`${(p.people || []).length} resultat(s) — source: ${p.source}`,
+							"ok",
+						);
+						renderResults(p.people || []);
+						return;
+					}
+
+					if (p.event === "contactSelected") {
+						renderSelected(p.settings || {});
+						setStatus(
+							document.getElementById("searchStatus"),
+							p.warning ? `Contact OK — ${p.warning}` : "Contact assigne a la touche.",
+							p.warning ? "warn" : "ok",
+						);
+						return;
+					}
+
+					if (p.event === "photoRefreshed") {
+						setStatus(
+							document.getElementById("searchStatus"),
+							p.ok ? `Photo rafraichie (${p.photoSource || "?"})` : p.error || "Pas de photo",
+							p.ok ? "ok" : "warn",
+						);
+					}
+				};
+			}
+
+			document.getElementById("saveTokens").addEventListener("click", saveTokens);
+			document.getElementById("searchBtn").addEventListener("click", () => {
+				const query = document.getElementById("query").value.trim();
+				if (!query) return;
+				setStatus(document.getElementById("searchStatus"), "Recherche…", "");
+				sendToPlugin({ event: "search", query });
+			});
+			document.getElementById("query").addEventListener("keydown", (e) => {
+				if (e.key === "Enter") document.getElementById("searchBtn").click();
+			});
+			document.getElementById("refreshPhoto").addEventListener("click", () => {
+				sendToPlugin({ event: "refreshPhoto" });
+			});
+		</script>
+	</body>
+</html>

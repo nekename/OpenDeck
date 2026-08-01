@@ -1,0 +1,37 @@
+{
+	"Name": "Teams Contact",
+	"Description": "Search Microsoft Teams / Graph contacts, show their photo on a key, open chat on single click and start an audio call on double click.",
+	"Author": "contact-retriever",
+	"Version": "1.0.0",
+	"UUID": "com.contactretriever.teams",
+	"CodePath": "plugin.mjs",
+	"Icon": "imgs/plugin",
+	"Category": "Teams Contact",
+	"CategoryIcon": "imgs/category",
+	"Nodejs": {
+		"Version": "20"
+	},
+	"OS": [
+		{ "Platform": "mac", "MinimumVersion": "10.11" },
+		{ "Platform": "windows", "MinimumVersion": "10" },
+		{ "Platform": "linux" }
+	],
+	"Actions": [
+		{
+			"Icon": "imgs/action",
+			"Name": "Teams Contact",
+			"States": [
+				{
+					"Image": "imgs/key",
+					"TitleAlignment": "bottom",
+					"FontSize": "11"
+				}
+			],
+			"Controllers": ["Keypad"],
+			"SupportedInMultiActions": true,
+			"Tooltip": "Single click: Teams chat. Double click: audio call. Configure contact in the property inspector.",
+			"UUID": "com.contactretriever.teams.contact",
+			"PropertyInspectorPath": "ui/contact.html"
+		}
+	]
+}

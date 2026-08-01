@@ -1,0 +1,13 @@
+{
+	"name": "com.contactretriever.teams",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "OpenDeck Teams Contact plugin — search contacts, show photo, chat / audio call",
+	"engines": {
+		"node": ">=20"
+	},
+	"optionalDependencies": {
+		"ws": "^8.18.0"
+	}
+}
