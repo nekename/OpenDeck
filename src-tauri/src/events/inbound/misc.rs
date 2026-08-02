@@ -43,14 +43,38 @@ pub async fn show_ok(event: ContextEvent) -> Result<(), anyhow::Error> {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+pub struct SwitchProfilePayload {
+	profile: Option<String>,
+	page: Option<u32>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct SwitchProfileEvent {
 	device: String,
-	profile: String,
+	payload: SwitchProfilePayload,
 }
 
 pub async fn switch_profile(event: SwitchProfileEvent) -> Result<(), anyhow::Error> {
+	let Some(profile) = event.payload.profile.clone() else {
+		anyhow::bail!("switchToProfile without a profile is not supported yet");
+	};
+
+	eprintln!("[profile-switch] reçu device={} profile={} page={:?}", event.device, profile, event.payload.page);
+
+	crate::events::frontend::profiles::set_selected_profile(event.device.clone(), profile.clone()).await?;
+
+	eprintln!("[profile-switch] succès device={} profile={}", event.device, profile);
+
 	let app_handle = crate::APP_HANDLE.get().unwrap();
-	app_handle.get_webview_window("main").unwrap().emit("switch_profile", event)?;
+
+	app_handle.get_webview_window("main").unwrap().emit(
+		"switch_profile",
+		serde_json::json!({
+				"device": event.device,
+				"profile": profile
+		}),
+	)?;
+
 	Ok(())
 }
 

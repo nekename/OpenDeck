@@ -66,6 +66,7 @@ pub enum InboundEventType {
 	ShowOk(ContextEvent),
 	SendToPropertyInspector(ContextAndPayloadEvent<serde_json::Value>),
 	SendToPlugin(ContextAndPayloadEvent<serde_json::Value>),
+	#[serde(alias = "switchToProfile")]
 	SwitchProfile(misc::SwitchProfileEvent),
 	DeviceBrightness(misc::DeviceBrightnessEvent),
 }
@@ -111,10 +112,7 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 				if event.context != uuid {
 					return;
 				}
-			} else if matches!(decoded, InboundEventType::SwitchProfile(_) | InboundEventType::DeviceBrightness(_))
-				&& uuid != "com.amansprojects.starterpack.sdPlugin"
-				&& uuid != "opendeck_alternative_elgato_implementation"
-			{
+			} else if matches!(decoded, InboundEventType::DeviceBrightness(_)) && uuid != "com.amansprojects.starterpack.sdPlugin" && uuid != "opendeck_alternative_elgato_implementation" {
 				return;
 			}
 		}
