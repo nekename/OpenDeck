@@ -59,11 +59,9 @@ pub async fn switch_profile(event: SwitchProfileEvent) -> Result<(), anyhow::Err
 		anyhow::bail!("switchToProfile without a profile is not supported yet");
 	};
 
-	eprintln!("[profile-switch] reçu device={} profile={} page={:?}", event.device, profile, event.payload.page);
+	log::debug!("Switching profile for device {} to {} on page {:?}", event.device, profile, event.payload.page);
 
 	crate::events::frontend::profiles::set_selected_profile(event.device.clone(), profile.clone()).await?;
-
-	eprintln!("[profile-switch] succès device={} profile={}", event.device, profile);
 
 	let app_handle = crate::APP_HANDLE.get().unwrap();
 
