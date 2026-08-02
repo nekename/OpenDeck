@@ -228,7 +228,6 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 
 					crate::events::outbound::encoder::touch_swipe(&device_id, position, start_x, start_y, end_x, end_y).await
 				}
-				_ => Ok(()),
 			} {
 				Ok(_) => (),
 				Err(error) => log::warn!("Failed to process device event {update:?}: {error}"),
