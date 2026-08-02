@@ -220,6 +220,14 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 					};
 					inbound::devices::touchscreen_press(touchscreen_press(position, x, y, true)).await
 				}
+				DeviceStateUpdate::TouchScreenSwipe((start_x, start_y), (end_x, end_y)) => {
+					let position = match kind {
+						Kind::Plus => (start_x / 200) as u8,
+						_ => continue,
+					};
+
+					crate::events::outbound::encoder::touch_swipe(&device_id, position, start_x, start_y, end_x, end_y).await
+				}
 				_ => Ok(()),
 			} {
 				Ok(_) => (),
