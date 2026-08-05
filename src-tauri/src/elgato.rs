@@ -61,7 +61,18 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 				let (r, g, b) = extract_average_colour(&image::load_from_memory(&bytes)?);
 				device.set_touchpoint_color(context.position - key_count, r, g, b).await?;
 			} else {
-				device.set_button_image(context.position, image::load_from_memory(&bytes)?).await?;
+				// Scale to the key size ourselves. elgato-streamdeck would otherwise do it
+				// with FilterType::Nearest, which discards the antialiasing of whatever the
+				// plugin drew: at the Stream Deck +'s 6:5 ratio (144 -> 120) that drops every
+				// sixth row and column and point-samples soft edges into stair-steps.
+				let img = image::load_from_memory(&bytes)?;
+				let (kw, kh) = kind.key_image_format().size;
+				let img = if img.dimensions() == (kw as u32, kh as u32) {
+					img
+				} else {
+					img.resize_exact(kw as u32, kh as u32, image::imageops::FilterType::Lanczos3)
+				};
+				device.set_button_image(context.position, img).await?;
 			}
 		} else if context.controller == "Encoder" {
 			let mut img = image::DynamicImage::new_rgb8(200, 100);

@@ -176,7 +176,8 @@ export async function renderImage(
 
 	context.restore();
 
-	if (active && slotContext) setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") }), 10);
+	// PNG, not JPEG: this is an in-process invoke and the image is re-encoded as JPEG for the device anyway, so the lossy pass here only costs quality.
+	if (active && slotContext) setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL() }), 10);
 }
 
 export async function resizeImage(source: string): Promise<string | undefined> {
