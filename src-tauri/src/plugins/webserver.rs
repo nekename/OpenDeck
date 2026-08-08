@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use tiny_http::{Header, Response, Server};
 
@@ -38,9 +38,17 @@ pub async fn init_webserver(prefix: PathBuf) {
 		}
 		#[cfg(target_os = "windows")]
 		let url = url[1..].replace('/', "\\");
-		let path = Path::new(url.trim_end_matches("|opendeck_property_inspector").trim_end_matches("|opendeck_property_inspector_child"));
+		// Resolve the requested path relative to the config directory. The request URL is
+		// absolute-looking (e.g. "/plugins/..."), so without joining it to `prefix` it would
+		// be treated as a path from the filesystem root and every plugin asset (icons,
+		// property inspectors) would 404.
+		let path = prefix.join(
+			url.trim_end_matches("|opendeck_property_inspector")
+				.trim_end_matches("|opendeck_property_inspector_child")
+				.trim_start_matches(['/', '\\']),
+		);
 
-		if !matches!(tokio::fs::try_exists(path).await, Ok(true)) {
+		if !matches!(tokio::fs::try_exists(&path).await, Ok(true)) {
 			let _ = request.respond(Response::empty(404));
 			continue;
 		}
@@ -68,9 +76,7 @@ pub async fn init_webserver(prefix: PathBuf) {
 		// and requests the Svelte frontend to maximise the property inspector.
 
 		if url.ends_with("|opendeck_property_inspector") {
-			let path = &url[..url.len() - 28];
-
-			let mut content = tokio::fs::read_to_string(path).await.unwrap_or_default();
+			let mut content = tokio::fs::read_to_string(&path).await.unwrap_or_default();
 			content += r#"
 				<div id="opendeck_iframe_container" style="position: absolute; z-index: 100; top: 0; left: 0; width: 100%; height: 100%; display: none;"></div>
 				<script>
@@ -144,9 +150,7 @@ pub async fn init_webserver(prefix: PathBuf) {
 			});
 			let _ = request.respond(response);
 		} else if url.ends_with("|opendeck_property_inspector_child") {
-			let path = &url[..url.len() - 34];
-
-			let mut content = tokio::fs::read_to_string(path).await.unwrap_or_default();
+			let mut content = tokio::fs::read_to_string(&path).await.unwrap_or_default();
 			content = format!("<script>window.opener ??= window.parent;</script>{content}");
 
 			let mut response = Response::from_string(content);
@@ -157,7 +161,7 @@ pub async fn init_webserver(prefix: PathBuf) {
 			});
 			let _ = request.respond(response);
 		} else {
-			let mime_type = mime(&match Path::new(&url).extension() {
+			let mime_type = mime(&match path.extension() {
 				Some(extension) => extension.to_string_lossy().into_owned(),
 				None => "html".to_owned(),
 			});
@@ -168,12 +172,12 @@ pub async fn init_webserver(prefix: PathBuf) {
 			};
 
 			if mime_type.starts_with("text/") || mime_type == "image/svg+xml" {
-				let mut response = Response::from_string(tokio::fs::read_to_string(url).await.unwrap_or_default());
+				let mut response = Response::from_string(tokio::fs::read_to_string(&path).await.unwrap_or_default());
 				response.add_header(access_control_allow_origin);
 				response.add_header(content_type);
 				let _ = request.respond(response);
 			} else {
-				let mut response = Response::from_file(match tokio::fs::File::open(url).await {
+				let mut response = Response::from_file(match tokio::fs::File::open(&path).await {
 					Ok(file) => file.into_std().await,
 					Err(_) => continue,
 				});
