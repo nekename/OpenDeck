@@ -243,7 +243,7 @@ pub fn get_device_profiles(device: &str) -> Result<Vec<String>, anyhow::Error> {
 	let entries = fs::read_dir(device_path)?;
 
 	for entry in entries.flatten() {
-		if entry.metadata()?.is_file() {
+		if entry.path().is_file() {
 			let mut id = entry.file_name().to_string_lossy().into_owned();
 			if id.ends_with(".json") {
 				id.truncate(id.len() - 5);
@@ -255,10 +255,10 @@ pub fn get_device_profiles(device: &str) -> Result<Vec<String>, anyhow::Error> {
 				continue;
 			}
 			profiles.push(id);
-		} else if entry.metadata()?.is_dir() {
+		} else if entry.path().is_dir() {
 			let entries = fs::read_dir(entry.path())?;
 			for subentry in entries.flatten() {
-				if subentry.metadata()?.is_file() {
+				if subentry.path().is_file() {
 					let mut id = format!("{}/{}", entry.file_name().to_string_lossy(), subentry.file_name().to_string_lossy());
 					if id.ends_with(".json") {
 						id.truncate(id.len() - 5);
