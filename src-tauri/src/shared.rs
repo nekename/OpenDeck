@@ -478,6 +478,32 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 					}
 				))
 				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Dial Stack",
+						"icon": "opendeck/dial-stack.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.dialstack",
+						"tooltip": "Stack multiple dial actions and cycle between them",
+						"controllers": [ "Encoder" ],
+						"states": [ { "image": "opendeck/dial-stack.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Action Wheel",
+						"icon": "opendeck/action-wheel.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.actionwheel",
+						"tooltip": "Rotate to select, press to execute key actions",
+						"controllers": [ "Encoder" ],
+						"states": [ { "image": "opendeck/action-wheel.png" } ],
+						"supported_in_multi_actions": false
+					}
+				))
+				.unwrap(),
 			],
 		},
 	);
