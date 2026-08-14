@@ -20,14 +20,24 @@
 		first?.focus();
 	});
 
+	let parent: ActionInstance;
+	$: parent = ($inspectedParentAction!.controller == "Encoder" ? profile.sliders : profile.keys)[$inspectedParentAction!.position]!;
 	let children: ActionInstance[];
-	$: children = profile.keys[$inspectedParentAction!.position]!.children!;
+	$: children = parent.children!;
 	let parentUuid: string;
-	$: parentUuid = profile.keys[$inspectedParentAction!.position]!.action.uuid;
+	$: parentUuid = parent.action.uuid;
 	let parentContext: string;
-	$: parentContext = profile.keys[$inspectedParentAction!.position]!.context;
+	$: parentContext = parent.context;
 	let parentSettings: any;
-	$: parentSettings = profile.keys[$inspectedParentAction!.position]!.settings;
+	$: parentSettings = parent.settings;
+	$: parentLabel =
+		parentUuid == "opendeck.toggleaction"
+			? $t("parent_action_view.toggle")
+			: parentUuid == "opendeck.dialstack"
+				? $t("parent_action_view.dialstack")
+				: parentUuid == "opendeck.actionwheel"
+					? $t("parent_action_view.actionwheel")
+					: $t("parent_action_view.multi");
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
@@ -37,12 +47,23 @@
 	async function addAction(action: Action) {
 		if (
 			(parentUuid == "opendeck.multiaction" && !action.supported_in_multi_actions) ||
-			(parentUuid == "opendeck.toggleaction" && (action.uuid == "opendeck.multiaction" || action.uuid == "opendeck.toggleaction"))
+			(parentUuid == "opendeck.toggleaction" && (action.uuid == "opendeck.multiaction" || action.uuid == "opendeck.toggleaction")) ||
+			(parentUuid == "opendeck.dialstack" &&
+				["opendeck.multiaction", "opendeck.toggleaction", "opendeck.dialstack", "opendeck.actionwheel"].includes(action.uuid)) ||
+			(parentUuid == "opendeck.actionwheel" &&
+				(!action.controllers.includes("Keypad") ||
+					["opendeck.multiaction", "opendeck.toggleaction", "opendeck.dialstack", "opendeck.actionwheel"].includes(action.uuid)))
 		) {
 			return;
 		}
 		let response: ActionInstance | null = await invoke("create_instance", { context: $inspectedParentAction, action });
-		if (response) profile.keys[$inspectedParentAction!.position] = response;
+		if (response) {
+			if ($inspectedParentAction!.controller == "Encoder") {
+				profile.sliders[$inspectedParentAction!.position] = response;
+			} else {
+				profile.keys[$inspectedParentAction!.position] = response;
+			}
+		}
 	}
 
 	async function handleDrop({ dataTransfer }: DragEvent) {
@@ -60,12 +81,12 @@
 	async function removeInstance(index: number, refocus = false) {
 		await invoke("remove_instance", { context: children[index].context });
 		children.splice(index, 1);
-		profile.keys[$inspectedParentAction!.position]!.children = children;
+		parent.children = children;
 
 		if (index == 0) {
-			profile.keys[$inspectedParentAction!.position]!.settings.delays?.splice(0, 1);
+			parent.settings.delays?.splice(0, 1);
 		} else {
-			profile.keys[$inspectedParentAction!.position]!.settings.delays?.splice(index - 1, 1);
+			parent.settings.delays?.splice(index - 1, 1);
 		}
 
 		if (!refocus) return;
@@ -85,7 +106,7 @@
 		const target = event.currentTarget as HTMLInputElement;
 		const val = Math.max(0, parseInt(target.value) || 0);
 		const settings = await invoke<any>("set_child_delay", { parentContext, index, delayMs: val });
-		profile.keys[$inspectedParentAction!.position]!.settings = settings;
+		parent.settings = settings;
 	}
 
 	function handleListKeydown(event: KeyboardEvent) {
@@ -128,7 +149,7 @@
 
 <div class="px-6 pt-6 pb-4 text-neutral-300">
 	<button class="float-right text-xl" on:click={() => ($inspectedParentAction = null)} aria-label={$t("settings.close")}>✕</button>
-	<h1 class="font-semibold text-2xl">{parentUuid == "opendeck.toggleaction" ? $t("parent_action_view.toggle") : $t("parent_action_view.multi")}</h1>
+	<h1 class="font-semibold text-2xl">{parentLabel}</h1>
 </div>
 
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
@@ -137,7 +158,7 @@
 	class="flex flex-col h-128 overflow-auto"
 	on:click={() => ($inspectedInstance = null)}
 	role="list"
-	aria-label="{parentUuid == 'opendeck.toggleaction' ? $t('parent_action_view.toggle') : $t('parent_action_view.multi')} {$t('parent_action_view.children')}"
+	aria-label="{parentLabel} {$t('parent_action_view.children')}"
 	on:keydown={handleListKeydown}
 >
 	{#each children as instance, index}
@@ -160,11 +181,7 @@
 				scale={3 / 4}
 				role="presentation"
 				tabindex={-1}
-				label={(parentUuid == "opendeck.toggleaction" ? $t("parent_action_view.toggle") : $t("parent_action_view.multi")) +
-					" " +
-					$t("parent_action_view.child") +
-					" " +
-					(index + 1)}
+				label={parentLabel + " " + $t("parent_action_view.child") + " " + (index + 1)}
 			/>
 			<p class="ml-4 text-xl text-neutral-300">{instance.action.name}</p>
 			<button

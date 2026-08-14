@@ -12,7 +12,7 @@
 
 	import { t } from "$lib/i18n";
 	import { copiedItem, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
-	import { CanvasLock, renderImage } from "$lib/rendererHelper";
+	import { CanvasLock, renderImage, renderActionWheel } from "$lib/rendererHelper";
 	import { settings } from "$lib/settings";
 
 	import { invoke } from "@tauri-apps/api/core";
@@ -46,7 +46,7 @@
 		if (!slot) {
 			state = undefined;
 		} else {
-			state = slot.states[slot.current_state];
+			state = slot.states[slot.current_state] ?? slot.states[0];
 		}
 	}
 
@@ -65,7 +65,12 @@
 			$inspectedInstance = context;
 			return;
 		}
-		if (slot.action.uuid == "opendeck.multiaction" || slot.action.uuid == "opendeck.toggleaction") {
+		if (
+			slot.action.uuid == "opendeck.multiaction" ||
+			slot.action.uuid == "opendeck.toggleaction" ||
+			slot.action.uuid == "opendeck.dialstack" ||
+			slot.action.uuid == "opendeck.actionwheel"
+		) {
 			$inspectedParentAction = context;
 		} else {
 			$inspectedInstance = slot.context;
@@ -78,7 +83,12 @@
 			$inspectedInstance = context;
 			return;
 		}
-		if (slot.action.uuid != "opendeck.multiaction" && slot.action.uuid != "opendeck.toggleaction") {
+		if (
+			slot.action.uuid != "opendeck.multiaction" &&
+			slot.action.uuid != "opendeck.toggleaction" &&
+			slot.action.uuid != "opendeck.dialstack" &&
+			slot.action.uuid != "opendeck.actionwheel"
+		) {
 			$inspectedInstance = slot.context;
 		} else {
 			$inspectedInstance = context;
@@ -161,6 +171,13 @@
 				const ctx = canvas?.getContext("2d");
 				if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
 				if (active) await invoke("update_image", { context, image: null });
+			} finally {
+				unlock();
+			}
+		} else if (sl.action.uuid == "opendeck.actionwheel") {
+			const unlock = await lock.lock();
+			try {
+				await renderActionWheel(canvas, context, sl.children ?? [], sl.current_state, active, pressed);
 			} finally {
 				unlock();
 			}

@@ -1,4 +1,5 @@
 import type { ActionState } from "./ActionState.ts";
+import type { ActionInstance } from "./ActionInstance.ts";
 import type { Context } from "./Context.ts";
 
 import { getWebserverUrl } from "./ports.ts";
@@ -177,6 +178,74 @@ export async function renderImage(
 	context.restore();
 
 	if (active && slotContext) setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") }), 10);
+}
+
+export async function renderActionWheel(
+	canvas: HTMLCanvasElement | null,
+	slotContext: Context | null,
+	children: ActionInstance[],
+	selectedIndex: number,
+	active: boolean,
+	pressed: boolean,
+) {
+	if (!canvas) return;
+
+	// Render at the native encoder LCD resolution (200x100) to avoid stretching.
+	const lcd = document.createElement("canvas");
+	lcd.width = 200;
+	lcd.height = 100;
+	const lctx = lcd.getContext("2d");
+	if (!lctx) return;
+	const c = lctx;
+
+	c.clearRect(0, 0, lcd.width, lcd.height);
+	c.fillStyle = "#000000";
+	c.fillRect(0, 0, lcd.width, lcd.height);
+
+	async function drawIcon(child: ActionInstance, x: number, y: number, size: number, dimmed: boolean) {
+		const state = child.states[child.current_state] ?? child.states[0];
+		const fallback = child.action.states[child.current_state]?.image ?? child.action.icon;
+		const img = document.createElement("img");
+		img.crossOrigin = "anonymous";
+		img.src = getImage(state?.image, fallback);
+		await new Promise((resolve, reject) => {
+			img.onload = resolve;
+			img.onerror = reject;
+		}).catch(() => {});
+		c.save();
+		if (dimmed) c.globalAlpha = 0.33;
+		c.imageSmoothingQuality = "high";
+		c.drawImage(img, x, y, size, size);
+		c.restore();
+	}
+
+	if (children.length > 0) {
+		const len = children.length;
+		const prevIdx = (selectedIndex + len - 1) % len;
+		const nextIdx = (selectedIndex + 1) % len;
+
+		const sideSize = 40;
+		const centerSize = pressed ? Math.round(56 * 0.8) : 56;
+		const gap = 8;
+		const totalWidth = sideSize + gap + centerSize + gap + sideSize;
+		const startX = (lcd.width - totalWidth) / 2;
+		const sideY = (lcd.height - sideSize) / 2;
+		const centerY = (lcd.height - centerSize) / 2;
+
+		await drawIcon(children[prevIdx], startX, sideY, sideSize, true);
+		await drawIcon(children[selectedIndex], startX + sideSize + gap, centerY, centerSize, false);
+		await drawIcon(children[nextIdx], startX + sideSize + gap + centerSize + gap, sideY, sideSize, true);
+	}
+
+	// Draw the LCD-rendered image onto the visible canvas (scaled to fit).
+	const vctx = canvas.getContext("2d");
+	if (vctx) {
+		vctx.clearRect(0, 0, canvas.width, canvas.height);
+		vctx.imageSmoothingQuality = "high";
+		vctx.drawImage(lcd, 0, 0, canvas.width, canvas.height);
+	}
+
+	if (active && slotContext) await invoke("update_image", { context: slotContext, image: lcd.toDataURL("image/jpeg") });
 }
 
 export async function resizeImage(source: string): Promise<string | undefined> {
