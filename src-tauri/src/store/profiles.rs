@@ -76,6 +76,18 @@ impl ProfileStores {
 
 				// Load encoder layout if not yet parsed
 				let _ = initialise_encoder_layout(&mut instance.action, None);
+
+				// Also initialize layouts for children of container instances (Dial Stack / Action Wheel)
+				if let Some(children) = &mut instance.children {
+					for child in children {
+						if child.action.encoder.is_none()
+							&& let Some(action) = actions.iter().find(|a| a.uuid == *child.action.uuid)
+						{
+							child.action.encoder = action.encoder.clone();
+						}
+						let _ = initialise_encoder_layout(&mut child.action, None);
+					}
+				}
 			}
 
 			store.save()?;

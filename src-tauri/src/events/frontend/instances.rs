@@ -8,7 +8,19 @@ use tokio::fs::remove_dir_all;
 
 #[command]
 pub async fn create_instance(app: AppHandle, mut action: Action, context: Context) -> Result<Option<ActionInstance>, Error> {
-	if !action.controllers.contains(&context.controller) {
+	let is_child_of_actionwheel = {
+		let locks = acquire_locks().await;
+		matches!(
+			get_slot(&context, &locks).await,
+			Ok(Some(parent)) if parent.action.uuid == "opendeck.actionwheel"
+		)
+	};
+
+	if !is_child_of_actionwheel && !action.controllers.contains(&context.controller) {
+		return Ok(None);
+	}
+
+	if is_child_of_actionwheel && !action.controllers.iter().any(|c| c == "Keypad") {
 		return Ok(None);
 	}
 
@@ -20,6 +32,9 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 	let slot = get_slot_mut(&context, &mut locks).await?;
 
 	if let Some(parent) = slot {
+		if matches!(parent.action.uuid.as_str(), "opendeck.dialstack" | "opendeck.actionwheel") && matches!(action.uuid.as_str(), "opendeck.dialstack" | "opendeck.actionwheel") {
+			return Ok(None);
+		}
 		let Some(children) = &mut parent.children else { return Ok(None) };
 		let index = match children.last() {
 			None => 1,
@@ -36,6 +51,8 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 		};
 		children.push(instance.clone());
 
+		let is_actionwheel = parent.action.uuid == "opendeck.actionwheel";
+
 		if parent.action.uuid == "opendeck.toggleaction" && parent.states.len() < children.len() {
 			parent.states.push(crate::shared::ActionState {
 				image: "opendeck/toggle-action.png".to_owned(),
@@ -46,7 +63,11 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 
 		save_profile_now(&context.device, &mut locks).await?;
 		drop(locks);
-		let _ = crate::events::outbound::will_appear::will_appear(&instance).await;
+		if is_actionwheel {
+			let _ = crate::events::outbound::will_appear::will_appear_with_controller(&instance, Some("Keypad")).await;
+		} else {
+			let _ = crate::events::outbound::will_appear::will_appear(&instance).await;
+		}
 
 		let locks = acquire_locks().await;
 		let slot = get_slot(&context, &locks).await?.clone();
@@ -58,7 +79,7 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 			states: action.states.clone(),
 			current_state: 0,
 			settings: serde_json::Value::Object(serde_json::Map::new()),
-			children: if matches!(action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
+			children: if matches!(action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction" | "opendeck.dialstack" | "opendeck.actionwheel") {
 				Some(vec![])
 			} else {
 				None
@@ -199,6 +220,13 @@ pub async fn remove_instance(context: ActionContext) -> Result<(), Error> {
 			}
 			if !children.is_empty() {
 				instance.states.pop();
+				let _ = update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await;
+			}
+		} else if instance.action.uuid == "opendeck.dialstack" || instance.action.uuid == "opendeck.actionwheel" {
+			if instance.current_state as usize >= children.len() {
+				instance.current_state = if children.is_empty() { 0 } else { children.len() as u16 - 1 };
+			}
+			if !children.is_empty() {
 				let _ = update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await;
 			}
 		}
