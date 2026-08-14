@@ -35,7 +35,27 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 			.chain(profile.value.sliders.iter().flatten())
 			.chain(profile.value.infobars.iter().flatten())
 		{
-			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
+			if matches!(instance.action.uuid.as_str(), "opendeck.dialstack" | "opendeck.actionwheel") {
+				if let Some(children) = &instance.children
+					&& !children.is_empty()
+				{
+					let child = &children[instance.current_state as usize];
+					if instance.action.uuid == "opendeck.actionwheel" {
+						let _ = crate::events::outbound::will_appear::will_appear_with_controller(child, Some("Keypad")).await;
+					} else {
+						let _ = crate::events::outbound::will_appear::will_appear(child).await;
+					}
+				}
+			} else {
+				let _ = crate::events::outbound::will_appear::will_appear(instance).await;
+			}
+		}
+
+		// Trigger initial frontend render for all slider instances so the device LCD updates,
+		// including Dial Stack / Action Wheel containers whose active child may not send feedback immediately.
+		let slider_contexts: Vec<_> = profile.value.sliders.iter().flatten().map(|i| i.context.clone()).collect();
+		for context in slider_contexts {
+			let _ = crate::events::frontend::instances::update_state(crate::APP_HANDLE.get().unwrap(), context, &mut locks).await;
 		}
 
 		use tauri_plugin_aptabase::EventTracker;
@@ -68,7 +88,20 @@ pub async fn deregister_device(uuid: &str, event: PayloadEvent<String>) -> Resul
 			.chain(profile.value.sliders.iter().flatten())
 			.chain(profile.value.infobars.iter().flatten())
 		{
-			let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
+			if matches!(instance.action.uuid.as_str(), "opendeck.dialstack" | "opendeck.actionwheel") {
+				if let Some(children) = &instance.children
+					&& !children.is_empty()
+				{
+					let child = &children[instance.current_state as usize];
+					if instance.action.uuid == "opendeck.actionwheel" {
+						let _ = crate::events::outbound::will_appear::will_disappear_with_controller(child, false, Some("Keypad")).await;
+					} else {
+						let _ = crate::events::outbound::will_appear::will_disappear(child, false).await;
+					}
+				}
+			} else {
+				let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
+			}
 		}
 
 		// Flush any pending profile writes before removing the device.

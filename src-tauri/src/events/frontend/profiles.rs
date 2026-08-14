@@ -47,7 +47,18 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 			.chain(&mut old_profile.sliders.iter().flatten())
 			.chain(&mut old_profile.infobars.iter().flatten())
 		{
-			if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
+			if matches!(instance.action.uuid.as_str(), "opendeck.dialstack" | "opendeck.actionwheel") {
+				if let Some(children) = instance.children.as_ref()
+					&& !children.is_empty()
+				{
+					let child = &children[instance.current_state as usize];
+					if instance.action.uuid == "opendeck.actionwheel" {
+						let _ = crate::events::outbound::will_appear::will_disappear_with_controller(child, false, Some("Keypad")).await;
+					} else {
+						let _ = crate::events::outbound::will_appear::will_disappear(child, false).await;
+					}
+				}
+			} else if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
 				let _ = crate::events::outbound::will_appear::will_disappear(instance, false).await;
 			} else {
 				for child in instance.children.as_ref().unwrap() {
@@ -68,7 +79,18 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 		.chain(&mut new_profile.sliders.iter().flatten())
 		.chain(&mut new_profile.infobars.iter().flatten())
 	{
-		if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
+		if matches!(instance.action.uuid.as_str(), "opendeck.dialstack" | "opendeck.actionwheel") {
+			if let Some(children) = instance.children.as_ref()
+				&& !children.is_empty()
+			{
+				let child = &children[instance.current_state as usize];
+				if instance.action.uuid == "opendeck.actionwheel" {
+					let _ = crate::events::outbound::will_appear::will_appear_with_controller(child, Some("Keypad")).await;
+				} else {
+					let _ = crate::events::outbound::will_appear::will_appear(child).await;
+				}
+			}
+		} else if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
 			let _ = crate::events::outbound::will_appear::will_appear(instance).await;
 		} else {
 			for child in instance.children.as_ref().unwrap() {

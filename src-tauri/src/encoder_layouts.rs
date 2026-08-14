@@ -16,12 +16,30 @@ pub async fn generate_encoder_image(context: &crate::shared::Context, fallback: 
 
 	// We need to borrow the encoder instance to render the image, so we'll take it, then give it back when we're done.
 	let img = if let Some(instance) = slot {
-		if let Some(mut encoder) = instance.action.encoder.take() {
-			let result = get_encoder_image(&mut encoder, instance).context("Failed to render encoder image");
-			instance.action.encoder = Some(encoder);
-			Some(result?)
+		if instance.action.uuid == "opendeck.dialstack" {
+			let active_idx = instance.current_state as usize;
+			let child_count = instance.children.as_ref().map(|c| c.len()).unwrap_or(0);
+			instance
+				.children
+				.as_ref()
+				.and_then(|c| c.get(active_idx))
+				.and_then(|child| {
+					let mut encoder = child.action.encoder.clone()?;
+					get_encoder_image(&mut encoder, child).ok()
+				})
+				.map(|img| overlay_dial_stack_indicator(img, child_count))
+		} else if instance.action.uuid == "opendeck.actionwheel" {
+			// Action Wheel is rendered by the frontend at 200x100 (native LCD resolution).
+			// Use the fallback image directly without resizing.
+			Some(image::load_from_memory(fallback).context("Failed to decode fallback image")?)
 		} else {
-			None
+			if let Some(mut encoder) = instance.action.encoder.take() {
+				let result = get_encoder_image(&mut encoder, instance).context("Failed to render encoder image");
+				instance.action.encoder = Some(encoder);
+				Some(result?)
+			} else {
+				None
+			}
 		}
 	} else {
 		None
@@ -46,6 +64,24 @@ pub async fn generate_encoder_image(context: &crate::shared::Context, fallback: 
 			Ok(DynamicImage::ImageRgba8(fallback_canvas))
 		}
 	}
+}
+
+/// Overlay a small "stacked dials" icon in the top-right corner of the 200x100 encoder canvas
+/// to indicate that this dial is a Dial Stack.
+fn overlay_dial_stack_indicator(img: DynamicImage, child_count: usize) -> DynamicImage {
+	if child_count <= 1 {
+		return img;
+	}
+
+	let indicator_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("static").join("dial-stack-indicator.png");
+
+	let mut canvas = img.to_rgba8();
+
+	if let Ok(indicator_img) = image::open(&indicator_path) {
+		overlay(&mut canvas, &indicator_img.to_rgba8(), 200 - 24, 4);
+	}
+
+	DynamicImage::ImageRgba8(canvas)
 }
 
 fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result<DynamicImage, anyhow::Error> {
