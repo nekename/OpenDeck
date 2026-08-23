@@ -180,61 +180,78 @@ export async function renderImage(
 	if (active && slotContext) setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") }), 10);
 }
 
+let actionWheelWindowStart = 0;
+
 function drawDotIndicator(ctx: CanvasRenderingContext2D, totalItems: number, selectedIndex: number) {
-	if (totalItems <= 1) return;
+	if (totalItems <= 1) {
+		actionWheelWindowStart = 0;
+		return;
+	}
 
 	const maxDots = 9;
 	const dotCount = Math.min(totalItems, maxDots);
 
-	// Compute the scroll window — which slice of items the dots represent.
-	let windowStart: number;
 	if (totalItems <= maxDots) {
-		// All items fit — no scrolling needed
-		windowStart = 0;
+		actionWheelWindowStart = 0;
 	} else {
-		const scrollThreshold = totalItems <= 10 ? 8 : 7;
-		const scrollBackThreshold = totalItems <= 10 ? 2 : 3;
-		if (selectedIndex >= scrollThreshold) {
-			// Scroll right so selected is near the right end of the window
-			windowStart = Math.min(selectedIndex - scrollThreshold + 1, totalItems - dotCount);
-		} else if (selectedIndex < scrollBackThreshold) {
-			// Scroll left so selected is near the left end of the window
-			windowStart = 0;
-		} else {
-			// Keep selected in the middle-ish
-			windowStart = selectedIndex - Math.floor(dotCount / 2);
-			windowStart = Math.max(0, Math.min(windowStart, totalItems - dotCount));
+		const scrollForwardPos = 6; // 0-indexed 7th dot
+		const scrollBackPos = 2; // 0-indexed 3rd dot
+		const selectedInWindow = selectedIndex - actionWheelWindowStart;
+		if (selectedInWindow > scrollForwardPos) {
+			actionWheelWindowStart = selectedIndex - scrollForwardPos;
+		} else if (selectedInWindow < scrollBackPos) {
+			actionWheelWindowStart = selectedIndex - scrollBackPos;
 		}
+		actionWheelWindowStart = Math.max(0, Math.min(actionWheelWindowStart, totalItems - dotCount));
 	}
 
-	// Determine which dots are "edge" dots that should shrink to indicate more items
+	const windowStart = actionWheelWindowStart;
 	const hasMoreLeft = windowStart > 0;
 	const hasMoreRight = windowStart + dotCount < totalItems;
 
-	const dotRadius = 2;
-	const dotSpacing = 6;
-	const totalWidth = dotCount * dotSpacing;
+	const dotRadius = 4;
+	const dotSpacing = 11;
+	const selectedRectW = dotRadius * 3.5;
+	const selectedExtraWidth = selectedRectW - dotSpacing;
+	const totalWidth = dotCount * dotSpacing + selectedExtraWidth;
 	const startX = (200 - totalWidth) / 2;
-	const y = 92;
+	const y = 91;
+
+	const selectedOffset = selectedIndex - windowStart;
 
 	for (let i = 0; i < dotCount; i++) {
 		const itemIndex = windowStart + i;
 		const isSelected = itemIndex === selectedIndex;
-		const x = startX + i * dotSpacing + dotSpacing / 2;
+		// Dots left of selected shift left by half the extra width,
+		// dots right of selected shift right by half the extra width.
+		let offset = 0;
+		if (i < selectedOffset) offset = -selectedExtraWidth / 2 - 1.5;
+		else if (i > selectedOffset) offset = selectedExtraWidth / 2 + 1.5;
+		const x = startX + i * dotSpacing + dotSpacing / 2 + offset;
 
 		// Shrink edge dots to indicate more items beyond
 		let radius = dotRadius;
-		if (hasMoreLeft && i === 0) radius = 1;
-		if (hasMoreLeft && i === 1 && dotCount > 3) radius = 1.5;
-		if (hasMoreRight && i === dotCount - 1) radius = 1;
-		if (hasMoreRight && i === dotCount - 2 && dotCount > 3) radius = 1.5;
+		if (hasMoreLeft && i === 0) radius = 2;
+		if (hasMoreLeft && i === 1 && dotCount > 3) radius = 3;
+		if (hasMoreRight && i === dotCount - 1) radius = 2;
+		if (hasMoreRight && i === dotCount - 2 && dotCount > 3) radius = 3;
 
 		ctx.save();
 		if (isSelected) {
-			// Selected: brighter and wider ellipse
+			// Selected: brighter rounded rectangle
 			ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+			const rectW = radius * 3.5;
+			const rectH = radius * 1.8;
+			const rectX = x - rectW / 2;
+			const rectY = y - rectH / 2;
+			const r = rectH / 2;
 			ctx.beginPath();
-			ctx.ellipse(x, y, radius + 1.5, radius, 0, 0, Math.PI * 2);
+			ctx.moveTo(rectX + r, rectY);
+			ctx.arcTo(rectX + rectW, rectY, rectX + rectW, rectY + rectH, r);
+			ctx.arcTo(rectX + rectW, rectY + rectH, rectX, rectY + rectH, r);
+			ctx.arcTo(rectX, rectY + rectH, rectX, rectY, r);
+			ctx.arcTo(rectX, rectY, rectX + rectW, rectY, r);
+			ctx.closePath();
 			ctx.fill();
 		} else {
 			ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
