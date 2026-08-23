@@ -39,11 +39,12 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 				if let Some(children) = &instance.children
 					&& !children.is_empty()
 				{
-					let child = &children[instance.current_state as usize];
-					if instance.action.uuid == "opendeck.actionwheel" {
-						let _ = crate::events::outbound::will_appear::will_appear_with_controller(child, Some("Keypad")).await;
-					} else {
-						let _ = crate::events::outbound::will_appear::will_appear(child).await;
+					for child in children {
+						if instance.action.uuid == "opendeck.actionwheel" {
+							let _ = crate::events::outbound::will_appear::will_appear_with_controller(child, Some("Keypad")).await;
+						} else {
+							let _ = crate::events::outbound::will_appear::will_appear(child).await;
+						}
 					}
 				}
 			} else {
@@ -92,11 +93,12 @@ pub async fn deregister_device(uuid: &str, event: PayloadEvent<String>) -> Resul
 				if let Some(children) = &instance.children
 					&& !children.is_empty()
 				{
-					let child = &children[instance.current_state as usize];
-					if instance.action.uuid == "opendeck.actionwheel" {
-						let _ = crate::events::outbound::will_appear::will_disappear_with_controller(child, false, Some("Keypad")).await;
-					} else {
-						let _ = crate::events::outbound::will_appear::will_disappear(child, false).await;
+					for child in children {
+						if instance.action.uuid == "opendeck.actionwheel" {
+							let _ = crate::events::outbound::will_appear::will_disappear_with_controller(child, false, Some("Keypad")).await;
+						} else {
+							let _ = crate::events::outbound::will_appear::will_disappear(child, false).await;
+						}
 					}
 				}
 			} else {

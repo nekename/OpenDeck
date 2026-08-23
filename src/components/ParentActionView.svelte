@@ -3,6 +3,8 @@
 	import type { ActionInstance } from "$lib/ActionInstance";
 	import type { Profile } from "$lib/Profile";
 
+	import type { Context } from "$lib/Context";
+
 	import Trash from "phosphor-svelte/lib/Trash";
 	import Key from "./Key.svelte";
 
@@ -38,6 +40,11 @@
 				: parentUuid == "opendeck.actionwheel"
 					? $t("parent_action_view.actionwheel")
 					: $t("parent_action_view.multi");
+
+	function contextFromString(ctx: string): Context {
+		const [device, profile, controller, position] = ctx.split(".");
+		return { device, profile, controller, position: parseInt(position) };
+	}
 
 	function handleDragOver(event: DragEvent) {
 		event.preventDefault();
@@ -176,8 +183,9 @@
 		>
 			<Key
 				inslot={instance}
-				context={null}
-				active={false}
+				context={contextFromString(instance.context)}
+				active={true}
+				interactive={false}
 				scale={3 / 4}
 				role="presentation"
 				tabindex={-1}

@@ -180,6 +180,72 @@ export async function renderImage(
 	if (active && slotContext) setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") }), 10);
 }
 
+function drawDotIndicator(ctx: CanvasRenderingContext2D, totalItems: number, selectedIndex: number) {
+	if (totalItems <= 1) return;
+
+	const maxDots = 9;
+	const dotCount = Math.min(totalItems, maxDots);
+
+	// Compute the scroll window — which slice of items the dots represent.
+	let windowStart: number;
+	if (totalItems <= maxDots) {
+		// All items fit — no scrolling needed
+		windowStart = 0;
+	} else {
+		const scrollThreshold = totalItems <= 10 ? 8 : 7;
+		const scrollBackThreshold = totalItems <= 10 ? 2 : 3;
+		if (selectedIndex >= scrollThreshold) {
+			// Scroll right so selected is near the right end of the window
+			windowStart = Math.min(selectedIndex - scrollThreshold + 1, totalItems - dotCount);
+		} else if (selectedIndex < scrollBackThreshold) {
+			// Scroll left so selected is near the left end of the window
+			windowStart = 0;
+		} else {
+			// Keep selected in the middle-ish
+			windowStart = selectedIndex - Math.floor(dotCount / 2);
+			windowStart = Math.max(0, Math.min(windowStart, totalItems - dotCount));
+		}
+	}
+
+	// Determine which dots are "edge" dots that should shrink to indicate more items
+	const hasMoreLeft = windowStart > 0;
+	const hasMoreRight = windowStart + dotCount < totalItems;
+
+	const dotRadius = 2;
+	const dotSpacing = 6;
+	const totalWidth = dotCount * dotSpacing;
+	const startX = (200 - totalWidth) / 2;
+	const y = 92;
+
+	for (let i = 0; i < dotCount; i++) {
+		const itemIndex = windowStart + i;
+		const isSelected = itemIndex === selectedIndex;
+		const x = startX + i * dotSpacing + dotSpacing / 2;
+
+		// Shrink edge dots to indicate more items beyond
+		let radius = dotRadius;
+		if (hasMoreLeft && i === 0) radius = 1;
+		if (hasMoreLeft && i === 1 && dotCount > 3) radius = 1.5;
+		if (hasMoreRight && i === dotCount - 1) radius = 1;
+		if (hasMoreRight && i === dotCount - 2 && dotCount > 3) radius = 1.5;
+
+		ctx.save();
+		if (isSelected) {
+			// Selected: brighter and wider ellipse
+			ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+			ctx.beginPath();
+			ctx.ellipse(x, y, radius + 1.5, radius, 0, 0, Math.PI * 2);
+			ctx.fill();
+		} else {
+			ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+			ctx.beginPath();
+			ctx.arc(x, y, radius, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+	}
+}
+
 export async function renderActionWheel(
 	canvas: HTMLCanvasElement | null,
 	slotContext: Context | null,
@@ -187,10 +253,11 @@ export async function renderActionWheel(
 	selectedIndex: number,
 	active: boolean,
 	pressed: boolean,
+	fallbackIcon: string,
 ) {
 	if (!canvas) return;
 
-	// Render at the native encoder LCD resolution (200x100) to avoid stretching.
+	// Render the three-icon preview at native encoder LCD resolution (200x100) for the device.
 	const lcd = document.createElement("canvas");
 	lcd.width = 200;
 	lcd.height = 100;
@@ -202,7 +269,7 @@ export async function renderActionWheel(
 	c.fillStyle = "#000000";
 	c.fillRect(0, 0, lcd.width, lcd.height);
 
-	async function drawIcon(child: ActionInstance, x: number, y: number, size: number, dimmed: boolean) {
+	async function drawIcon(ctx: CanvasRenderingContext2D, child: ActionInstance, x: number, y: number, size: number, dimmed: boolean) {
 		const state = child.states[child.current_state] ?? child.states[0];
 		const fallback = child.action.states[child.current_state]?.image ?? child.action.icon;
 		const img = document.createElement("img");
@@ -212,11 +279,11 @@ export async function renderActionWheel(
 			img.onload = resolve;
 			img.onerror = reject;
 		}).catch(() => {});
-		c.save();
-		if (dimmed) c.globalAlpha = 0.33;
-		c.imageSmoothingQuality = "high";
-		c.drawImage(img, x, y, size, size);
-		c.restore();
+		ctx.save();
+		if (dimmed) ctx.globalAlpha = 0.33;
+		ctx.imageSmoothingQuality = "high";
+		ctx.drawImage(img, x, y, size, size);
+		ctx.restore();
 	}
 
 	if (children.length > 0) {
@@ -232,20 +299,37 @@ export async function renderActionWheel(
 		const sideY = (lcd.height - sideSize) / 2;
 		const centerY = (lcd.height - centerSize) / 2;
 
-		await drawIcon(children[prevIdx], startX, sideY, sideSize, true);
-		await drawIcon(children[selectedIndex], startX + sideSize + gap, centerY, centerSize, false);
-		await drawIcon(children[nextIdx], startX + sideSize + gap + centerSize + gap, sideY, sideSize, true);
+		await drawIcon(c, children[prevIdx], startX, sideY, sideSize, true);
+		await drawIcon(c, children[selectedIndex], startX + sideSize + gap, centerY, centerSize, false);
+		await drawIcon(c, children[nextIdx], startX + sideSize + gap + centerSize + gap, sideY, sideSize, true);
+
+		// Draw dot indicator at the bottom center
+		drawDotIndicator(c, len, selectedIndex);
 	}
 
-	// Draw the LCD-rendered image onto the visible canvas (scaled to fit).
+	// Send the three-icon preview to the device.
+	if (active && slotContext) await invoke("update_image", { context: slotContext, image: lcd.toDataURL("image/jpeg") });
+
+	// Render the container's placeholder icon on the visible UI canvas (not the three-icon preview).
 	const vctx = canvas.getContext("2d");
 	if (vctx) {
+		const iconImg = document.createElement("img");
+		iconImg.crossOrigin = "anonymous";
+		iconImg.src = getImage(fallbackIcon, undefined);
+		await new Promise((resolve, reject) => {
+			iconImg.onload = resolve;
+			iconImg.onerror = reject;
+		}).catch(() => {});
 		vctx.clearRect(0, 0, canvas.width, canvas.height);
 		vctx.imageSmoothingQuality = "high";
-		vctx.drawImage(lcd, 0, 0, canvas.width, canvas.height);
+		const scaleFactor = pressed ? 0.8 : 1.0;
+		const scale = (Math.max(10, 100) / 100) * scaleFactor;
+		const xScaled = canvas.width * scale;
+		const yScaled = canvas.height * scale;
+		const xOffset = (canvas.width - xScaled) / 2;
+		const yOffset = (canvas.height - yScaled) / 2;
+		vctx.drawImage(iconImg, xOffset, yOffset, xScaled, yScaled);
 	}
-
-	if (active && slotContext) await invoke("update_image", { context: slotContext, image: lcd.toDataURL("image/jpeg") });
 }
 
 export async function resizeImage(source: string): Promise<string | undefined> {

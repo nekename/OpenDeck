@@ -1,7 +1,6 @@
 use super::{Coordinates, GenericInstancePayload, send_to_plugin};
 
 use crate::events::frontend::instances::{key_moved, update_state};
-use crate::events::outbound::will_appear::{will_appear, will_appear_with_controller, will_disappear, will_disappear_with_controller};
 use crate::shared::ActionContext;
 use crate::store::profiles::{acquire_locks_mut, get_instance_mut, save_profile_now};
 
@@ -68,16 +67,10 @@ pub async fn dial_rotate(device: &str, index: u8, ticks: i16) -> Result<(), anyh
 		}
 		let len = children.len() as isize;
 		let new_index = (instance.current_state as isize + ticks as isize).rem_euclid(len) as usize;
-		let old_index = instance.current_state as usize;
 		instance.current_state = new_index as u16;
-		let old_child = children[old_index].clone();
-		let new_child = children[new_index].clone();
 		let _ = update_state(crate::APP_HANDLE.get().unwrap(), context.clone(), &mut locks).await;
 		save_profile_now(device, &mut locks).await?;
 		drop(locks);
-
-		let _ = will_disappear_with_controller(&old_child, false, Some("Keypad")).await;
-		let _ = will_appear_with_controller(&new_child, Some("Keypad")).await;
 		Ok(())
 	} else {
 		send_to_plugin(
@@ -150,16 +143,11 @@ pub async fn dial_press(device: &str, event: &'static str, index: u8) -> Result<
 		}
 		let old_index = instance.current_state as usize;
 		let new_index = (old_index + 1) % children.len();
-		let old_child = children[old_index].clone();
-		let new_child = children[new_index].clone();
 		instance.current_state = new_index as u16;
 
 		let _ = update_state(crate::APP_HANDLE.get().unwrap(), context.clone(), &mut locks).await;
 		save_profile_now(device, &mut locks).await?;
 		drop(locks);
-
-		let _ = will_disappear(&old_child, false).await;
-		let _ = will_appear(&new_child).await;
 
 		return Ok(());
 	}

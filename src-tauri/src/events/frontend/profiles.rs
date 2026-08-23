@@ -51,11 +51,12 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 				if let Some(children) = instance.children.as_ref()
 					&& !children.is_empty()
 				{
-					let child = &children[instance.current_state as usize];
-					if instance.action.uuid == "opendeck.actionwheel" {
-						let _ = crate::events::outbound::will_appear::will_disappear_with_controller(child, false, Some("Keypad")).await;
-					} else {
-						let _ = crate::events::outbound::will_appear::will_disappear(child, false).await;
+					for child in children {
+						if instance.action.uuid == "opendeck.actionwheel" {
+							let _ = crate::events::outbound::will_appear::will_disappear_with_controller(child, false, Some("Keypad")).await;
+						} else {
+							let _ = crate::events::outbound::will_appear::will_disappear(child, false).await;
+						}
 					}
 				}
 			} else if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
@@ -83,11 +84,12 @@ pub async fn set_selected_profile(device: String, id: String) -> Result<(), Erro
 			if let Some(children) = instance.children.as_ref()
 				&& !children.is_empty()
 			{
-				let child = &children[instance.current_state as usize];
-				if instance.action.uuid == "opendeck.actionwheel" {
-					let _ = crate::events::outbound::will_appear::will_appear_with_controller(child, Some("Keypad")).await;
-				} else {
-					let _ = crate::events::outbound::will_appear::will_appear(child).await;
+				for child in children {
+					if instance.action.uuid == "opendeck.actionwheel" {
+						let _ = crate::events::outbound::will_appear::will_appear_with_controller(child, Some("Keypad")).await;
+					} else {
+						let _ = crate::events::outbound::will_appear::will_appear(child).await;
+					}
 				}
 			}
 		} else if !matches!(instance.action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {

@@ -23,6 +23,7 @@
 	export let label: string = "";
 	export let tabindex: number = 0;
 	export let role: string = "gridcell";
+	export let interactive: boolean = true;
 
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
@@ -177,7 +178,8 @@
 		} else if (sl.action.uuid == "opendeck.actionwheel") {
 			const unlock = await lock.lock();
 			try {
-				await renderActionWheel(canvas, context, sl.children ?? [], sl.current_state, active, pressed);
+				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
+				await renderActionWheel(canvas, context, sl.children ?? [], sl.current_state, active, pressed, fallback);
 			} finally {
 				unlock();
 			}
@@ -201,7 +203,7 @@
 	}
 
 	async function triggerVirtualPress() {
-		if (!active || !context || !slot) return;
+		if (!interactive || !active || !context || !slot) return;
 		await invoke("trigger_virtual_press", { context });
 	}
 
