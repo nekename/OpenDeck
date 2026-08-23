@@ -99,7 +99,7 @@
 	let contextMenuEl: HTMLDivElement;
 	async function contextMenu(event: MouseEvent | KeyboardEvent) {
 		event.preventDefault();
-		if (!active || !context) return;
+		if (!interactive || !context) return;
 		const rect = canvas.getBoundingClientRect();
 		let x = event instanceof MouseEvent && event.x ? event.x : rect.left;
 		let y = event instanceof MouseEvent && event.y ? event.y : rect.bottom;

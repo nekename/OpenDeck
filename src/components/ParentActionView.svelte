@@ -184,8 +184,8 @@
 			<Key
 				inslot={instance}
 				context={contextFromString(instance.context)}
-				active={true}
-				interactive={false}
+				active={false}
+				interactive={true}
 				scale={3 / 4}
 				role="presentation"
 				tabindex={-1}
