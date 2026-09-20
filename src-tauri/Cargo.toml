@@ -58,6 +58,8 @@ psp = { git = "https://github.com/pewsheen/psp", rev = "d2936425122e26822a2c126e
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"
+zbus = "5"
+xcb = "1.6"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = "0.61"
