@@ -1,3 +1,4 @@
+use crate::device_sleep::is_device_sleeping;
 use crate::encoder_layouts::generate_encoder_image;
 use crate::events::inbound;
 
@@ -126,6 +127,15 @@ pub async fn reset_devices() {
 	for (_id, device) in ELGATO_DEVICES.read().await.iter() {
 		let _ = device.reset().await;
 		let _ = device.flush().await;
+	}
+}
+
+/// Wake up certain kinds of devices that do not wake themselves after the computer resumes from sleep.
+pub async fn wake_deeply_sleeping_devices() {
+	for (id, device) in ELGATO_DEVICES.read().await.iter() {
+		if device.kind() == Kind::Plus && !is_device_sleeping(id) {
+			set_brightness(id, crate::store::get_settings().value.brightness).await;
+		}
 	}
 }
 
