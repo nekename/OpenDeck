@@ -124,7 +124,7 @@ pub async fn set_brightness(id: &str, brightness: u8) {
 }
 
 pub async fn reset_devices() {
-	for (_id, device) in ELGATO_DEVICES.read().await.iter() {
+	for device in ELGATO_DEVICES.read().await.values() {
 		let _ = device.reset().await;
 		let _ = device.flush().await;
 	}

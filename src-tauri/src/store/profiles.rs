@@ -259,7 +259,7 @@ pub fn get_device_profiles(device: &str) -> Result<Vec<String>, anyhow::Error> {
 			let entries = fs::read_dir(entry.path())?;
 			for subentry in entries.flatten() {
 				if subentry.metadata()?.is_file() {
-					let mut id = format!("{}/{}", entry.file_name().to_string_lossy(), &subentry.file_name().to_string_lossy());
+					let mut id = format!("{}/{}", entry.file_name().to_string_lossy(), subentry.file_name().to_string_lossy());
 					if id.ends_with(".json") {
 						id.truncate(id.len() - 5);
 					} else if id.ends_with(".json.bak") {
