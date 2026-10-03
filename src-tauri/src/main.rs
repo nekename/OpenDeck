@@ -391,23 +391,18 @@ If you have already donated, thank you so much for your support!"#,
 
 	app.run(|app, event| {
 		if let tauri::RunEvent::Exit = event {
-			// Turn off every device's screen before tearing the plugins down. reset_devices() below
-			// only clears natively-supported Elgato devices, so plugin-provided devices (Ajazz,
-			// Mirabox, etc.) otherwise keep their screens lit after OpenDeck exits. Sleep them
-			// (brightness 0) while their plugins are still connected, then wait briefly so the
-			// command reaches the hardware over USB before deactivate_plugins() kills the plugins.
 			futures::executor::block_on(async {
-				let device_ids = shared::DEVICES.iter().map(|entry| entry.id.clone()).collect::<Vec<_>>();
+				let device_ids = shared::DEVICES.iter().filter(|entry| !entry.id.starts_with("sd-")).map(|entry| entry.id.clone()).collect::<Vec<_>>();
 				for id in device_ids {
-					if let Err(error) = events::outbound::devices::set_device_brightness(&id, 0).await {
-						log::warn!("Failed to sleep device {id} on exit: {error}");
-					}
+					let _ = events::outbound::devices::clear_screen(id).await;
 				}
 			});
-			std::thread::sleep(std::time::Duration::from_millis(700));
 
 			#[cfg(windows)]
-			futures::executor::block_on(plugins::deactivate_plugins());
+			{
+				std::thread::sleep(std::time::Duration::from_millis(750));
+				futures::executor::block_on(plugins::deactivate_plugins());
+			}
 
 			let flush_future = store::profiles::flush_stale_profiles();
 			match futures::executor::block_on(flush_future) {
