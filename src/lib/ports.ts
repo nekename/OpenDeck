@@ -14,5 +14,5 @@ export function getWebSocketPort(): number {
 }
 
 export function getWebserverUrl(path: string = ""): string {
-	return `http://localhost:${portBase + 2}/${path}`;
+	return `http://127.0.0.1:${portBase + 2}/${path}`;
 }

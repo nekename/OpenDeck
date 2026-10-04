@@ -5,7 +5,7 @@
 			let update = () => {};
 
 			function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
-				const websocket = new WebSocket("ws://localhost:" + inPort);
+				const websocket = new WebSocket("ws://127.0.0.1:" + inPort);
 				inActionInfo = JSON.parse(inActionInfo);
 				websocket.onopen = () => {
 					websocket.send(

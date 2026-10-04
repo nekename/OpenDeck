@@ -89,7 +89,7 @@ An `ActionContext` extends this with an action instance index for nested actions
 
 ### Plugin Communication
 
-- **WebSocket protocol**: Plugins/PIs connect to `localhost:PORT_BASE`, send JSON messages with `event` field
+- **WebSocket protocol**: Plugins/PIs connect to `127.0.0.1:PORT_BASE`, send JSON messages with `event` field
 - **Message routing**: `inbound::InboundEventType` enum handles all incoming events, `outbound::` modules send to plugins
 - **Outbound event types**: `willAppear`, `keyDown`, `keyUp`, `dialRotate`, etc. (Stream Deck SDK compatible)
 - **Authentication**: Context validation ensures plugins can only access their own action instances
