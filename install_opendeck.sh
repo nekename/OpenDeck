@@ -196,26 +196,10 @@ install_rpm() {
     reload_udev_rules
 }
 
-install_aur() {
-    msg_info "Installing from AUR"
-    msg_info "${BOLD}This script will attempt to use yay, paru, aura, pikaur, or trizen, in that order"
-    confirm "If you use another AUR helper, you should install OpenDeck manually. Continue?"
-
-    if has_cmd yay; then
-        tty_stdin yay -Sy opendeck
-    elif has_cmd paru; then
-        tty_stdin paru -Sy opendeck
-    elif has_cmd aura; then
-        tty_stdin aura -Ak opendeck
-    elif has_cmd pikaur; then
-        tty_stdin pikaur -Sy opendeck
-    elif has_cmd trizen; then
-        tty_stdin trizen -Sy opendeck
-    else
-        msg_error "No AUR helper found; install yay, paru, aura, pikaur, or trizen, or install manually"
-        return 1
-    fi
-    msg_ok "Installed from AUR"
+install_arch() {
+    msg_info "Installing from Arch repositories"
+    tty_stdin sudo pacman -Sy opendeck
+    msg_ok "Installed from Arch repositories"
 
     reload_udev_rules
 }
@@ -319,7 +303,7 @@ rpm)
     install_rpm
     ;;
 arch)
-    install_aur
+    install_arch
     ;;
 ublue)
     install_flatpak
