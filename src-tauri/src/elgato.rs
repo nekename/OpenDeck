@@ -155,10 +155,6 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 		Kind::Neo => 9,
 		Kind::PlusXl => 13,
 	};
-	let _ = device.clear_all_button_images().await;
-	clear_all_touchpoints(&device).await;
-	let _ = device.set_brightness(crate::store::get_settings().value.brightness).await;
-	let _ = device.flush().await;
 
 	let reader = device.get_reader();
 	ELGATO_DEVICES.write().await.insert(device_id.clone(), device);

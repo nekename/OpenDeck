@@ -21,6 +21,7 @@ pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::
 		event.payload.plugin = uuid.to_owned();
 		let _ = crate::events::outbound::devices::device_did_connect(&event.payload.id, (&event.payload).into()).await;
 		DEVICES.insert(event.payload.id.clone(), event.payload.clone());
+		let _ = crate::events::outbound::devices::set_device_brightness(&event.payload.id, crate::store::get_settings().value.brightness).await;
 		let _ = crate::device_sleep::apply_initial_device_sleep(&event.payload.id).await;
 		crate::events::frontend::update_devices().await;
 
