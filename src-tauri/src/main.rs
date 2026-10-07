@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod active_window;
 mod application_watcher;
 mod device_sleep;
 mod elgato;
