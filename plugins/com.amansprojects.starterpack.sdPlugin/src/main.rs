@@ -4,11 +4,39 @@ mod open_url;
 mod run_command;
 mod switch_profile;
 
+use std::sync::{OnceLock, RwLock};
+
 use openaction::*;
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Default)]
+#[serde(default)]
+pub struct GlobalSettings {
+	#[serde(rename = "enigoRestoreToken")]
+	pub enigo_restore_token: Option<String>,
+}
+
+pub fn current_settings() -> &'static RwLock<GlobalSettings> {
+	static SETTINGS: OnceLock<RwLock<GlobalSettings>> = OnceLock::new();
+	SETTINGS.get_or_init(|| RwLock::new(GlobalSettings::default()))
+}
 
 struct GlobalEventHandler;
 #[async_trait]
 impl global_events::GlobalEventHandler for GlobalEventHandler {
+	async fn plugin_ready(&self) -> OpenActionResult<()> {
+		get_global_settings().await
+	}
+
+	async fn did_receive_global_settings(
+		&self,
+		event: global_events::DidReceiveGlobalSettingsEvent,
+	) -> OpenActionResult<()> {
+		*current_settings().write().unwrap() =
+			serde_json::from_value(event.payload.settings).unwrap_or_default();
+
+		Ok(())
+	}
+
 	async fn device_did_connect(
 		&self,
 		_event: global_events::DeviceDidConnectEvent,
