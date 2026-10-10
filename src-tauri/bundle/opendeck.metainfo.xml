@@ -53,6 +53,27 @@
 	</branding>
 
 	<releases>
+		<release version="2.14.1" date="2026-10-10">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.14.1</url>
+			<description>
+				<ul>
+					<li>fix: fire `touchTap` outbound event when pressing touchstrip of the Stream Deck + XL (#437)</li>
+					<li>fix: correctly wake Stream Deck + after system resume (#420)</li>
+					<li>chore: resolve violations of new Clippy linter rules</li>
+					<li>fix: update elgato-streamdeck to prevent image quality degradation</li>
+					<li>fix: clear screens of plugin-registered devices on exit (#454)</li>
+					<li>feat: add Korean language localisations (#405)</li>
+					<li>feat: update Arch installation steps in README and automated installation script to use package from `extra` repo</li>
+					<li>fix: bump Tauri to 2.12 to enforce server side decorations (#456)</li>
+					<li>fix: remove redundant Elgato device initialisation steps and set brightness during plugin-registered device registration</li>
+					<li>perf: stop rendering key images to temporary canvases before main canvases exist</li>
+					<li>fix: bind WebSocket and asset webservers only to the loopback address</li>
+					<li>feat: support using symlinks to share profiles across devices (#423)</li>
+					<li>feat: indicate plugins marked AI-assisted in the catalogue in the plugin store</li>
+					<li>feat: update enigo and add support for restoring the input simulation permission token on Linux</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.14.0" date="2026-07-29">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.14.0</url>
 			<description>
