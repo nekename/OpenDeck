@@ -4,6 +4,7 @@
 
 	import { t } from "$lib/i18n";
 	import { profileManager } from "$lib/singletons";
+	import { settings } from "$lib/settings";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
@@ -47,9 +48,21 @@
 	let buildInfo: string;
 	(async () => (buildInfo = await invoke("get_build_info")))();
 	const window = getCurrentWindow();
+	$: previewSize = $settings?.deck_preview_size ?? 100;
 
 	$: {
-		if (devices[value]) {
+		if (previewSize < 100) {
+			const minWidth = previewSize === 75 ? 1220 : 1080;
+			const extraHeight = devices[value]?.type === 13 /* Stream Deck + XL */ ? (previewSize === 75 ? 40 : 20) : 0;
+			const minHeight = (previewSize === 75 ? 960 : 940) + extraHeight;
+			(async () => {
+				await window.setMinSize(new LogicalSize(minWidth, minHeight));
+				const size = (await window.innerSize()).toLogical(await window.scaleFactor());
+				if (size.width < minWidth || size.height < minHeight) {
+					await window.setSize(new LogicalSize(Math.max(size.width, minWidth), Math.max(size.height, minHeight)));
+				}
+			})().catch(console.error);
+		} else if (devices[value]) {
 			const effectiveCols = Math.min(Math.max(devices[value].columns, devices[value].encoders, devices[value].touchpoints), 8);
 			const effectiveRows = Math.min(devices[value].rows + Math.min(devices[value].encoders, 1) + Math.min(devices[value].touchpoints, 1), 4);
 			const idealWidth = effectiveCols * 132 + 416;
