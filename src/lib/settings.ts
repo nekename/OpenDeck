@@ -2,6 +2,7 @@ export type Settings = {
 	version: string;
 	language: string;
 	brightness: number;
+	deck_preview_size: 50 | 75 | 100;
 	sleep_timeout_minutes: number;
 	sleep_when_computer_locked: boolean;
 	rotation: number;
