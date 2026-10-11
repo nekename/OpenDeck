@@ -85,5 +85,14 @@ pub fn read_manifest(base_path: &std::path::Path) -> Result<PluginManifest, anyh
 		json_patch::merge(&mut manifest, &platform_overrides);
 	}
 
-	serde_json::from_value(manifest).context("failed to parse manifest")
+	let mut manifest: PluginManifest = serde_json::from_value(manifest).context("failed to parse manifest")?;
+	for action in &mut manifest.actions {
+		for controller in &mut action.controllers {
+			if controller == "Infobar" {
+				*controller = "Neo".to_string();
+			}
+		}
+	}
+
+	Ok(manifest)
 }

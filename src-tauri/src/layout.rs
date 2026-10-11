@@ -1,14 +1,117 @@
-use crate::shared::{ActionInstance, config_dir};
+use crate::shared::{Action, ActionInstance, config_dir};
 use crate::store::profiles::{acquire_locks_mut, get_slot_mut};
 
 use std::path::{Path, PathBuf};
 
-use anyhow::Context;
+use anyhow::{Context, Result, bail};
 use image::imageops::overlay;
 use image::{DynamicImage, Rgba, RgbaImage};
 use log::{trace, warn};
 use serde_json::{Map, Value};
+use streamdeck_strip_render::get_incremental_renderer_with_size;
 use streamdeck_strip_render::layout::{LayoutItem, PixmapSource};
+
+/// Check if the specified controller supports dynamic layouts.
+///
+/// Only `"Encoder"` and `"Neo"` use dynamic layout templates via `streamdeck_strip_render`.
+/// Standard `"Keypad"` does not support dynamic layouts.
+pub fn supports_dynamic_layout(controller: &str) -> bool {
+	matches!(controller, "Encoder" | "Neo")
+}
+
+pub fn initialise_layout(action: &mut Action, controller: &str, layout: Option<String>) -> Result<(), anyhow::Error> {
+	let is_neo = controller == "Neo";
+	let (width, height) = if is_neo {
+		(232, 50)
+	} else {
+		(200, 100)
+	};
+
+	let load_layout = if is_neo {
+		match layout {
+			Some(s) if !s.is_empty() => s,
+			_ => {
+				action.layout_parsed = None;
+				return Ok(());
+			}
+		}
+	} else {
+		let layout_default = action.encoder.as_ref().map(|e| e.layout.clone());
+		match layout.or(layout_default) {
+			Some(s) if !s.is_empty() => s,
+			_ => {
+				if action.encoder.is_some() {
+					"$X1".to_string()
+				} else {
+					action.layout_parsed = None;
+					return Ok(());
+				}
+			}
+		}
+	};
+
+	let layout = if load_layout.starts_with('$') {
+		load_layout.clone()
+	} else {
+		let plugin_dir = config_dir().join("plugins").join(&action.plugin);
+		let layout_file = plugin_dir.join(&load_layout);
+
+		let Ok(plugin_dir) = plugin_dir.canonicalize() else {
+			bail!("Failed to canonicalize plugin directory: {}", plugin_dir.display());
+		};
+
+		match layout_file.canonicalize() {
+			Ok(resolved) if resolved.starts_with(&plugin_dir) => resolved.to_string_lossy().into_owned(),
+			Ok(_) => {
+				action.layout_parsed = None;
+				bail!("Encoder layout path escapes plugin directory: {}", load_layout);
+			}
+			Err(error) => {
+				action.layout_parsed = None;
+				bail!("Failed to canonicalize encoder layout path {}: {}", load_layout, error);
+			}
+		}
+	};
+
+	match load_encoder_layout(&layout) {
+		Ok(parsed) => action.layout_parsed = Some(get_incremental_renderer_with_size(parsed, None, width, height)?),
+		Err(error) => {
+			action.layout_parsed = None;
+			bail!("Failed to load encoder layout {}: {}", load_layout, error)
+		}
+	}
+	Ok(())
+}
+
+fn load_encoder_layout(layout: &str) -> Result<serde_json::Value> {
+	match layout {
+		"$A0" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/A0.json"))?),
+		"$A1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/A1.json"))?),
+		"$B1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/B1.json"))?),
+		"$B2" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/B2.json"))?),
+		"$C1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/C1.json"))?),
+		"$X1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/X1.json"))?),
+
+		path_str => {
+			if path_str.is_empty() {
+				bail!("Encoder layout path is blank, ignoring");
+			}
+
+			// This doesn't match an existing built-in layout
+			if path_str.starts_with('$') {
+				bail!("Invalid encoder layout type: {}", path_str);
+			}
+
+			let path = Path::new(path_str);
+			if !path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("json")) {
+				bail!("Invalid encoder layout type: {}", path_str);
+			}
+
+			let content = std::fs::read_to_string(path)?;
+			Ok(serde_json::from_str(&content)?)
+		}
+	}
+}
 
 pub async fn generate_encoder_image(context: &crate::shared::Context, fallback: &[u8]) -> Result<DynamicImage, anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
@@ -46,10 +149,43 @@ pub async fn generate_encoder_image(context: &crate::shared::Context, fallback: 
 	}
 }
 
+pub async fn generate_infobar_image(context: &crate::shared::Context, fallback: &[u8]) -> Result<DynamicImage, anyhow::Error> {
+	let mut locks = acquire_locks_mut().await;
+	let slot = get_slot_mut(context, &mut locks).await?;
+
+	let img = if let Some(instance) = slot {
+		if instance.context.controller == "Neo" && instance.action.layout_parsed.is_some() {
+			let rendered = get_layout_image(instance).context("Failed to render infobar layout")?;
+			// Stream Deck Neo layout canvas is 232x50, physical display is 248x58.
+			// Center the 232x50 layout onto the 248x58 canvas with 8px horizontal and 4px vertical margin.
+			let mut canvas = RgbaImage::from_pixel(248, 58, Rgba([0, 0, 0, 255]));
+			overlay(&mut canvas, &rendered.to_rgba8(), 8, 4);
+			Some(DynamicImage::ImageRgba8(canvas))
+		} else {
+			None
+		}
+	} else {
+		None
+	};
+	drop(locks);
+
+	match img {
+		Some(img) => Ok(img),
+		None => {
+			let fallback_img = image::load_from_memory(fallback)
+				.context("Failed to decode fallback image")?
+				.resize_exact(248, 58, image::imageops::FilterType::Lanczos3);
+			Ok(fallback_img)
+		}
+	}
+}
+
 fn get_layout_image(instance: &mut ActionInstance) -> Result<DynamicImage, anyhow::Error> {
+	let is_neo = instance.context.controller == "Neo";
+	let (w, h) = if is_neo { (232, 50) } else { (200, 100) };
 	let Some(ref mut renderer) = instance.action.layout_parsed else {
 		// Something's gone horribly wrong here; we should have a layout. Render a blank image.
-		return Ok(DynamicImage::new_rgb8(200, 100));
+		return Ok(DynamicImage::new_rgb8(w, h));
 	};
 
 	let path = config_dir().join("plugins").join(&instance.action.plugin);
