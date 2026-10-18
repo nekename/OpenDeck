@@ -39,8 +39,8 @@
 			let result = reader.result?.toString();
 			if (result) {
 				let resized = await resizeImage(result);
-				if (resized) instance.states[state].image = resized;
-				else instance.states[state].image = result;
+				if (resized) instance.states[state].image_override = resized;
+				else instance.states[state].image_override = result;
 			}
 		};
 
@@ -89,7 +89,7 @@
 				on:drop={handleDrop}
 				on:contextmenu={(event) => {
 					event.preventDefault();
-					instance.states[state].image = instance.action.states[state]?.image ?? instance.action.icon;
+					instance.states[state].image_override = null;
 				}}
 				title={$t("instance_editor.image.hint")}
 				aria-label={$t("instance_editor.image.hint")}
@@ -173,7 +173,7 @@
 						if (!context) return;
 						context.fillStyle = solidColourInput.value;
 						context.fillRect(0, 0, canvas.width, canvas.height);
-						instance.states[state].image = canvas.toDataURL("image/png");
+						instance.states[state].image_override = canvas.toDataURL("image/png");
 					}}
 				/>
 			</button>
@@ -191,8 +191,8 @@
 					let result = reader.result?.toString();
 					if (result) {
 						let resized = await resizeImage(result);
-						if (resized) instance.states[state].image = resized;
-						else instance.states[state].image = result;
+						if (resized) instance.states[state].image_override = resized;
+						else instance.states[state].image_override = result;
 					}
 				};
 
@@ -204,7 +204,7 @@
 			<div class="flex flex-row items-center space-x-2">
 				<label for="editor-text">{$t("instance_editor.text")}</label>
 				<textarea
-					bind:value={instance.states[state].text}
+					bind:value={instance.states[state].text_override}
 					placeholder={instance.action.states[state]?.text || instance.action.name}
 					rows="1"
 					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg resize-none"

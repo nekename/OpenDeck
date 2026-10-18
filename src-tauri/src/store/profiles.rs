@@ -59,8 +59,23 @@ impl ProfileStores {
 				if let Some(instance) = slot {
 					if !keep_instance(instance) {
 						*slot = None;
+						continue;
 					} else if let Some(children) = &mut instance.children {
 						children.retain_mut(|child| keep_instance(child));
+					}
+
+					for (index, state) in instance.states.iter_mut().enumerate() {
+						if index >= instance.action.states.len() {
+							break;
+						}
+						if state.image_override.is_none() && state.image != instance.action.states[index].image {
+							state.image_override = Some(state.image.clone());
+							state.image = instance.action.states[index].image.clone();
+						}
+						if state.text_override.is_none() && state.text != instance.action.states[index].text {
+							state.text_override = Some(state.text.clone());
+							state.text = instance.action.states[index].text.clone();
+						}
 					}
 				}
 			}
