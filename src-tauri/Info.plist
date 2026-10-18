@@ -3,6 +3,6 @@
 <plist version="1.0">
 <dict>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>OpenDeck plugins use this to control other apps from your keys. Access applies to all installed plugins.</string>
+	<string>OpenDeck plugins use this to control your system and other apps. Access is granted to all installed plugins.</string>
 </dict>
 </plist>
