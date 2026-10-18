@@ -87,15 +87,7 @@ impl From<ActionInstance> for DiskActionInstance {
 			}
 		};
 
-		for (index, state) in value.states.iter_mut().enumerate() {
-			if state.text_override.as_ref().map(|s| s.is_empty()).unwrap_or(false) {
-				state.text_override = None;
-			}
-
-			let Some(ref mut image) = state.image_override else {
-				continue;
-			};
-
+		let normalise_image = |index: usize, image: &mut String| {
 			if image.trim() == "data:" {
 				*image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==".to_owned();
 			}
@@ -112,7 +104,7 @@ impl From<ActionInstance> for DiskActionInstance {
 				let data = if image.contains(";base64,") {
 					use base64::Engine;
 					let Ok(data) = base64::engine::general_purpose::STANDARD.decode(image.split_once(";base64,").unwrap().1) else {
-						continue;
+						return;
 					};
 					data
 				} else {
@@ -121,12 +113,23 @@ impl From<ActionInstance> for DiskActionInstance {
 
 				let filename = format!("{}.{}", index, extension);
 				if fs::create_dir_all(&image_dir).is_err() || fs::write(image_dir.join(&filename), data).is_err() {
-					continue;
+					return;
 				};
 				*image = filename;
 			}
 
 			*image = normalise_path(image);
+		};
+
+		for (index, state) in value.states.iter_mut().enumerate() {
+			if state.text_override.as_ref().map(|s| s.is_empty()).unwrap_or(false) {
+				state.text_override = None;
+			}
+
+			if let Some(ref mut image) = state.image_override {
+				normalise_image(index, image);
+			}
+			normalise_image(index, &mut state.image);
 		}
 		for state in value.action.states.iter_mut() {
 			state.image = normalise_path(&state.image);
@@ -161,9 +164,7 @@ impl DiskActionInstance {
 			}
 		};
 
-		let mut states = self.states.clone();
-		for state in states.iter_mut() {
-			let image = state.image_override.as_mut().unwrap_or(&mut state.image);
+		let reconstruct_image = |image: &mut String| {
 			if let Some(true) = image.chars().next().map(|v| v.is_numeric()) {
 				*image = config_dir
 					.join("images")
@@ -176,6 +177,14 @@ impl DiskActionInstance {
 			} else {
 				*image = reconstruct_path(image);
 			}
+		};
+
+		let mut states = self.states.clone();
+		for state in states.iter_mut() {
+			if let Some(ref mut image) = state.image_override {
+				reconstruct_image(image);
+			}
+			reconstruct_image(&mut state.image);
 		}
 		let mut action = self.action.clone();
 		for state in action.states.iter_mut() {

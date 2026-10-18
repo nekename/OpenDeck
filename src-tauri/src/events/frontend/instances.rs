@@ -126,12 +126,16 @@ pub async fn move_instance(source: Context, destination: Context, retain: bool) 
 		}
 	}
 	for state in new.states.iter_mut() {
-		let Some(image_override) = state.image_override.as_mut() else {
-			continue;
-		};
-		let path = std::path::Path::new(image_override);
+		let path = std::path::Path::new(&state.image);
 		if path.starts_with(&old_dir) {
-			*image_override = new_dir.join(path.strip_prefix(&old_dir).unwrap()).to_string_lossy().into_owned();
+			state.image = new_dir.join(path.strip_prefix(&old_dir).unwrap()).to_string_lossy().into_owned();
+		}
+
+		if let Some(image_override) = state.image_override.as_mut() {
+			let override_path = std::path::Path::new(image_override);
+			if override_path.starts_with(&old_dir) {
+				*image_override = new_dir.join(override_path.strip_prefix(&old_dir).unwrap()).to_string_lossy().into_owned();
+			}
 		}
 	}
 

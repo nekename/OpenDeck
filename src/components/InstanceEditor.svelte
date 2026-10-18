@@ -89,7 +89,10 @@
 				on:drop={handleDrop}
 				on:contextmenu={(event) => {
 					event.preventDefault();
-					instance.states[state].image_override = null;
+					if (instance.states[state].image_override) instance.states[state].image_override = null;
+					// Support further resetting the base image to the manifest value as a migration path
+					// for profiles where the base image and user override image were indistinguishable.
+					else instance.states[state].image = instance.action.states[state]?.image ?? instance.action.icon;
 				}}
 				title={$t("instance_editor.image.hint")}
 				aria-label={$t("instance_editor.image.hint")}
