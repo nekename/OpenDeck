@@ -71,7 +71,7 @@ fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result
 
 	// Similar to the title, except for the rendered icon.
 	let state_image = &instance.states[state_idx].image.trim();
-	let override_icon = instance.action.states[state_idx].image_override.clone();
+	let override_icon = instance.states[state_idx].image_override.clone();
 
 	// We need to do small item corrections here.
 	let mut feedback = Map::new();
