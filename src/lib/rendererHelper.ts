@@ -108,7 +108,7 @@ export async function renderImage(
 
 	// Draw text
 	if (state.show) {
-		const textSource = state.text_override ?? state.text;
+		const textSource = state.text_override || state.text;
 		const size = state.size * 2 * scale;
 		context.textAlign = "center";
 		context.font =

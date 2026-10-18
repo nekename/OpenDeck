@@ -88,6 +88,10 @@ impl From<ActionInstance> for DiskActionInstance {
 		};
 
 		for (index, state) in value.states.iter_mut().enumerate() {
+			if state.text_override.as_ref().map(|s| s.is_empty()).unwrap_or(false) {
+				state.text_override = None;
+			}
+
 			let Some(ref mut image) = state.image_override else {
 				continue;
 			};
