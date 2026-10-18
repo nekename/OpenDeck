@@ -1,6 +1,6 @@
 use super::{send_to_all_plugins, send_to_plugin};
 
-use crate::encoder_layouts::generate_encoder_image;
+use crate::layout::generate_encoder_image;
 use crate::plugins::{DEVICE_NAMESPACES, info_param::DeviceInfo};
 
 use base64::Engine;
@@ -51,7 +51,7 @@ struct SetImageEvent {
 pub async fn update_image(context: crate::shared::Context, image: Option<String>) -> Result<(), anyhow::Error> {
 	if let Some(plugin) = DEVICE_NAMESPACES.read().await.get(&context.device[..2]) {
 		let image = match (context.controller.as_str(), image) {
-			("Encoder", Some(img)) => Some(to_encoder_jpeg_data_uri(&context, &img).await?),
+			("Encoder" | "Neo", Some(img)) => Some(render_layout_jpeg_data_uri(&context, &img).await?),
 			(_, img) => img,
 		};
 
@@ -73,11 +73,14 @@ pub async fn update_image(context: crate::shared::Context, image: Option<String>
 	Ok(())
 }
 
-async fn to_encoder_jpeg_data_uri(context: &crate::shared::Context, image: &str) -> Result<String, anyhow::Error> {
+async fn render_layout_jpeg_data_uri(context: &crate::shared::Context, image: &str) -> Result<String, anyhow::Error> {
 	let data = image.split_once(',').unwrap().1;
 	let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
 
-	let img = generate_encoder_image(context, &bytes).await?;
+	let img = match context.controller.as_str() {
+		"Neo" => crate::layout::generate_infobar_image(context, &bytes).await?,
+		_ => generate_encoder_image(context, &bytes).await?,
+	};
 
 	let mut buf = Vec::new();
 	img.write_to(&mut Cursor::new(&mut buf), ImageFormat::Jpeg)?;

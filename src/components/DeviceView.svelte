@@ -32,19 +32,20 @@
 	}
 
 	async function handleDrop({ dataTransfer }: DragEvent, controller: string, position: number) {
-		let context = { device: device.id, profile: profile.id, controller, position };
-		let array = controller == "Encoder" ? profile.sliders : controller == "Infobar" ? profile.infobars : profile.keys;
+		let array = controller == "Encoder" ? profile.sliders : controller == "Neo" ? profile.infobars : profile.keys;
 		if (dataTransfer?.getData("action")) {
 			let action = JSON.parse(dataTransfer?.getData("action"));
 			if (array[position]) {
 				return;
 			}
+			let context = { device: device.id, profile: profile.id, controller, position };
 			array[position] = await invoke("create_instance", { context, action });
 			profile = profile;
 		} else if (dataTransfer?.getData("controller")) {
 			let oldController = dataTransfer?.getData("controller");
-			let oldArray = oldController == "Encoder" ? profile.sliders : oldController == "Infobar" ? profile.infobars : profile.keys;
+			let oldArray = oldController == "Encoder" ? profile.sliders : oldController == "Neo" ? profile.infobars : profile.keys;
 			let oldPosition = parseInt(dataTransfer?.getData("position"));
+			let context = { device: device.id, profile: profile.id, controller, position };
 			let response: ActionInstance = await invoke("move_instance", {
 				source: { device: device.id, profile: profile.id, controller: oldController, position: oldPosition },
 				destination: context,
@@ -59,7 +60,7 @@
 	}
 
 	async function handlePaste(item: CopiedItem, destination: Context) {
-		let array = destination.controller == "Encoder" ? profile.sliders : destination.controller == "Infobar" ? profile.infobars : profile.keys;
+		let array = destination.controller == "Encoder" ? profile.sliders : destination.controller == "Neo" ? profile.infobars : profile.keys;
 
 		if (item.type == "action") {
 			if (array[destination.position]) return;
@@ -220,11 +221,11 @@
 					{#each { length: device.infobars } as _, j}
 						<div class="px-3.5 py-[3.5px]">
 							<Key
-								context={{ device: device.id, profile: profile.id, controller: "Infobar", position: j }}
+								context={{ device: device.id, profile: profile.id, controller: "Neo", position: j }}
 								bind:inslot={profile.infobars[j]}
 								on:dragover={handleDragOver}
-								on:drop={(event) => handleDrop(event, "Infobar", j)}
-								on:dragstart={(event) => handleDragStart(event, "Infobar", j)}
+								on:drop={(event) => handleDrop(event, "Neo", j)}
+								on:dragstart={(event) => handleDragStart(event, "Neo", j)}
 								{handlePaste}
 								size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 								width={248}

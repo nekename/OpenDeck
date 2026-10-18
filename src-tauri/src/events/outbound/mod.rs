@@ -31,7 +31,7 @@ struct GenericInstancePayload {
 impl GenericInstancePayload {
 	fn new(instance: &crate::shared::ActionInstance) -> Self {
 		let coordinates = match &instance.context.controller[..] {
-			"Encoder" => Coordinates {
+			"Encoder" | "Neo" => Coordinates {
 				row: 0,
 				column: instance.context.position,
 			},

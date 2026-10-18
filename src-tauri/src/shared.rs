@@ -6,9 +6,9 @@ use std::sync::LazyLock;
 use serde::{Deserialize, Deserializer, Serialize, de::Visitor};
 use serde_inline_default::serde_inline_default;
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 use dashmap::DashMap;
-use streamdeck_strip_render::{get_incremental_renderer, strip_renderer::StripRenderer};
+use streamdeck_strip_render::strip_renderer::StripRenderer;
 use tauri::Manager;
 use tokio::sync::RwLock;
 
@@ -233,6 +233,10 @@ pub struct Action {
 
 	#[serde(alias = "States")]
 	pub states: Vec<ActionState>,
+
+	// Note: this is not a real manifest property; it is only used internally.
+	#[serde(skip)]
+	pub layout_parsed: Option<StripRenderer>,
 }
 
 /// An encoder, deserialised from the plugin manifest.
@@ -255,81 +259,6 @@ pub struct Encoder {
 
 	#[serde_inline_default(String::from("$X1"))]
 	pub layout: String,
-
-	// Note: this is not a real manifest property; it is only used internally.
-	#[serde(skip)]
-	pub layout_parsed: Option<StripRenderer>,
-}
-
-pub fn initialise_encoder_layout(action: &mut Action, layout: Option<String>) -> Result<(), anyhow::Error> {
-	let Some(encoder) = action.encoder.as_mut() else { return Ok(()) };
-
-	let load_layout = match layout.unwrap_or_else(|| encoder.layout.clone()) {
-		s if s.is_empty() => "$X1".to_string(),
-		s => s,
-	};
-
-	let layout = if load_layout.starts_with('$') {
-		load_layout.clone()
-	} else {
-		let plugin_dir = config_dir().join("plugins").join(&action.plugin);
-		let layout_file = plugin_dir.join(&load_layout);
-
-		let Ok(plugin_dir) = plugin_dir.canonicalize() else {
-			bail!("Failed to canonicalize plugin directory: {}", plugin_dir.display());
-		};
-
-		match layout_file.canonicalize() {
-			Ok(resolved) if resolved.starts_with(&plugin_dir) => resolved.to_string_lossy().into_owned(),
-			Ok(_) => {
-				encoder.layout_parsed = None;
-				bail!("Encoder layout path escapes plugin directory: {}", load_layout);
-			}
-			Err(error) => {
-				encoder.layout_parsed = None;
-				bail!("Failed to canonicalize encoder layout path {}: {}", load_layout, error);
-			}
-		}
-	};
-
-	match load_encoder_layout(&layout) {
-		Ok(parsed) => encoder.layout_parsed = Some(get_incremental_renderer(parsed, None)?),
-		Err(error) => {
-			encoder.layout_parsed = None;
-			bail!("Failed to load encoder layout {}: {}", load_layout, error)
-		}
-	}
-	Ok(())
-}
-
-fn load_encoder_layout(layout: &str) -> Result<serde_json::Value> {
-	match layout {
-		"$A0" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/A0.json"))?),
-		"$A1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/A1.json"))?),
-		"$B1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/B1.json"))?),
-		"$B2" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/B2.json"))?),
-		"$C1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/C1.json"))?),
-		"$X1" => Ok(serde_json::from_str(include_str!("../../static/encoder_layouts/X1.json"))?),
-
-		path_str => {
-			if path_str.is_empty() {
-				bail!("Encoder layout path is blank, ignoring");
-			}
-
-			// This doesn't match an existing built-in layout
-			if path_str.starts_with('$') {
-				bail!("Invalid encoder layout type: {}", path_str);
-			}
-
-			let path = Path::new(path_str);
-			if !path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("json")) {
-				bail!("Invalid encoder layout type: {}", path_str);
-			}
-
-			let content = std::fs::read_to_string(path)?;
-			Ok(serde_json::from_str(&content)?)
-		}
-	}
 }
 
 /// Descriptions of touchstrip interaction response behaviours, to be shown to the user in the PI

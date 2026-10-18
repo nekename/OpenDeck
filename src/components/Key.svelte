@@ -198,7 +198,7 @@
 		style={`margin: ${-((size + 3 * 2 /* border */ - 132) /* desired outer size */ / 2)}px;`}
 		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
 		class:rounded-full!={context?.controller == "Encoder"}
-		class:rounded-lg!={context?.controller == "Infobar"}
+		class:rounded-lg!={context?.controller == "Neo"}
 		class:bg-black={slot != null}
 		{width}
 		{height}

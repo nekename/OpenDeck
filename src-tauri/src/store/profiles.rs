@@ -1,6 +1,7 @@
 use super::Store;
 
-use crate::shared::{ActionInstance, DEVICES, DeviceInfo, Profile, config_dir, copy_dir, initialise_encoder_layout};
+use crate::layout::initialise_layout;
+use crate::shared::{ActionInstance, DEVICES, DeviceInfo, Profile, config_dir, copy_dir};
 
 use std::collections::HashMap;
 use std::fs;
@@ -75,7 +76,15 @@ impl ProfileStores {
 				}
 
 				// Load encoder layout if not yet parsed
-				let _ = initialise_encoder_layout(&mut instance.action, None);
+				let _ = initialise_layout(&mut instance.action, "Encoder", None);
+			}
+
+			for instance in store.value.infobars.iter_mut().flatten() {
+				if instance.context.controller == "Infobar" {
+					instance.context.controller = "Neo".to_string();
+				}
+
+				let _ = initialise_layout(&mut instance.action, &instance.context.controller, None);
 			}
 
 			store.save()?;
@@ -317,7 +326,7 @@ pub async fn get_slot<'a>(context: &crate::shared::Context, locks: &'a Locks<'_>
 
 	let configured = match &context.controller[..] {
 		"Encoder" => store.value.sliders.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
-		"Infobar" => store.value.infobars.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
+		"Neo" => store.value.infobars.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 		_ => store.value.keys.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 	};
 
@@ -330,7 +339,7 @@ pub async fn get_slot_mut<'a>(context: &crate::shared::Context, locks: &'a mut L
 
 	let configured = match &context.controller[..] {
 		"Encoder" => store.value.sliders.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
-		"Infobar" => store.value.infobars.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
+		"Neo" => store.value.infobars.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 		_ => store.value.keys.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
 	};
 
