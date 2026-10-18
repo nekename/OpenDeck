@@ -61,17 +61,17 @@ fn get_encoder_image(encoder: &mut Encoder, instance: &ActionInstance) -> Result
 
 	// Override the title if it's set in the state.
 	let override_title = {
-		let t = instance.states[state_idx].text.trim();
-		(!t.is_empty()).then(|| t.to_string())
+		let t = instance.states[state_idx]
+			.text_override
+			.clone()
+			.filter(|s| !s.is_empty())
+			.unwrap_or_else(|| instance.states[state_idx].text.clone());
+		(!t.is_empty()).then_some(t)
 	};
 
-	// Similar to the title, except for the rendered icon (we check whether the state matches the default, and if it doesn't, we use it).
+	// Similar to the title, except for the rendered icon.
 	let state_image = &instance.states[state_idx].image.trim();
-
-	let override_icon = {
-		let default_image = &instance.action.states[state_idx].image.trim();
-		(!state_image.is_empty() && state_image != default_image).then(|| state_image.to_string())
-	};
+	let override_icon = instance.states[state_idx].image_override.clone();
 
 	// We need to do small item corrections here.
 	let mut feedback = Map::new();

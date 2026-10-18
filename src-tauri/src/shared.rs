@@ -128,6 +128,9 @@ pub struct ActionState {
 	#[serde(alias = "Image")]
 	pub image: String,
 	// Note: this is not a real manifest property; it is only used internally.
+	#[serde(alias = "ImageOverride")]
+	pub image_override: Option<String>,
+	// Note: this is not a real manifest property; it is only used internally.
 	#[serde(alias = "ImageScale")]
 	pub image_scale: u8,
 	// Note: this is not a real manifest property; it is only used internally.
@@ -137,6 +140,9 @@ pub struct ActionState {
 	pub name: String,
 	#[serde(alias = "Title")]
 	pub text: String,
+	// Note: this is not a real manifest property; it is only used internally.
+	#[serde(alias = "TitleOverride")]
+	pub text_override: Option<String>,
 	#[serde(alias = "ShowTitle")]
 	pub show: bool,
 	#[serde(alias = "TitleColor")]
@@ -163,10 +169,12 @@ impl Default for ActionState {
 	fn default() -> Self {
 		Self {
 			image: "actionDefaultImage".to_owned(),
+			image_override: None,
 			image_scale: 100,
 			background_colour: "#000000".to_owned(),
 			name: String::new(),
 			text: String::new(),
+			text_override: None,
 			show: true,
 			colour: "#FFFFFF".to_owned(),
 			stroke_colour: "#000000".to_owned(),
