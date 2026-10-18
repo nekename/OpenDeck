@@ -208,7 +208,7 @@
 				<label for="editor-text">{$t("instance_editor.text")}</label>
 				<textarea
 					bind:value={instance.states[state].text_override}
-					placeholder={instance.action.states[state]?.text || instance.action.name}
+					placeholder={instance.states[state].text}
 					rows="1"
 					class="w-full px-1 text-neutral-300 bg-neutral-600 border border-neutral-500 rounded-lg resize-none"
 					id="editor-text"
