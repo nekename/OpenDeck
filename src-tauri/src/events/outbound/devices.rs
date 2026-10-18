@@ -74,7 +74,7 @@ pub async fn update_image(context: crate::shared::Context, image: Option<String>
 }
 
 async fn to_encoder_jpeg_data_uri(context: &crate::shared::Context, image: &str) -> Result<String, anyhow::Error> {
-	let data = image.split_once(',').unwrap().1;
+	let data = image.split_once(',').unwrap().1.trim();
 	let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
 
 	let img = generate_encoder_image(context, &bytes).await?;

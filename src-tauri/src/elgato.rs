@@ -37,7 +37,7 @@ pub async fn update_image(context: &crate::shared::Context, image: Option<&str>)
 		let is_touch_point = context.controller == "Keypad" && context.position >= key_count;
 
 		if let Some(image) = image {
-			let data = image.split_once(',').unwrap().1;
+			let data = image.split_once(',').unwrap().1.trim();
 			let bytes = base64::engine::general_purpose::STANDARD.decode(data)?;
 			if context.controller == "Encoder" {
 				let mut img = generate_encoder_image(context, &bytes).await?;

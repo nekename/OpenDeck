@@ -103,7 +103,7 @@ impl From<ActionInstance> for DiskActionInstance {
 
 				let data = if state.image.contains(";base64,") {
 					use base64::Engine;
-					let Ok(data) = base64::engine::general_purpose::STANDARD.decode(state.image.split_once(";base64,").unwrap().1) else {
+					let Ok(data) = base64::engine::general_purpose::STANDARD.decode(state.image.split_once(";base64,").unwrap().1.trim()) else {
 						continue;
 					};
 					data
