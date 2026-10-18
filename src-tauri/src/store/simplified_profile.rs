@@ -87,7 +87,7 @@ impl From<ActionInstance> for DiskActionInstance {
 			}
 		};
 
-		let normalise_image = |index: usize, image: &mut String| {
+		let normalise_image = |index: usize, image: &mut String, suffix: &str| {
 			if image.trim() == "data:" {
 				*image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==".to_owned();
 			}
@@ -111,7 +111,7 @@ impl From<ActionInstance> for DiskActionInstance {
 					image.split_once(',').unwrap().1.as_bytes().to_vec()
 				};
 
-				let filename = format!("{}.{}", index, extension);
+				let filename = format!("{}{}.{}", index, suffix, extension);
 				if fs::create_dir_all(&image_dir).is_err() || fs::write(image_dir.join(&filename), data).is_err() {
 					return;
 				};
@@ -127,9 +127,9 @@ impl From<ActionInstance> for DiskActionInstance {
 			}
 
 			if let Some(ref mut image) = state.image_override {
-				normalise_image(index, image);
+				normalise_image(index, image, "-user");
 			}
-			normalise_image(index, &mut state.image);
+			normalise_image(index, &mut state.image, "");
 		}
 		for state in value.action.states.iter_mut() {
 			state.image = normalise_path(&state.image);
