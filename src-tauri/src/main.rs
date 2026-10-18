@@ -243,7 +243,7 @@ If you have already donated, thank you so much for your support!"#,
 					let _ = match event.id().as_ref() {
 						"show" => show_window(app),
 						"hide" => hide_window(app),
-						"restart" => app.restart(),
+						"restart" => shared::restart(app),
 						"quit" => {
 							app.exit(0);
 							Ok(())

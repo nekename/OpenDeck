@@ -64,6 +64,14 @@ pub fn is_flatpak() -> bool {
 	var("FLATPAK_ID").is_ok() || var("container").map(|x| x.to_lowercase().trim() == "flatpak").unwrap_or(false)
 }
 
+/// Restart the application.
+pub fn restart(app: &tauri::AppHandle) -> ! {
+	#[cfg(windows)]
+	futures::executor::block_on(crate::plugins::deactivate_plugins());
+
+	app.restart()
+}
+
 /// Convert an icon specified in a plugin manifest to its full path.
 pub fn convert_icon(path: String) -> String {
 	if Path::new(&(path.clone() + ".svg")).exists() {
