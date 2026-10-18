@@ -163,9 +163,7 @@ impl DiskActionInstance {
 
 		let mut states = self.states.clone();
 		for state in states.iter_mut() {
-			let Some(ref mut image) = state.image_override else {
-				continue;
-			};
+			let image = state.image_override.as_mut().unwrap_or(&mut state.image);
 			if let Some(true) = image.chars().next().map(|v| v.is_numeric()) {
 				*image = config_dir
 					.join("images")
