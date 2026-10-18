@@ -188,7 +188,8 @@
 		await invoke("trigger_virtual_press", { context });
 	}
 
-	$: accessibleLabel = label + (slot ? ": " + slot.action.name + (state?.show && state?.text ? " - " + state.text : "") : "");
+	$: accessibleLabel =
+		label + (slot ? ": " + slot.action.name + (state?.show && (state?.text_override || state?.text) ? " - " + (state.text_override || state.text) : "") : "");
 </script>
 
 <div class="relative" style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}>
