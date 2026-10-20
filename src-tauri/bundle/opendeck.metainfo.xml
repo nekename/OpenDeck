@@ -53,6 +53,19 @@
 	</branding>
 
 	<releases>
+		<release version="2.14.2" date="2026-10-20">
+			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.14.2</url>
+			<description>
+				<ul>
+					<li>feat: update elgato-streamdeck to support Stream Deck MK.2 with Scissor Keys Module</li>
+					<li>fix: deactivate plugins before restarting the application on Windows</li>
+					<li>fix: add NSAppleEventsUsageDescription to Info.plist so plugins can request automation permissions (#474)</li>
+					<li>fix: prevent custom action state images and text from being overriden by plugin events</li>
+					<li>fix: validate device ID length and plugin ownership of namespace before processing incoming device events</li>
+					<li>fix: prohibit duplicate registration of WebSocket connections for plugins and property inspectors</li>
+				</ul>
+			</description>
+		</release>
 		<release version="2.14.1" date="2026-10-10">
 			<url type="details">https://github.com/nekename/OpenDeck/releases/tag/v2.14.1</url>
 			<description>
