@@ -6,6 +6,7 @@ export type Settings = {
 	sleep_when_computer_locked: boolean;
 	rotation: number;
 	background: boolean;
+	trayicon: string;
 	autolaunch: boolean;
 	updatecheck: boolean;
 	statistics: boolean;
