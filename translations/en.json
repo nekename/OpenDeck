@@ -150,5 +150,11 @@
 	"settings.sleep_when_computer_locked": "Sleep when computer is locked:",
 	"settings.sleep_when_computer_locked.tooltip": "If this option is enabled, devices will enter sleep mode when the computer locks and all key presses will be suppressed until it is unlocked.",
 	"settings.statistics": "Contribute statistics:",
+	"settings.trayicon": "Tray icon:",
+	"settings.trayicon.auto": "Monochrome (automatic)",
+	"settings.trayicon.colour": "Colour",
+	"settings.trayicon.dark": "Monochrome (dark)",
+	"settings.trayicon.light": "Monochrome (light)",
+	"settings.trayicon.tooltip": "Use a monochrome tray icon to match your system's icon theme. The automatic variant follows the theme of your taskbar or panel; if it guesses wrong, choose the light variant for dark panels or the dark variant for light panels. On macOS, all monochrome variants adapt to the menu bar automatically.",
 	"settings.updatecheck": "Check for updates:"
 }

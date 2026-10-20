@@ -20,11 +20,11 @@ pub async fn get_settings() -> crate::store::Settings {
 }
 
 #[command]
-pub async fn set_settings(_app: AppHandle, settings: crate::store::Settings) -> Result<(), Error> {
+pub async fn set_settings(app: AppHandle, settings: crate::store::Settings) -> Result<(), Error> {
 	#[cfg(not(debug_assertions))]
 	let _ = match settings.autolaunch {
-		true => _app.autolaunch().enable(),
-		false => _app.autolaunch().disable(),
+		true => app.autolaunch().enable(),
+		false => app.autolaunch().disable(),
 	};
 
 	crate::events::outbound::devices::set_brightness(settings.brightness).await?;
@@ -32,6 +32,11 @@ pub async fn set_settings(_app: AppHandle, settings: crate::store::Settings) -> 
 	crate::device_sleep::update_sleep_when_computer_locked(settings.sleep_when_computer_locked).await?;
 
 	let mut store = crate::store::SETTINGS_MUT.lock().await;
+	if store.value.trayicon != settings.trayicon
+		&& let Err(error) = crate::tray::set_icon(&app, &settings.trayicon)
+	{
+		log::error!("Failed to update tray icon: {error}");
+	}
 	store.value = settings;
 	store.save()?;
 	Ok(())

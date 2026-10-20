@@ -150,5 +150,11 @@
 	"settings.sleep_when_computer_locked": "Ruhezustand, wenn der Computer gesperrt ist:",
 	"settings.sleep_when_computer_locked.tooltip": "Wenn diese Option aktiviert ist, wechseln die Geräte beim Sperren des Computers in den Ruhezustand, und alle Tastendrücke werden bis zum Entsperren des Computers unterdrückt.",
 	"settings.statistics": "Statistiken übermitteln:",
+	"settings.trayicon": "Tray-Symbol:",
+	"settings.trayicon.auto": "Monochrom (automatisch)",
+	"settings.trayicon.colour": "Farbig",
+	"settings.trayicon.dark": "Monochrom (dunkel)",
+	"settings.trayicon.light": "Monochrom (hell)",
+	"settings.trayicon.tooltip": "Verwende ein monochromes Tray-Symbol, das zum Symboldesign deines Systems passt. Die automatische Variante richtet sich nach dem Design deiner Taskleiste bzw. Kontrollleiste; liegt sie falsch, wähle die helle Variante für dunkle Leisten oder die dunkle Variante für helle Leisten. Unter macOS passen sich alle monochromen Varianten automatisch an die Menüleiste an.",
 	"settings.updatecheck": "Automatisch auf Updates prüfen:"
 }

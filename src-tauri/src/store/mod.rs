@@ -135,6 +135,7 @@ pub struct Settings {
 	pub sleep_when_computer_locked: bool,
 	pub rotation: u16,
 	pub background: bool,
+	pub trayicon: String,
 	pub autolaunch: bool,
 	pub updatecheck: bool,
 	pub statistics: bool,
@@ -153,6 +154,7 @@ impl Default for Settings {
 			sleep_when_computer_locked: false,
 			rotation: 0,
 			background: !is_flatpak(),
+			trayicon: "colour".to_owned(),
 			autolaunch: false,
 			updatecheck: option_env!("OPENDECK_DISABLE_UPDATE_CHECK").is_none() && !is_flatpak(),
 			// Consent is given by the user on install so it is OK to have the default be `true`
