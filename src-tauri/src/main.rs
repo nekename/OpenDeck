@@ -56,6 +56,21 @@ fn hide_window(app: &AppHandle) -> Result<(), tauri::Error> {
 	Ok(())
 }
 
+// The KSNI tray backend sends icons over D-Bus on every request, so avoid sending the full-size window icon
+#[cfg(target_os = "linux")]
+fn tray_icon(app: &AppHandle) -> tauri::image::Image<'static> {
+	const SIZE: u32 = 64;
+	let icon = app.default_window_icon().unwrap();
+	let buffer = image::RgbaImage::from_raw(icon.width(), icon.height(), icon.rgba().to_vec()).unwrap();
+	let resized = image::imageops::resize(&buffer, SIZE, SIZE, image::imageops::FilterType::Lanczos3);
+	tauri::image::Image::new_owned(resized.into_raw(), SIZE, SIZE)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn tray_icon(app: &AppHandle) -> tauri::image::Image<'static> {
+	app.default_window_icon().unwrap().clone().to_owned()
+}
+
 #[tokio::main]
 async fn main() {
 	log_panics::init();
@@ -214,8 +229,9 @@ If you have already donated, thank you so much for your support!"#,
 			device_sleep::init_device_sleep();
 			power_events::init_power_events();
 
+			let icon = tray_icon(app.handle());
 			let label = IconMenuItemBuilder::with_id("label", PRODUCT_NAME)
-				.icon(app.default_window_icon().unwrap().clone())
+				.icon(icon.clone())
 				.enabled(false)
 				.build(app)?;
 			let show = MenuItemBuilder::with_id("show", "Show").build(app)?;
@@ -226,11 +242,16 @@ If you have already donated, thank you so much for your support!"#,
 			let menu = MenuBuilder::new(app).items(&[&label, &separator, &show, &hide, &separator, &restart, &quit]).build()?;
 			let _tray = TrayIconBuilder::with_id("opendeck")
 				.menu(&menu)
-				.icon(app.default_window_icon().unwrap().clone())
+				.icon(icon)
 				.show_menu_on_left_click(false)
 				.on_tray_icon_event(move |icon, event| {
 					if let TrayIconEvent::Click { button, button_state, .. } = event {
-						if button != MouseButton::Left || button_state != MouseButtonState::Down {
+						// The KSNI backend used on Linux only emits release events
+						#[cfg(target_os = "linux")]
+						const TOGGLE_STATE: MouseButtonState = MouseButtonState::Up;
+						#[cfg(not(target_os = "linux"))]
+						const TOGGLE_STATE: MouseButtonState = MouseButtonState::Down;
+						if button != MouseButton::Left || button_state != TOGGLE_STATE {
 							return;
 						}
 
