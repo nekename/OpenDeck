@@ -230,7 +230,12 @@ If you have already donated, thank you so much for your support!"#,
 				.show_menu_on_left_click(false)
 				.on_tray_icon_event(move |icon, event| {
 					if let TrayIconEvent::Click { button, button_state, .. } = event {
-						if button != MouseButton::Left || button_state != MouseButtonState::Down {
+						// The KSNI backend used on Linux only emits release events
+						#[cfg(target_os = "linux")]
+						const TOGGLE_STATE: MouseButtonState = MouseButtonState::Up;
+						#[cfg(not(target_os = "linux"))]
+						const TOGGLE_STATE: MouseButtonState = MouseButtonState::Down;
+						if button != MouseButton::Left || button_state != TOGGLE_STATE {
 							return;
 						}
 
