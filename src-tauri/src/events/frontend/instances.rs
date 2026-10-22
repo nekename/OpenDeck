@@ -84,6 +84,96 @@ fn instance_images_dir(context: &ActionContext) -> std::path::PathBuf {
 }
 
 #[command]
+pub async fn get_application_icon(name: String) -> Result<Option<String>, Error> {
+	#[cfg(target_os = "macos")]
+	{
+		use base64::Engine;
+
+		// LaunchServices resolves any registered application, wherever it lives.
+		let escaped = name.replace('\\', "\\\\").replace('"', "\\\"");
+		let resolved = tokio::process::Command::new("osascript")
+			.args(["-e", &format!("POSIX path of (path to application \"{escaped}\")")])
+			.output()
+			.await;
+		let mut path = resolved.map(|output| String::from_utf8_lossy(&output.stdout).trim().to_owned()).unwrap_or_default();
+		if path.is_empty() {
+			for candidate in [
+				format!("/Applications/{name}.app"),
+				format!("/System/Applications/{name}.app"),
+				format!("/Applications/Utilities/{name}.app"),
+			] {
+				if std::path::Path::new(&candidate).exists() {
+					path = candidate;
+					break;
+				}
+			}
+		}
+		if path.is_empty() {
+			return Ok(None);
+		}
+
+		let bundle = std::path::Path::new(path.trim_end_matches('/'));
+		let info = bundle.join("Contents").join("Info.plist");
+		let icon_name = tokio::process::Command::new("/usr/libexec/PlistBuddy")
+			.args(["-c", "Print :CFBundleIconFile", &info.to_string_lossy()])
+			.output()
+			.await
+			.map(|output| String::from_utf8_lossy(&output.stdout).trim().to_owned())
+			.unwrap_or_default();
+		if icon_name.is_empty() {
+			return Ok(None);
+		}
+
+		let mut icon_file = icon_name;
+		if !icon_file.ends_with(".icns") {
+			icon_file.push_str(".icns");
+		}
+		let icns = bundle.join("Contents").join("Resources").join(icon_file);
+		if !icns.exists() {
+			return Ok(None);
+		}
+
+		let png = std::env::temp_dir().join(format!("opendeck-icon-{}.png", std::process::id()));
+		let _ = tokio::process::Command::new("sips")
+			.args(["-s", "format", "png", "-Z", "144"])
+			.arg(&icns)
+			.arg("--out")
+			.arg(&png)
+			.output()
+			.await;
+		let bytes = tokio::fs::read(&png).await;
+		let _ = tokio::fs::remove_file(&png).await;
+
+		let Ok(bytes) = bytes else {
+			return Ok(None);
+		};
+		Ok(Some(format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(bytes))))
+	}
+
+	#[cfg(not(target_os = "macos"))]
+	{
+		let _ = name;
+		Ok(None)
+	}
+}
+
+#[command]
+pub async fn set_instance_settings(context: ActionContext, settings: serde_json::Value) -> Result<(), Error> {
+	let mut locks = acquire_locks_mut().await;
+
+	if let Some(instance) = get_instance_mut(&context, &mut locks).await? {
+		instance.settings = settings;
+		let instance = instance.clone();
+
+		save_profile_now(&context.device, &mut locks).await?;
+		drop(locks);
+		let _ = crate::events::outbound::settings::did_receive_settings(&instance, false).await;
+	}
+
+	Ok(())
+}
+
+#[command]
 pub async fn move_instance(source: Context, destination: Context, retain: bool) -> Result<Option<ActionInstance>, Error> {
 	if source.controller != destination.controller {
 		return Ok(None);
