@@ -117,6 +117,26 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 			{
 				return;
 			}
+
+			if let Some(device_id) = match &decoded {
+				InboundEventType::RegisterDevice(event) => Some(&event.payload.id),
+				InboundEventType::DeregisterDevice(event) => Some(&event.payload),
+				InboundEventType::RerenderImages(event) => Some(&event.payload),
+				InboundEventType::KeyDown(event) => Some(&event.payload.device),
+				InboundEventType::KeyUp(event) => Some(&event.payload.device),
+				InboundEventType::EncoderChange(event) => Some(&event.payload.device),
+				InboundEventType::EncoderDown(event) => Some(&event.payload.device),
+				InboundEventType::EncoderUp(event) => Some(&event.payload.device),
+				InboundEventType::TouchscreenPress(event) => Some(&event.payload.device),
+				_ => None,
+			} {
+				let Some(namespace) = device_id.get(..2) else {
+					return;
+				};
+				if Some(uuid) != crate::plugins::DEVICE_NAMESPACES.read().await.get(namespace).map(|x| x.as_str()) {
+					return;
+				}
+			}
 		}
 
 		if let Err(error) = match decoded {

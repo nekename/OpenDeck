@@ -76,7 +76,8 @@ export async function renderImage(
 		// Load image
 		const image = document.createElement("img");
 		image.crossOrigin = "anonymous";
-		image.src = processImage ? getImage(state.image, fallback) : state.image;
+		const imageSource = state.image_override ?? state.image;
+		image.src = processImage ? getImage(imageSource, fallback) : imageSource;
 		if (image.src == undefined) return;
 		await new Promise((resolve, reject) => {
 			image.onload = resolve;
@@ -107,6 +108,7 @@ export async function renderImage(
 
 	// Draw text
 	if (state.show) {
+		const textSource = state.text_override || state.text;
 		const size = state.size * 2 * scale;
 		context.textAlign = "center";
 		context.font =
@@ -116,16 +118,16 @@ export async function renderImage(
 		context.lineWidth = state.stroke_size * scale;
 		context.textBaseline = "top";
 		const x = canvas.width / 2;
-		let y = canvas.height / 2 - size * state.text.split("\n").length * 0.5;
+		let y = canvas.height / 2 - size * textSource.split("\n").length * 0.5;
 		switch (state.alignment) {
 			case "top":
 				y = context.lineWidth;
 				break;
 			case "bottom":
-				y = canvas.height - size * state.text.split("\n").length - context.lineWidth;
+				y = canvas.height - size * textSource.split("\n").length - context.lineWidth;
 				break;
 		}
-		for (const [index, line] of Object.entries(state.text.split("\n"))) {
+		for (const [index, line] of Object.entries(textSource.split("\n"))) {
 			context.strokeText(line, x, y + size * parseInt(index));
 			context.fillText(line, x, y + size * parseInt(index));
 			if (state.underline) {

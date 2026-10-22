@@ -87,13 +87,13 @@ impl From<ActionInstance> for DiskActionInstance {
 			}
 		};
 
-		for (index, state) in value.states.iter_mut().enumerate() {
-			if state.image.trim() == "data:" {
-				state.image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==".to_owned();
+		let normalise_image = |index: usize, image: &mut String, suffix: &str| {
+			if image.trim() == "data:" {
+				*image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==".to_owned();
 			}
 
-			if state.image.starts_with("data:") && state.image.contains('/') && state.image.contains(',') {
-				let mut extension = state.image.split_once('/').unwrap().1.split_once(',').unwrap().0;
+			if image.starts_with("data:") && image.contains('/') && image.contains(',') {
+				let mut extension = image.split_once('/').unwrap().1.split_once(',').unwrap().0;
 				if extension.contains(';') {
 					extension = extension.split_once(';').unwrap().0;
 				}
@@ -101,24 +101,35 @@ impl From<ActionInstance> for DiskActionInstance {
 					extension = extension.split_once('+').unwrap().0;
 				}
 
-				let data = if state.image.contains(";base64,") {
+				let data = if image.contains(";base64,") {
 					use base64::Engine;
-					let Ok(data) = base64::engine::general_purpose::STANDARD.decode(state.image.split_once(";base64,").unwrap().1) else {
-						continue;
+					let Ok(data) = base64::engine::general_purpose::STANDARD.decode(image.split_once(";base64,").unwrap().1) else {
+						return;
 					};
 					data
 				} else {
-					state.image.split_once(',').unwrap().1.as_bytes().to_vec()
+					image.split_once(',').unwrap().1.as_bytes().to_vec()
 				};
 
-				let filename = format!("{}.{}", index, extension);
+				let filename = format!("{}{}.{}", index, suffix, extension);
 				if fs::create_dir_all(&image_dir).is_err() || fs::write(image_dir.join(&filename), data).is_err() {
-					continue;
+					return;
 				};
-				state.image = filename;
+				*image = filename;
 			}
 
-			state.image = normalise_path(&state.image);
+			*image = normalise_path(image);
+		};
+
+		for (index, state) in value.states.iter_mut().enumerate() {
+			if state.text_override.as_ref().map(|s| s.is_empty()).unwrap_or(false) {
+				state.text_override = None;
+			}
+
+			if let Some(ref mut image) = state.image_override {
+				normalise_image(index, image, "-user");
+			}
+			normalise_image(index, &mut state.image, "");
 		}
 		for state in value.action.states.iter_mut() {
 			state.image = normalise_path(&state.image);
@@ -153,20 +164,27 @@ impl DiskActionInstance {
 			}
 		};
 
-		let mut states = self.states.clone();
-		for state in states.iter_mut() {
-			if let Some(true) = state.image.chars().next().map(|v| v.is_numeric()) {
-				state.image = config_dir
+		let reconstruct_image = |image: &mut String| {
+			if let Some(true) = image.chars().next().map(|v| v.is_numeric()) {
+				*image = config_dir
 					.join("images")
 					.join(&device)
 					.join(&profile)
 					.join(self.context.to_string())
-					.join(&state.image)
+					.join(&image)
 					.to_string_lossy()
 					.into_owned();
 			} else {
-				state.image = reconstruct_path(&state.image);
+				*image = reconstruct_path(image);
 			}
+		};
+
+		let mut states = self.states.clone();
+		for state in states.iter_mut() {
+			if let Some(ref mut image) = state.image_override {
+				reconstruct_image(image);
+			}
+			reconstruct_image(&mut state.image);
 		}
 		let mut action = self.action.clone();
 		for state in action.states.iter_mut() {

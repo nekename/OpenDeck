@@ -147,7 +147,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 	let device_name = device.product().await.unwrap();
 	let kind = device.kind();
 	let device_type = match kind {
-		Kind::Original | Kind::OriginalV2 | Kind::Mk2 | Kind::Mk2Scissor | Kind::Mk2Module => 0,
+		Kind::Original | Kind::OriginalV2 | Kind::Mk2 | Kind::Mk2Scissor | Kind::Mk2Module | Kind::Mk2ModuleScissor => 0,
 		Kind::Mini | Kind::MiniMk2 | Kind::MiniDiscord | Kind::MiniMk2Module => 1,
 		Kind::Xl | Kind::XlV2 | Kind::XlV2Module => 2,
 		Kind::Pedal => 5,
