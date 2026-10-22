@@ -3577,6 +3577,8 @@ dependencies = [
  "tokio-tungstenite",
  "urlencoding",
  "windows-sys 0.61.2",
+ "xcb",
+ "zbus",
  "zip",
 ]
 
