@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Action } from "$lib/Action";
 	import type { ActionInstance } from "$lib/ActionInstance";
 	import type { Context } from "$lib/Context";
 	import type { DeviceInfo } from "$lib/DeviceInfo";
@@ -29,30 +30,88 @@
 		if (!event.dataTransfer) return;
 		if (event.dataTransfer.types.includes("action")) event.dataTransfer.dropEffect = "copy";
 		else if (event.dataTransfer.types.includes("controller")) event.dataTransfer.dropEffect = "move";
+		else if (event.dataTransfer.types.includes("Files")) event.dataTransfer.dropEffect = "copy";
+	}
+
+	// Returns the name of a file dropped from outside the application, if any. WebKit
+	// delivers dropped directories as a zip archive, so an application bundle arrives
+	// as "Name.app.zip". Some webviews only expose bundles as a file URI instead.
+	function droppedFileName(dataTransfer: DataTransfer): string | null {
+		const file = dataTransfer.files?.[0];
+		if (file?.name) return file.name;
+
+		const uri = dataTransfer.getData("text/uri-list") || dataTransfer.getData("text/plain");
+		if (!uri.startsWith("file://")) return null;
+
+		const name = decodeURIComponent(uri.split(/\r?\n/)[0]).replace(/\/+$/, "").split("/").pop();
+		return name || null;
 	}
 
 	async function handleDrop({ dataTransfer }: DragEvent, controller: string, position: number) {
+		// The contents of a DataTransfer can only be read before the first await.
+		const droppedFile = dataTransfer ? droppedFileName(dataTransfer) : null;
+		const actionData = dataTransfer?.getData("action") ?? "";
+		const controllerData = dataTransfer?.getData("controller") ?? "";
+		const positionData = controllerData ? parseInt(dataTransfer?.getData("position") ?? "0") : 0;
+
 		let context = { device: device.id, profile: profile.id, controller, position };
 		let array = controller == "Encoder" ? profile.sliders : controller == "Infobar" ? profile.infobars : profile.keys;
-		if (dataTransfer?.getData("action")) {
-			let action = JSON.parse(dataTransfer?.getData("action"));
+
+		if (droppedFile) {
+			// An application bundle or entry dragged in from the system file manager, from
+			// which a Run Command action that launches the application can be created.
+			let name: string | null = null;
+			let command: string | null = null;
+			if (droppedFile.endsWith(".app.zip")) {
+				// WebKit delivers dropped directories as a zip archive, so an application
+				// bundle arrives as "Name.app.zip".
+				name = droppedFile.slice(0, -8);
+				command = `open -a "${name}"`;
+			} else if (droppedFile.endsWith(".app")) {
+				name = droppedFile.slice(0, -4);
+				command = `open -a "${name}"`;
+			} else if (droppedFile.endsWith(".desktop")) {
+				name = droppedFile.slice(0, -8);
+				command = `gtk-launch "${name}"`;
+			}
+			if (command && !array[position]) {
+				const categories: { [name: string]: { icon?: string; actions: Action[] } } = await invoke("get_categories");
+				const action = Object.values(categories)
+					.flatMap((category) => category.actions ?? [])
+					.find((action) => action.uuid == "com.amansprojects.starterpack.runcommand");
+				if (action) {
+					const instance: ActionInstance = await invoke("create_instance", { context, action });
+					if (instance) {
+						instance.states[0].text_override = name;
+						instance.states[0].show = true;
+						const icon: string | null = name ? await invoke("get_application_icon", { name }) : null;
+						if (icon) instance.states[0].image_override = icon;
+						instance.settings = { down: command };
+						array[position] = instance;
+						profile = profile;
+						await invoke("set_instance_settings", { context: instance.context, settings: instance.settings });
+						await invoke("set_state", { context: instance.context, index: 0, state: instance.states[0] });
+					}
+				}
+			}
+		} else if (actionData) {
+			let action = JSON.parse(actionData);
 			if (array[position]) {
 				return;
 			}
 			array[position] = await invoke("create_instance", { context, action });
 			profile = profile;
-		} else if (dataTransfer?.getData("controller")) {
-			let oldController = dataTransfer?.getData("controller");
+		} else if (controllerData) {
+			let oldController = controllerData;
 			let oldArray = oldController == "Encoder" ? profile.sliders : oldController == "Infobar" ? profile.infobars : profile.keys;
-			let oldPosition = parseInt(dataTransfer?.getData("position"));
 			let response: ActionInstance = await invoke("move_instance", {
-				source: { device: device.id, profile: profile.id, controller: oldController, position: oldPosition },
+				source: { device: device.id, profile: profile.id, controller: oldController, position: positionData },
 				destination: context,
 				retain: false,
 			});
 			if (response) {
 				array[position] = response;
-				oldArray[oldPosition] = null;
+				oldArray[positionData] = null;
 				profile = profile;
 			}
 		}
