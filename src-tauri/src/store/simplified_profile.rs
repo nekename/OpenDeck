@@ -60,6 +60,12 @@ impl DiskActionContext {
 	}
 }
 
+/// Get the file extension for a data URL from its MIME subtype, e.g. `png` for `data:image/png;base64,...` and `svg` for `data:image/svg+xml,...`.
+fn data_url_extension(url: &str) -> Option<&str> {
+	let (_, subtype) = url.strip_prefix("data:")?.split_once(',')?.0.split_once('/')?;
+	subtype.split([';', '+']).next().filter(|extension| !extension.is_empty())
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct DiskActionInstance {
 	pub action: Action,
@@ -92,15 +98,7 @@ impl From<ActionInstance> for DiskActionInstance {
 				*image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==".to_owned();
 			}
 
-			if image.starts_with("data:") && image.contains('/') && image.contains(',') {
-				let mut extension = image.split_once('/').unwrap().1.split_once(',').unwrap().0;
-				if extension.contains(';') {
-					extension = extension.split_once(';').unwrap().0;
-				}
-				if extension.contains('+') {
-					extension = extension.split_once('+').unwrap().0;
-				}
-
+			if let Some(extension) = data_url_extension(image) {
 				let data = if image.contains(";base64,") {
 					use base64::Engine;
 					let Ok(data) = base64::engine::general_purpose::STANDARD.decode(image.split_once(";base64,").unwrap().1) else {
@@ -248,5 +246,27 @@ impl super::FromAndIntoDiskValue for Profile {
 	fn from_value(value: serde_json::Value, path: &Path) -> Result<Profile, serde_json::Error> {
 		let disk: DiskProfile = serde_json::from_value(value)?;
 		Ok(disk.into_profile(path))
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::data_url_extension;
+
+	#[test]
+	fn data_url_extension_reads_mime_subtype() {
+		assert_eq!(data_url_extension("data:image/png;base64,iVBORw0KGgo="), Some("png"));
+		assert_eq!(data_url_extension("data:image/svg+xml,<svg/>"), Some("svg"));
+		assert_eq!(data_url_extension("data:image/svg+xml;charset=utf8,<svg/>"), Some("svg"));
+	}
+
+	#[test]
+	fn data_url_extension_rejects_urls_without_subtype() {
+		// A slash in the payload must not be mistaken for the MIME type separator.
+		assert_eq!(data_url_extension("data:;base64,AB/CD"), None);
+		assert_eq!(data_url_extension("data:text,a/b"), None);
+		assert_eq!(data_url_extension("data:image/,AB"), None);
+		assert_eq!(data_url_extension("data:image/png"), None);
+		assert_eq!(data_url_extension("icon.png"), None);
 	}
 }
