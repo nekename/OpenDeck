@@ -20,6 +20,7 @@ use events::frontend;
 use shared::PRODUCT_NAME;
 
 use std::sync::OnceLock;
+use std::sync::atomic::AtomicBool;
 use std::time::Duration;
 
 use tauri::{
@@ -30,6 +31,8 @@ use tauri::{
 use tauri_plugin_log::{Target, TargetKind};
 
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
+// Setup can return before the Aptabase plugin is registered, and flushing an unregistered client panics on exit.
+static APTABASE_REGISTERED: AtomicBool = AtomicBool::new(false);
 const SAVE_PROBE: Duration = Duration::from_secs(30);
 
 fn show_window(app: &AppHandle) -> Result<(), tauri::Error> {
@@ -128,7 +131,10 @@ async fn main() {
 			use std::cmp::Ordering;
 			use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 			let current_version = semver::Version::parse(built_info::PKG_VERSION)?;
-			let settings_version = semver::Version::parse(&settings.value.version)?;
+			let settings_version = semver::Version::parse(&settings.value.version).unwrap_or_else(|error| {
+				log::warn!("Failed to parse version {} from settings: {error}", settings.value.version);
+				semver::Version::new(0, 0, 0)
+			});
 			let cmp = (current_version.major, current_version.minor).cmp(&(settings_version.major, settings_version.minor));
 			match cmp {
 				Ordering::Less => {
@@ -147,7 +153,9 @@ async fn main() {
 				Ordering::Greater => {
 					let old_version = settings.value.version.clone();
 					settings.value.version = built_info::PKG_VERSION.to_owned();
-					settings.save()?;
+					if let Err(error) = settings.save() {
+						log::error!("Failed to save settings: {error}");
+					}
 					if old_version == "0.0.0" {
 						app.dialog()
 							.message(format!(
@@ -191,6 +199,7 @@ If you have already donated, thank you so much for your support!"#,
 					})
 					.build(),
 			)?;
+			APTABASE_REGISTERED.store(true, std::sync::atomic::Ordering::Relaxed);
 			let _ = app.track_event("app_started", None);
 
 			tokio::spawn(async {
@@ -268,14 +277,16 @@ If you have already donated, thank you so much for your support!"#,
 					.await?
 					.json::<serde_json::Value>()
 					.await?;
-				let tag_name = res.get("tag_name").unwrap().as_str().unwrap();
-				if semver::Version::parse(built_info::PKG_VERSION)?.cmp(&semver::Version::parse(&tag_name[1..])?) == Ordering::Less {
+				let Some(tag_name) = res.get("tag_name").and_then(|v| v.as_str()) else {
+					return Err(anyhow::anyhow!("no tag name in latest release response"));
+				};
+				if semver::Version::parse(built_info::PKG_VERSION)?.cmp(&semver::Version::parse(tag_name.get(1..).unwrap_or_default())?) == Ordering::Less {
 					let app = APP_HANDLE.get().unwrap();
 					app.dialog()
 						.message(format!(
 							"A new version of {PRODUCT_NAME}, {}, is available.\nUpdate description:\n\n{}",
 							tag_name,
-							res.get("body").map(|v| v.as_str().unwrap()).unwrap_or("No description").trim()
+							res.get("body").and_then(|v| v.as_str()).unwrap_or("No description").trim()
 						))
 						.title(format!("{PRODUCT_NAME} update available"))
 						.show(|_| ());
@@ -411,8 +422,10 @@ If you have already donated, thank you so much for your support!"#,
 			}
 
 			tokio::spawn(elgato::reset_devices());
-			use tauri_plugin_aptabase::EventTracker;
-			app.flush_events_blocking();
+			if APTABASE_REGISTERED.load(std::sync::atomic::Ordering::Relaxed) {
+				use tauri_plugin_aptabase::EventTracker;
+				app.flush_events_blocking();
+			}
 		}
 	});
 }
