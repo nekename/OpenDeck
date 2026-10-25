@@ -132,10 +132,16 @@ pub async fn reset_devices() {
 
 /// Wake up certain kinds of devices that do not wake themselves after the computer resumes from sleep.
 pub async fn wake_deeply_sleeping_devices() {
-	for (id, device) in ELGATO_DEVICES.read().await.iter() {
-		if device.kind() == Kind::Plus && !is_device_sleeping(id) {
-			set_brightness(id, crate::store::get_settings().value.brightness).await;
-		}
+	// Collect the IDs first: set_brightness takes the read lock again, and a nested read deadlocks if a writer is queued in between.
+	let ids = ELGATO_DEVICES
+		.read()
+		.await
+		.iter()
+		.filter(|(id, device)| device.kind() == Kind::Plus && !is_device_sleeping(id))
+		.map(|(id, _)| id.clone())
+		.collect::<Vec<_>>();
+	for id in ids {
+		set_brightness(&id, crate::store::get_settings().value.brightness).await;
 	}
 }
 
