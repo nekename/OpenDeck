@@ -83,12 +83,7 @@ pub async fn get_localisations(locale: &str) -> Result<HashMap<String, serde_jso
 	};
 
 	while let Ok(Some(entry)) = entries.next_entry().await {
-		let path = match entry.metadata().await.unwrap().is_symlink() {
-			true => tokio::fs::read_link(entry.path()).await.unwrap(),
-			false => entry.path(),
-		};
-		let metadata = tokio::fs::metadata(&path).await.unwrap();
-		if metadata.is_dir() {
+		if let Ok(Some(path)) = crate::plugins::resolve_plugin_entry(&entry.path()) {
 			let Ok(locale) = tokio::fs::read(path.join(format!("{locale}.json"))).await else { continue };
 			let Ok(locale): Result<serde_json::Value, _> = serde_json::from_slice(&locale) else {
 				continue;
