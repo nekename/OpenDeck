@@ -322,7 +322,11 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 		#[cfg(unix)]
 		{
 			use std::os::unix::fs::PermissionsExt;
-			fs::set_permissions(path.join(&code_path), fs::Permissions::from_mode(0o755))?;
+			let executable_path = path.join(&code_path);
+			let permissions = fs::metadata(&executable_path)?.permissions();
+			if permissions.mode() & 0o111 == 0 {
+				fs::set_permissions(executable_path, fs::Permissions::from_mode(0o755))?;
+			}
 		}
 
 		spawner_tx
