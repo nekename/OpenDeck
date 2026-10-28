@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ArrowSquareOut from "phosphor-svelte/lib/ArrowSquareOut";
 	import DownloadSimple from "phosphor-svelte/lib/DownloadSimple";
+	import Robot from "phosphor-svelte/lib/Robot";
 	import Popup from "./Popup.svelte";
 
 	import { t } from "$lib/i18n.ts";
@@ -14,7 +15,7 @@
 	import { onMount } from "svelte";
 
 	export let id: string;
-	export let details: { repository: string; name: string; author: string; download_url: string | undefined };
+	export let details: { repository: string; name: string; author: string; download_url: string | undefined; flags?: { ai_assisted?: boolean } };
 	let readme = `<strong>${$t("plugin_details.loading")}</strong>`;
 	let downloadCount = 0;
 
@@ -91,6 +92,9 @@
 						({details.repository.split("/")[3]})
 					{/if}
 				</a>
+				{#if details.flags?.ai_assisted}
+					<Robot size="20" class="ml-1.5 text-yellow-500" />
+				{/if}
 			</div>
 
 			<div class="flex flex-row items-center mt-6">

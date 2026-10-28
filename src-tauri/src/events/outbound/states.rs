@@ -56,7 +56,7 @@ pub async fn title_parameters_did_change(instance: &ActionInstance, state: u16) 
 					column: instance.context.position % 3,
 				},
 				state: instance.current_state,
-				title: state.text,
+				title: state.text_override.filter(|s| !s.is_empty()).unwrap_or(state.text),
 				titleParameters: TitleParameters {
 					fontFamily: String::new(),
 					fontSize: state.size.0,

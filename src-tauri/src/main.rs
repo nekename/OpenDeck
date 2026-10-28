@@ -243,7 +243,7 @@ If you have already donated, thank you so much for your support!"#,
 					let _ = match event.id().as_ref() {
 						"show" => show_window(app),
 						"hide" => hide_window(app),
-						"restart" => app.restart(),
+						"restart" => shared::restart(app),
 						"quit" => {
 							app.exit(0);
 							Ok(())
@@ -391,8 +391,18 @@ If you have already donated, thank you so much for your support!"#,
 
 	app.run(|app, event| {
 		if let tauri::RunEvent::Exit = event {
+			futures::executor::block_on(async {
+				let device_ids = shared::DEVICES.iter().filter(|entry| !entry.id.starts_with("sd-")).map(|entry| entry.id.clone()).collect::<Vec<_>>();
+				for id in device_ids {
+					let _ = events::outbound::devices::clear_screen(id).await;
+				}
+			});
+
 			#[cfg(windows)]
-			futures::executor::block_on(plugins::deactivate_plugins());
+			{
+				std::thread::sleep(std::time::Duration::from_millis(750));
+				futures::executor::block_on(plugins::deactivate_plugins());
+			}
 
 			let flush_future = store::profiles::flush_stale_profiles();
 			match futures::executor::block_on(flush_future) {

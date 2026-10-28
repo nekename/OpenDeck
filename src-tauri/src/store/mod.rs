@@ -92,12 +92,13 @@ where
 
 	/// Save the relevant Store as a file
 	pub fn save(&self) -> Result<(), anyhow::Error> {
-		fs::create_dir_all(self.path.parent().unwrap())?;
+		let target_path = fs::canonicalize(&self.path).unwrap_or_else(|_| self.path.clone());
+		fs::create_dir_all(target_path.parent().unwrap())?;
 
 		let contents = serde_json::to_string_pretty(&T::into_value(&self.value)?)?;
 
-		let temp_path = self.path.with_extension("json.temp");
-		let backup_path = self.path.with_extension("json.bak");
+		let temp_path = target_path.with_extension("json.temp");
+		let backup_path = target_path.with_extension("json.bak");
 
 		// Write to temporary file
 		let mut temp_file = fs::OpenOptions::new().write(true).truncate(true).create(true).open(&temp_path)?;
@@ -108,12 +109,12 @@ where
 		drop(temp_file);
 
 		// If main file exists, back it up
-		if self.path.exists() {
-			fs::rename(&self.path, &backup_path)?;
+		if target_path.exists() {
+			fs::rename(&target_path, &backup_path)?;
 		}
 
 		// Rename temp file to main file
-		fs::rename(&temp_path, &self.path)?;
+		fs::rename(&temp_path, &target_path)?;
 
 		// Remove backup file if everything succeeded
 		if backup_path.exists() {

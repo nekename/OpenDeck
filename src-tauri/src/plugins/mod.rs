@@ -39,8 +39,8 @@ static INSTANCES: LazyLock<Mutex<HashMap<String, PluginInstance>>> = LazyLock::n
 pub static PORT_BASE: LazyLock<u16> = LazyLock::new(|| {
 	let mut base = 57116;
 	loop {
-		let websocket_result = std::net::TcpListener::bind(format!("0.0.0.0:{}", base));
-		let webserver_result = std::net::TcpListener::bind(format!("0.0.0.0:{}", base + 2));
+		let websocket_result = std::net::TcpListener::bind(format!("127.0.0.1:{}", base));
+		let webserver_result = std::net::TcpListener::bind(format!("127.0.0.1:{}", base + 2));
 		if websocket_result.is_ok() && webserver_result.is_ok() {
 			log::debug!("Using ports {} and {}", base, base + 2);
 			break;
@@ -212,7 +212,7 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 	];
 
 	if code_path.to_lowercase().ends_with(".html") || code_path.to_lowercase().ends_with(".htm") || code_path.to_lowercase().ends_with(".xhtml") {
-		let url = format!("http://localhost:{}/", *PORT_BASE + 2) + path.join(code_path).to_str().unwrap();
+		let url = format!("http://127.0.0.1:{}/", *PORT_BASE + 2) + path.join(code_path).to_str().unwrap();
 		let window = tauri::WebviewWindowBuilder::new(APP_HANDLE.get().unwrap(), plugin_uuid.replace('.', "_"), tauri::WebviewUrl::External(url.parse()?))
 			.title(manifest.name)
 			.visible(false)
@@ -516,7 +516,7 @@ pub fn initialise_plugins() {
 
 /// Start the WebSocket server that plugins communicate with.
 async fn init_websocket_server() {
-	let listener = match TcpListener::bind(format!("0.0.0.0:{}", *PORT_BASE)).await {
+	let listener = match TcpListener::bind(format!("127.0.0.1:{}", *PORT_BASE)).await {
 		Ok(listener) => listener,
 		Err(error) => {
 			error!("Failed to bind plugin WebSocket server to socket: {}", error);

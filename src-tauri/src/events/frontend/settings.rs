@@ -160,5 +160,5 @@ pub async fn restore_config_directory(app: AppHandle) -> Result<(), Error> {
 	std::fs::rename(temp_dir, &config_dir)?;
 	let _ = std::fs::remove_dir_all(backup_dir);
 
-	app.restart();
+	crate::shared::restart(&app);
 }

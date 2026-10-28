@@ -21,9 +21,31 @@ async fn execute_input(value: Option<String>) -> Result<(), anyhow::Error> {
 	}
 
 	let mut enigo_guard = ENIGO.lock().await;
+	#[cfg(target_os = "linux")]
+	let runtime_handle = tokio::runtime::Handle::current();
 	std::thread::spawn(move || -> Result<(), anyhow::Error> {
 		if enigo_guard.is_none() {
-			enigo_guard.replace(Enigo::new(&Settings::default())?);
+			#[cfg(target_os = "linux")]
+			{
+				let mut settings = crate::current_settings().write().unwrap();
+
+				let enigo = Enigo::new(&Settings {
+					restore_token: settings.enigo_restore_token.clone(),
+					..Default::default()
+				})?;
+
+				if let Some(token) = enigo.restore_token() {
+					settings.enigo_restore_token = Some(token);
+					runtime_handle.spawn(set_global_settings(settings.clone()));
+				}
+
+				enigo_guard.replace(enigo);
+			}
+
+			#[cfg(not(target_os = "linux"))]
+			{
+				enigo_guard.replace(Enigo::new(&Settings::default())?);
+			}
 		}
 		let enigo = enigo_guard.as_mut().unwrap();
 		let tokens: Vec<Token> = ron::from_str(&value)?;

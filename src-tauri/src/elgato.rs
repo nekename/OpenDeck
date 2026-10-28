@@ -1,3 +1,4 @@
+use crate::device_sleep::is_device_sleeping;
 use crate::encoder_layouts::generate_encoder_image;
 use crate::events::inbound;
 
@@ -123,9 +124,18 @@ pub async fn set_brightness(id: &str, brightness: u8) {
 }
 
 pub async fn reset_devices() {
-	for (_id, device) in ELGATO_DEVICES.read().await.iter() {
+	for device in ELGATO_DEVICES.read().await.values() {
 		let _ = device.reset().await;
 		let _ = device.flush().await;
+	}
+}
+
+/// Wake up certain kinds of devices that do not wake themselves after the computer resumes from sleep.
+pub async fn wake_deeply_sleeping_devices() {
+	for (id, device) in ELGATO_DEVICES.read().await.iter() {
+		if device.kind() == Kind::Plus && !is_device_sleeping(id) {
+			set_brightness(id, crate::store::get_settings().value.brightness).await;
+		}
 	}
 }
 
@@ -137,7 +147,7 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 	let device_name = device.product().await.unwrap();
 	let kind = device.kind();
 	let device_type = match kind {
-		Kind::Original | Kind::OriginalV2 | Kind::Mk2 | Kind::Mk2Scissor | Kind::Mk2Module => 0,
+		Kind::Original | Kind::OriginalV2 | Kind::Mk2 | Kind::Mk2Scissor | Kind::Mk2Module | Kind::Mk2ModuleScissor => 0,
 		Kind::Mini | Kind::MiniMk2 | Kind::MiniDiscord | Kind::MiniMk2Module => 1,
 		Kind::Xl | Kind::XlV2 | Kind::XlV2Module => 2,
 		Kind::Pedal => 5,
@@ -145,10 +155,6 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 		Kind::Neo => 9,
 		Kind::PlusXl => 13,
 	};
-	let _ = device.clear_all_button_images().await;
-	clear_all_touchpoints(&device).await;
-	let _ = device.set_brightness(crate::store::get_settings().value.brightness).await;
-	let _ = device.flush().await;
 
 	let reader = device.get_reader();
 	ELGATO_DEVICES.write().await.insert(device_id.clone(), device);
@@ -208,14 +214,14 @@ async fn init(device: AsyncStreamDeck, device_id: String) {
 				DeviceStateUpdate::EncoderUp(dial) => inbound::devices::encoder_up(press(dial)).await,
 				DeviceStateUpdate::TouchScreenPress(x, y) => {
 					let (position, x, y) = match kind {
-						Kind::Plus => ((x / 200) as u8, x % 200, y),
+						Kind::Plus | Kind::PlusXl => ((x / 200) as u8, x % 200, y),
 						_ => continue,
 					};
 					inbound::devices::touchscreen_press(touchscreen_press(position, x, y, false)).await
 				}
 				DeviceStateUpdate::TouchScreenLongPress(x, y) => {
 					let (position, x, y) = match kind {
-						Kind::Plus => ((x / 200) as u8, x % 200, y),
+						Kind::Plus | Kind::PlusXl => ((x / 200) as u8, x % 200, y),
 						_ => continue,
 					};
 					inbound::devices::touchscreen_press(touchscreen_press(position, x, y, true)).await

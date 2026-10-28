@@ -16,7 +16,7 @@
 		"@sveltejs/kit": "^2.50",
 		"@sveltejs/vite-plugin-svelte": "^3.1",
 		"@tailwindcss/vite": "^4.1",
-		"@tauri-apps/cli": "^2.10",
+		"@tauri-apps/cli": "^2.12",
 		"lightningcss": "^1.31",
 		"prettier": "^3.8",
 		"prettier-plugin-svelte": "^3.5",
@@ -28,7 +28,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@tauri-apps/api": "^2.10",
+		"@tauri-apps/api": "^2.12",
 		"@tauri-apps/plugin-deep-link": "^2.4",
 		"@tauri-apps/plugin-dialog": "^2.6",
 		"dompurify": "^3.3",

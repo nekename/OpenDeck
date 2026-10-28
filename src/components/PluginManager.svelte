@@ -5,6 +5,7 @@
 	import FileArrowUp from "phosphor-svelte/lib/FileArrowUp";
 	import Gear from "phosphor-svelte/lib/Gear";
 	import MagnifyingGlass from "phosphor-svelte/lib/MagnifyingGlass";
+	import Robot from "phosphor-svelte/lib/Robot";
 	import Trash from "phosphor-svelte/lib/Trash";
 	import WarningCircle from "phosphor-svelte/lib/WarningCircle";
 	import ListedPlugin from "./ListedPlugin.svelte";
@@ -79,6 +80,9 @@
 		author: string;
 		repository: string;
 		download_url: string | undefined;
+		flags?: {
+			ai_assisted?: boolean;
+		};
 	};
 	async function installPluginGitHub(id: string, plugin: GitHubPlugin) {
 		if (plugin.download_url) {
@@ -343,6 +347,15 @@
 					action={() => (openDetailsView = id)}
 					actionLabel={$t("plugin_manager.view_details")}
 				>
+					<svelte:fragment slot="subtitle">
+						<span>
+							{plugin.author}
+							{#if plugin.flags?.ai_assisted}
+								<Robot size="1em" class="inline align-text-bottom text-yellow-500" />
+							{/if}
+						</span>
+					</svelte:fragment>
+
 					<ArrowSquareOut size="24" class="text-neutral-400" />
 				</ListedPlugin>
 			{/each}

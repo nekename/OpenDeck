@@ -12,7 +12,7 @@
 					return;
 				}
 
-				const websocket = new WebSocket("ws://localhost:" + inPort);
+				const websocket = new WebSocket("ws://127.0.0.1:" + inPort);
 				websocket.onopen = () => {
 					websocket.send(
 						JSON.stringify({
