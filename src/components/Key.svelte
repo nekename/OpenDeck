@@ -62,6 +62,8 @@
 		if (event instanceof MouseEvent && event.ctrlKey) return;
 		$openContextMenu = null;
 		if (!slot) {
+			// A slot that holds no control can only be used as a drop target.
+			if (!isButton) return;
 			$inspectedInstance = context;
 			return;
 		}
@@ -75,6 +77,7 @@
 	function onfocus() {
 		$openContextMenu = null;
 		if (!slot) {
+			if (!isButton) return;
 			$inspectedInstance = context;
 			return;
 		}
@@ -150,6 +153,12 @@
 	let canvas: HTMLCanvasElement;
 	let lock = new CanvasLock();
 	export let size = 144;
+	// Buttons are drawn transparently when the device has a background.
+	export let hasBackground = false;
+	// Whether this slot holds a button. Slots that do not are hidden.
+	export let isButton = true;
+	// Whether this slot is round, like a dial.
+	export let isRound = false;
 	// Canvas resolution defaults to a square `size`, but rectangular controllers (e.g. the Neo's infobar) can override this.
 	export let width: number = size;
 	export let height: number = size;
@@ -198,9 +207,11 @@
 		class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
 		style={`margin: ${-((size + 3 * 2 /* border */ - 132) /* desired outer size */ / 2)}px;`}
 		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
-		class:rounded-full!={context?.controller == "Encoder"}
+		class:rounded-full!={context?.controller == "Encoder" || isRound}
 		class:rounded-lg!={context?.controller == "Infobar"}
-		class:bg-black={slot != null}
+		class:bg-black={slot != null && !hasBackground}
+		class:border-transparent={slot == null && !isButton}
+		class:opacity-0={slot == null && !isButton}
 		{width}
 		{height}
 		draggable={slot != null}

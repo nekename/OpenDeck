@@ -9,6 +9,7 @@
 
 	import { t } from "$lib/i18n";
 	import { inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
+	import { deviceBackgrounds } from "$lib/devices";
 
 	import { invoke } from "@tauri-apps/api/core";
 
@@ -76,7 +77,7 @@
 	}
 
 	$: overflowsX = Math.max(device.columns, device.encoders, device.touchpoints) > 8;
-	$: overflowsY = device.rows + Math.min(device.encoders, 1) + Math.min(device.touchpoints, 1) > 4;
+	$: overflowsY = device.rows + Math.min(rowEncoders.length, 1) + Math.min(device.touchpoints, 1) > 4;
 
 	// Grid navigation: track focused cell and compute row lengths for arrow key movement.
 	let focusedRow = 0;
@@ -84,12 +85,35 @@
 
 	$: gridRowLengths = [
 		...Array(device.rows).fill(device.columns),
-		...(device.encoders > 0 ? [device.encoders] : []),
+		...(rowEncoders.length > 0 ? [rowEncoders.length] : []),
 		...(device.touchpoints > 0 || device.infobars > 0 ? [device.touchpoints + device.infobars] : []),
 	];
 	$: encoderRowIndex = device.rows;
-	$: touchpointRowIndex = device.rows + (device.encoders > 0 ? 1 : 0);
+	$: touchpointRowIndex = device.rows + (rowEncoders.length > 0 ? 1 : 0);
 	$: keypadRowWidth = device.columns * 132;
+
+	// The background image of the device, if it has one.
+	$: background = $deviceBackgrounds[device.id] ?? null;
+	$: hasBackground = !!background;
+
+	// Where the rotary encoders sit in their row.
+	$: encoderJustify =
+		device.encoder_alignment == "center"
+			? "justify-center"
+			: device.encoder_alignment == "start"
+				? "justify-start"
+				: device.encoder_alignment == "end"
+					? "justify-end"
+					: "justify-between";
+
+	// The physical controls of the device, keyed by their position in the grid.
+	$: gridSlots = new Map((device.slots ?? []).map((slot) => [slot.position, slot]));
+
+	// The rotary encoders that occupy a slot on the grid.
+	$: gridEncoders = new Set([...gridSlots.values()].filter((slot) => slot.encoder != null).map((slot) => slot.encoder!));
+
+	// The rotary encoders that are drawn in the row below the keypad.
+	$: rowEncoders = Array.from({ length: device.encoders }, (_, index) => index).filter((index) => !gridEncoders.has(index));
 
 	function flatIndexFromRowCol(row: number, col: number): number {
 		let index = 0;
@@ -159,7 +183,7 @@
 	}
 </script>
 
-{#key device}
+{#key device.id}
 	<span id="grid-description" class="sr-only">{$t("device_view.grid_description")}</span>
 	<div
 		class="flex flex-col justify-center grow px-16 py-6 overflow-auto"
@@ -177,40 +201,69 @@
 		on:keydown|capture={handleGridKeydown}
 		on:focusin={handleGridFocusin}
 	>
-		<div class="flex flex-col" role="rowgroup">
-			{#each { length: device.rows } as _, r}
-				<div class="flex flex-row" role="row">
-					{#each { length: device.columns } as _, c}
-						<Key
-							context={{ device: device.id, profile: profile.id, controller: "Keypad", position: r * device.columns + c }}
-							bind:inslot={profile.keys[r * device.columns + c]}
-							on:dragover={handleDragOver}
-							on:drop={(event) => handleDrop(event, "Keypad", r * device.columns + c)}
-							on:dragstart={(event) => handleDragStart(event, "Keypad", r * device.columns + c)}
-							{handlePaste}
-							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-							label="{$t('device_view.key')} {String.fromCharCode(65 + r)}{c + 1}"
-							tabindex={focusedRow === r && focusedCol === c ? 0 : -1}
-						/>
-					{/each}
-				</div>
-			{/each}
-		</div>
+		<div class="relative flex flex-col items-center">
+			{#if background}
+				<img src={background} alt="" class="absolute inset-0 z-0 h-full w-full object-contain pointer-events-none select-none" />
+			{/if}
+			<div class="relative z-10 flex flex-col" role="rowgroup">
+				{#each { length: device.rows } as _, r}
+					<div class="flex flex-row" role="row">
+						{#each { length: device.columns } as _, c}
+							{@const position = r * device.columns + c}
+							{@const slot = gridSlots.get(position)}
+							{@const encoder = slot?.encoder ?? null}
+							{#if encoder != null}
+								<Key
+									context={{ device: device.id, profile: profile.id, controller: "Encoder", position: encoder }}
+									bind:inslot={profile.sliders[encoder]}
+									on:dragover={handleDragOver}
+									on:drop={(event) => handleDrop(event, "Encoder", encoder)}
+									on:dragstart={(event) => handleDragStart(event, "Encoder", encoder)}
+									{handlePaste}
+									size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+									label="{$t('device_view.encoder')} {encoder + 1}"
+									tabindex={focusedRow === r && focusedCol === c ? 0 : -1}
+									{hasBackground}
+									isButton
+									isRound={slot?.round ?? false}
+								/>
+							{:else}
+								<Key
+									context={{ device: device.id, profile: profile.id, controller: "Keypad", position }}
+									bind:inslot={profile.keys[position]}
+									on:dragover={handleDragOver}
+									on:drop={(event) => handleDrop(event, "Keypad", position)}
+									on:dragstart={(event) => handleDragStart(event, "Keypad", position)}
+									{handlePaste}
+									size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+									label="{$t('device_view.key')} {String.fromCharCode(65 + r)}{c + 1}"
+									tabindex={focusedRow === r && focusedCol === c ? 0 : -1}
+									{hasBackground}
+									isButton={!device.slots || slot != null}
+									isRound={slot?.round ?? false}
+								/>
+							{/if}
+						{/each}
+					</div>
+				{/each}
+			</div>
 
-		<div class="flex flex-row justify-between" role="row" style={`width: ${keypadRowWidth}px;`}>
-			{#each { length: device.encoders } as _, i}
-				<Key
-					context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
-					bind:inslot={profile.sliders[i]}
-					on:dragover={handleDragOver}
-					on:drop={(event) => handleDrop(event, "Encoder", i)}
-					on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
-					{handlePaste}
-					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
-					label="{$t('device_view.encoder')} {i + 1}"
-					tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
-				/>
-			{/each}
+			<div class="relative z-10 flex flex-row {encoderJustify}" role="row" style={`width: ${keypadRowWidth}px;`} class:hidden={rowEncoders.length == 0}>
+				{#each rowEncoders as i}
+					<Key
+						context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
+						bind:inslot={profile.sliders[i]}
+						on:dragover={handleDragOver}
+						on:drop={(event) => handleDrop(event, "Encoder", i)}
+						on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
+						{handlePaste}
+						size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
+						label="{$t('device_view.encoder')} {i + 1}"
+						tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
+						{hasBackground}
+					/>
+				{/each}
+			</div>
 		</div>
 
 		<div class="flex flex-row items-center" role="row">

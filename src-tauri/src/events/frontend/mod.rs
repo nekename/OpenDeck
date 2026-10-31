@@ -58,9 +58,32 @@ pub async fn get_devices() -> dashmap::DashMap<String, DeviceInfo> {
 	DEVICES.clone()
 }
 
+#[command]
+pub async fn get_device_backgrounds() -> dashmap::DashMap<String, String> {
+	crate::shared::DEVICE_BACKGROUNDS.clone()
+}
+
 pub async fn update_devices() {
 	let app = crate::APP_HANDLE.get().unwrap();
 	let _ = app.get_webview_window("main").unwrap().emit("devices", DEVICES.clone());
+}
+
+#[derive(Clone, serde::Serialize)]
+struct DeviceBackgroundEvent {
+	device: String,
+	background: Option<String>,
+}
+
+/// Tell the frontend that a device's background image changed.
+pub fn device_background(device: &str, background: Option<String>) {
+	let app = crate::APP_HANDLE.get().unwrap();
+	let _ = app.get_webview_window("main").unwrap().emit(
+		"device_background",
+		DeviceBackgroundEvent {
+			device: device.to_owned(),
+			background,
+		},
+	);
 }
 
 #[command]

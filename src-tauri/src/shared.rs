@@ -43,9 +43,75 @@ pub struct DeviceInfo {
 	#[serde_inline_default(0)]
 	pub infobars: u8,
 	pub r#type: u8,
+	/// Image drawn behind the device's buttons. Kept out of the serialised
+	/// device because it can be several megabytes.
+	#[serde(skip_serializing)]
+	pub background: Option<String>,
+	/// Only the encoders that are not placed in a slot are affected.
+	pub encoder_alignment: Option<EncoderAlignment>,
+	/// The physical controls that occupy the device's grid. If unset, every
+	/// grid slot holds a button.
+	pub slots: Option<Vec<DeviceSlot>>,
+}
+
+/// A physical control that occupies a slot in a device's grid.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
+pub struct DeviceSlot {
+	/// The position of the slot in the device's grid.
+	pub position: u8,
+	/// Whether the slot is round, like a dial.
+	#[serde(default)]
+	pub round: bool,
+	/// The index of the rotary encoder occupying the slot, if any.
+	#[serde(default)]
+	pub encoder: Option<u8>,
+}
+
+/// How the rotary encoders are laid out in their row.
+#[derive(Clone, Copy, Debug, Default, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum EncoderAlignment {
+	/// Spread the encoders across the whole row.
+	#[default]
+	Between,
+	/// Line the encoders up at the start of the row.
+	Start,
+	/// Line the encoders up in the middle of the row.
+	Center,
+	/// Line the encoders up at the end of the row.
+	End,
+}
+
+/// Unknown values fall back to the default instead of rejecting the whole
+/// message.
+impl<'de> Deserialize<'de> for EncoderAlignment {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+	where
+		D: Deserializer<'de>,
+	{
+		let value = String::deserialize(deserializer)?;
+		Ok(match value.trim().to_ascii_lowercase().as_str() {
+			"start" => EncoderAlignment::Start,
+			"center" => EncoderAlignment::Center,
+			"end" => EncoderAlignment::End,
+			_ => EncoderAlignment::Between,
+		})
+	}
 }
 
 pub static DEVICES: LazyLock<DashMap<String, DeviceInfo>> = LazyLock::new(DashMap::new);
+
+/// The background image of each device.
+pub static DEVICE_BACKGROUNDS: LazyLock<DashMap<String, String>> = LazyLock::new(DashMap::new);
+
+/// The largest background image that is accepted, in bytes.
+pub const MAX_BACKGROUND_LENGTH: usize = 16 * 1024 * 1024;
+
+/// Whether a string may be used as the source of a background image.
+pub fn is_valid_background(source: &str) -> bool {
+	let is_image = source.starts_with("data:image/") || source.starts_with("http://") || source.starts_with("https://");
+	is_image && source.len() <= MAX_BACKGROUND_LENGTH
+}
 
 /// Get the application configuration directory.
 pub fn config_dir() -> std::path::PathBuf {
@@ -499,3 +565,55 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 	);
 	RwLock::new(hashmap)
 });
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn unknown_alignment_falls_back_to_the_default() {
+		assert_eq!(serde_json::from_str::<EncoderAlignment>("\"nonsense\"").unwrap(), EncoderAlignment::Between);
+		assert_eq!(serde_json::from_str::<EncoderAlignment>("\"CENTER\"").unwrap(), EncoderAlignment::Center);
+		assert_eq!(serde_json::from_str::<EncoderAlignment>("\" start \"").unwrap(), EncoderAlignment::Start);
+	}
+
+	#[test]
+	fn a_device_does_not_carry_its_background() {
+		let device = DeviceInfo {
+			id: "ex-0123456789ab".to_owned(),
+			plugin: "plugin".to_owned(),
+			name: "Example Controller".to_owned(),
+			rows: 4,
+			columns: 5,
+			encoders: 1,
+			touchpoints: 0,
+			infobars: 0,
+			r#type: 0,
+			background: Some("data:image/png;base64,AAAA".to_owned()),
+			encoder_alignment: None,
+			slots: None,
+		};
+
+		let value = serde_json::to_value(&device).unwrap();
+		let object = value.as_object().unwrap();
+
+		assert!(!object.contains_key("background"));
+		assert_eq!(object["id"], "ex-0123456789ab");
+	}
+
+	#[test]
+	fn backgrounds_have_a_size_limit() {
+		let prefix = "data:image/png;base64,";
+		let exact = format!("{prefix}{}", "A".repeat(MAX_BACKGROUND_LENGTH - prefix.len()));
+
+		assert!(is_valid_background("data:image/png;base64,AAAA"));
+		assert!(is_valid_background("http://example.com/device.png"));
+		assert!(is_valid_background("https://example.com/device.png"));
+		assert!(is_valid_background(&exact));
+
+		assert!(!is_valid_background(&format!("{exact}A")));
+		assert!(!is_valid_background("data:text/html;base64,AAAA"));
+		assert!(!is_valid_background("file:///etc/passwd"));
+		assert!(!is_valid_background(""));
+	}
+}

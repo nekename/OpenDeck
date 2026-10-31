@@ -44,6 +44,7 @@ pub struct ContextAndPayloadEvent<T, C = ActionContext> {
 pub enum InboundEventType {
 	RegisterDevice(PayloadEvent<crate::shared::DeviceInfo>),
 	DeregisterDevice(PayloadEvent<String>),
+	SetDeviceBackground(PayloadEvent<devices::DeviceBackgroundPayload>),
 	RerenderImages(PayloadEvent<String>),
 	KeyDown(PayloadEvent<devices::PressPayload>),
 	KeyUp(PayloadEvent<devices::PressPayload>),
@@ -121,6 +122,7 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 			if let Some(device_id) = match &decoded {
 				InboundEventType::RegisterDevice(event) => Some(&event.payload.id),
 				InboundEventType::DeregisterDevice(event) => Some(&event.payload),
+				InboundEventType::SetDeviceBackground(event) => Some(&event.payload.device),
 				InboundEventType::RerenderImages(event) => Some(&event.payload),
 				InboundEventType::KeyDown(event) => Some(&event.payload.device),
 				InboundEventType::KeyUp(event) => Some(&event.payload.device),
@@ -142,6 +144,7 @@ pub async fn process_incoming_message(data: Result<Message, Error>, uuid: &str, 
 		if let Err(error) = match decoded {
 			InboundEventType::RegisterDevice(event) => devices::register_device(uuid, event).await,
 			InboundEventType::DeregisterDevice(event) => devices::deregister_device(uuid, event).await,
+			InboundEventType::SetDeviceBackground(event) => devices::set_device_background(uuid, event).await,
 			InboundEventType::RerenderImages(event) => devices::rerender_images(event).await,
 			InboundEventType::KeyDown(event) => devices::key_down(event).await,
 			InboundEventType::KeyUp(event) => devices::key_up(event).await,

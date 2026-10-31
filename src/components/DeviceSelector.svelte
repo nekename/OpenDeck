@@ -4,6 +4,7 @@
 
 	import { t } from "$lib/i18n";
 	import { profileManager } from "$lib/singletons";
+	import { deviceBackgrounds } from "$lib/devices";
 
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
@@ -42,7 +43,11 @@
 	});
 
 	(async () => (devices = await invoke("get_devices")))();
+	(async () => deviceBackgrounds.set(await invoke("get_device_backgrounds")))();
 	listen("devices", ({ payload }: { payload: { [id: string]: DeviceInfo } }) => (devices = payload));
+	listen("device_background", ({ payload }: { payload: { device: string; background: string | null } }) => {
+		deviceBackgrounds.update((backgrounds) => ({ ...backgrounds, [payload.device]: payload.background }));
+	});
 
 	let buildInfo: string;
 	(async () => (buildInfo = await invoke("get_build_info")))();
