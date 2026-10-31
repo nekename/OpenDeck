@@ -64,7 +64,20 @@ pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result
 	Ok(())
 }
 
+/// Companion sends a ~140 byte black tile on willAppear and willDisappear.
+/// Storing it replaces the saved button image, so the key stays black after a page change.
+fn placeholder_data_image(image: &str) -> bool {
+	let Some((_, data)) = image.split_once(";base64,") else {
+		return image.starts_with("data:") && image.len() < 400;
+	};
+	data.len() < 360
+}
+
 pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Result<(), anyhow::Error> {
+	if event.payload.image.as_deref().is_some_and(|image| placeholder_data_image(image.trim())) {
+		return Ok(());
+	}
+
 	let mut locks = acquire_locks_mut().await;
 
 	if let Some(instance) = get_instance_mut(&event.context, &mut locks).await? {

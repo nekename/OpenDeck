@@ -1,7 +1,7 @@
 pub(crate) mod devices;
 mod misc;
 mod property_inspector;
-mod settings;
+pub(crate) mod settings;
 mod states;
 
 use crate::{

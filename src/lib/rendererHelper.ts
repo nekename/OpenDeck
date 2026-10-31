@@ -5,6 +5,45 @@ import { getWebserverUrl } from "./ports.ts";
 
 import { invoke } from "@tauri-apps/api/core";
 
+let configDirPromise: Promise<string> | undefined;
+
+function configDir(): Promise<string> {
+	configDirPromise ??= invoke<string>("get_config_dir");
+	return configDirPromise;
+}
+
+// Saved button images are stored as bare filenames ("0.png"). The action icon for those
+// buttons is often a blank loading tile, so the filename has to be resolved to the image file.
+function bareSavedFile(image: string | undefined): image is string {
+	return !!image && !image.startsWith("data:") && !image.startsWith("opendeck/") && !image.includes("/") && !image.includes("\\");
+}
+
+// Companion's appear/disappear placeholder is a ~140 byte data URL. A real button image is a few KB.
+function tinyDataImage(image: string | undefined): boolean {
+	if (!image?.startsWith("data:")) return false;
+	const b64 = image.split(";base64,")[1];
+	if (!b64) return image.length < 400;
+	return b64.length < 360;
+}
+
+function useSavedArt(image: string | undefined, fallback: string | undefined): boolean {
+	if (!image || tinyDataImage(image)) return true;
+	if (!image.startsWith("data:") && !image.startsWith("opendeck/") && !image.includes("/") && !image.includes("\\")) return true;
+	if (fallback && image === fallback) return true;
+	return image.includes("loadingIcon");
+}
+
+async function resolveSavedImage(image: string, slotContext: Context, instanceContext?: string): Promise<string> {
+	const root = await configDir();
+	const index = instanceContext?.split(".").pop();
+	const slotIndex = index && /^\d+$/.test(index) ? index : "0";
+	const disk =
+		slotContext.page > 0
+			? `${slotContext.page}.${slotContext.controller}.${slotContext.position}.${slotIndex}`
+			: `${slotContext.controller}.${slotContext.position}.${slotIndex}`;
+	return getWebserverUrl(`${root}/images/${slotContext.device}/${slotContext.profile}/${disk}/${image}`);
+}
+
 export function getImage(image: string | undefined, fallback: string | undefined): string {
 	if (!image) return fallback ? getImage(fallback, undefined) : "/alert.png";
 	if (image.startsWith("opendeck/")) return image.replace("opendeck", "");
@@ -39,6 +78,29 @@ export class CanvasLock {
 	}
 }
 
+// Handlers must be attached before src. A cached image can fire load synchronously, before a handler set afterwards, and the draw then hangs with a blank canvas.
+export function loadImage(src: string): Promise<HTMLImageElement> {
+	return new Promise((resolve, reject) => {
+		const image = document.createElement("img");
+		image.crossOrigin = "anonymous";
+		let settled = false;
+		const succeed = () => {
+			if (settled) return;
+			settled = true;
+			resolve(image);
+		};
+		const fail = () => {
+			if (settled) return;
+			settled = true;
+			reject(new Event("error"));
+		};
+		image.onload = succeed;
+		image.onerror = fail;
+		image.src = src;
+		if (image.complete && image.naturalWidth > 0) succeed();
+	});
+}
+
 export async function renderImage(
 	canvas: HTMLCanvasElement | null,
 	slotContext: Context | null,
@@ -50,7 +112,11 @@ export async function renderImage(
 	active: boolean,
 	pressed: boolean,
 	rotation?: number,
+	stillCurrent?: () => boolean,
+	instanceContext?: string,
+	stateIndex = 0,
 ) {
+	const live = () => !stillCurrent || stillCurrent();
 	// Create canvas
 	let scale = 1;
 	if (!canvas) {
@@ -73,16 +139,30 @@ export async function renderImage(
 	}
 
 	try {
-		// Load image
-		const image = document.createElement("img");
-		image.crossOrigin = "anonymous";
 		const imageSource = state.image_override ?? state.image;
-		image.src = processImage ? getImage(imageSource, fallback) : imageSource;
-		if (image.src == undefined) return;
-		await new Promise((resolve, reject) => {
-			image.onload = resolve;
-			image.onerror = reject;
-		});
+		let image: HTMLImageElement | undefined;
+		// A saved "0.png" (or the loading-icon placeholder that replaced it) must paint the file on disk.
+		if (processImage && slotContext && !state.image_override && useSavedArt(state.image, fallback)) {
+			const file = bareSavedFile(state.image) ? state.image : `${stateIndex}.png`;
+			try {
+				image = await loadImage(await resolveSavedImage(file, slotContext, instanceContext));
+			} catch {
+				image = undefined;
+			}
+		}
+		if (!image) {
+			const display = tinyDataImage(imageSource) ? undefined : imageSource;
+			const imageSrc = processImage ? getImage(display, fallback) : display;
+			if (imageSrc == undefined) {
+				context.restore();
+				return;
+			}
+			image = await loadImage(imageSrc);
+		}
+		if (!live()) {
+			context.restore();
+			return;
+		}
 
 		context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -101,9 +181,18 @@ export async function renderImage(
 		const yOffset = (canvas.height - yScaled) / 2;
 		context.drawImage(image, xOffset, yOffset, xScaled, yScaled);
 	} catch (error: any) {
+		if (!live()) {
+			context.restore();
+			return;
+		}
 		if (!(error instanceof Event)) console.error(error);
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		showAlert = true;
+	}
+
+	if (!live()) {
+		context.restore();
+		return;
 	}
 
 	// Draw text
@@ -142,24 +231,35 @@ export async function renderImage(
 		}
 	}
 
+	if (!live()) {
+		context.restore();
+		return;
+	}
+
 	if (showOk) {
-		const okImage = document.createElement("img");
-		okImage.crossOrigin = "anonymous";
-		okImage.src = "/ok.png";
-		await new Promise((resolve) => {
-			okImage.onload = resolve;
-		});
-		context.drawImage(okImage, 0, 0, canvas.width, canvas.height);
+		try {
+			const okImage = await loadImage("/ok.png");
+			if (!live()) {
+				context.restore();
+				return;
+			}
+			context.drawImage(okImage, 0, 0, canvas.width, canvas.height);
+		} catch {
+			// Overlay is optional. Keep the button image.
+		}
 	}
 
 	if (showAlert) {
-		const alertImage = document.createElement("img");
-		alertImage.crossOrigin = "anonymous";
-		alertImage.src = "/alert.png";
-		await new Promise((resolve) => {
-			alertImage.onload = resolve;
-		});
-		context.drawImage(alertImage, 0, 0, canvas.width, canvas.height);
+		try {
+			const alertImage = await loadImage("/alert.png");
+			if (!live()) {
+				context.restore();
+				return;
+			}
+			context.drawImage(alertImage, 0, 0, canvas.width, canvas.height);
+		} catch {
+			// Overlay is optional. Keep the button image.
+		}
 	}
 
 	// Make the image smaller while the button is pressed.
@@ -178,7 +278,11 @@ export async function renderImage(
 
 	context.restore();
 
-	if (active && slotContext) setTimeout(async () => await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") }), 10);
+	if (active && slotContext && live())
+		setTimeout(async () => {
+			if (!live()) return;
+			await invoke("update_image", { context: slotContext, image: canvas.toDataURL("image/jpeg") });
+		}, 10);
 }
 
 export async function resizeImage(source: string): Promise<string | undefined> {
@@ -188,10 +292,7 @@ export async function resizeImage(source: string): Promise<string | undefined> {
 	const context = canvas.getContext("2d");
 	if (!context) return;
 
-	const image = document.createElement("img");
-	image.crossOrigin = "anonymous";
-	image.src = source;
-	await new Promise((resolve) => (image.onload = resolve));
+	const image = await loadImage(source);
 
 	let xOffset = 0,
 		yOffset = 0;

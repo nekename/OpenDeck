@@ -38,6 +38,11 @@ pub async fn set_settings(_app: AppHandle, settings: crate::store::Settings) -> 
 }
 
 #[command]
+pub fn get_config_dir() -> String {
+	config_dir().to_string_lossy().into_owned()
+}
+
+#[command]
 pub fn open_config_directory() -> Result<(), Error> {
 	if let Err(error) = open::that_detached(config_dir()) {
 		return Err(anyhow::Error::from(error).into());

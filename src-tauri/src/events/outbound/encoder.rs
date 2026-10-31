@@ -25,14 +25,8 @@ struct DialRotateEvent {
 
 pub async fn dial_rotate(device: &str, index: u8, ticks: i16) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
-	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let context = ActionContext {
-		device: device.to_owned(),
-		profile: selected_profile.to_owned(),
-		controller: "Encoder".to_owned(),
-		position: index,
-		index: 0,
-	};
+	let slot = crate::store::profiles::selected_slot_context(device, "Encoder", index, &mut locks)?;
+	let context = ActionContext::from_context(slot, 0);
 	let Some(instance) = get_instance_mut(&context, &mut locks).await? else { return Ok(()) };
 
 	send_to_plugin(
@@ -72,16 +66,10 @@ struct DialPressEvent {
 
 pub async fn dial_press(device: &str, event: &'static str, index: u8) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
-	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let context = ActionContext {
-		device: device.to_owned(),
-		profile: selected_profile.to_owned(),
-		controller: "Encoder".to_owned(),
-		position: index,
-		index: 0,
-	};
+	let slot = crate::store::profiles::selected_slot_context(device, "Encoder", index, &mut locks)?;
+	let context = ActionContext::from_context(slot, 0);
 	let Some(instance) = get_instance_mut(&context, &mut locks).await? else { return Ok(()) };
-	let _ = crate::frontend::instances::key_moved(crate::APP_HANDLE.get().unwrap(), context.into(), event == "dialDown").await;
+	let _ = crate::events::frontend::instances::key_moved(crate::APP_HANDLE.get().unwrap(), context.clone().into(), event == "dialDown").await;
 
 	send_to_plugin(
 		&instance.action.plugin,
@@ -121,14 +109,8 @@ struct TouchTapEvent {
 
 pub async fn touch_tap(device: &str, index: u8, x: u16, y: u16, hold: bool) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
-	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let context = ActionContext {
-		device: device.to_owned(),
-		profile: selected_profile.to_owned(),
-		controller: "Encoder".to_owned(),
-		position: index,
-		index: 0,
-	};
+	let slot = crate::store::profiles::selected_slot_context(device, "Encoder", index, &mut locks)?;
+	let context = ActionContext::from_context(slot, 0);
 	let Some(instance) = get_instance_mut(&context, &mut locks).await? else { return Ok(()) };
 
 	send_to_plugin(

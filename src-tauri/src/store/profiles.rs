@@ -35,17 +35,19 @@ impl ProfileStores {
 		} else {
 			let default = Profile {
 				id: id.to_owned(),
+				pages: vec![crate::shared::ProfilePage::empty(device)],
+				current_page: 0,
 				keys: Vec::new(),
 				sliders: Vec::new(),
 				infobars: Vec::new(),
-
 				stale: false,
 			};
 
 			let mut store = Store::new(&canonical_id, &config_dir().join("profiles"), default).context(format!("Failed to create store for profile {}", canonical_id))?;
-			store.value.keys.resize((device.rows * device.columns + device.touchpoints) as usize, None);
-			store.value.sliders.resize(device.encoders as usize, None);
-			store.value.infobars.resize(device.infobars as usize, None);
+			store.value.ensure_pages();
+			for page in &mut store.value.pages {
+				page.resize(device);
+			}
 
 			let categories = crate::shared::CATEGORIES.read().await;
 			let actions = categories.values().flat_map(|v| v.actions.iter()).collect::<Vec<_>>();
@@ -55,7 +57,7 @@ impl ProfileStores {
 				instance.action.plugin == "opendeck"
 					|| (plugins_dir.join(&instance.action.plugin).exists() && (!registered.contains(&instance.action.plugin) || actions.iter().any(|v| v.uuid == instance.action.uuid)))
 			};
-			for slot in store.value.keys.iter_mut().chain(store.value.sliders.iter_mut()).chain(store.value.infobars.iter_mut()) {
+			for slot in store.value.pages.iter_mut().flat_map(|page| page.slots_mut()) {
 				if let Some(instance) = slot {
 					if !keep_instance(instance) {
 						*slot = None;
@@ -66,7 +68,7 @@ impl ProfileStores {
 			}
 
 			// We need to populate instances from a profile without encoders or without parsed layouts with them
-			for instance in store.value.sliders.iter_mut().flatten() {
+			for instance in store.value.pages.iter_mut().flat_map(|page| page.sliders.iter_mut()).flatten() {
 				// Populate encoder data using the manifest action if missing
 				if instance.action.encoder.is_none()
 					&& let Some(action) = actions.iter().find(|a| a.uuid == *instance.action.uuid)
@@ -78,6 +80,7 @@ impl ProfileStores {
 				let _ = initialise_encoder_layout(&mut instance.action, None);
 			}
 
+			store.value.hydrate_current_slots();
 			store.save()?;
 
 			self.stores.insert(canonical_id.clone(), store);
@@ -173,7 +176,7 @@ impl ProfileStores {
 	pub fn all_from_plugin(&self, plugin: &str) -> Vec<crate::shared::ActionContext> {
 		let mut all = vec![];
 		for store in self.stores.values() {
-			for instance in store.value.keys.iter().chain(&store.value.sliders).chain(&store.value.infobars).flatten() {
+			for instance in store.value.pages.iter().flat_map(|page| page.slots()).flatten() {
 				if instance.action.plugin == plugin {
 					all.push(instance.context.clone());
 				} else if let Some(children) = &instance.children {
@@ -311,30 +314,53 @@ pub async fn acquire_locks_mut() -> LocksMut<'static> {
 	LocksMut { device_stores, profile_stores }
 }
 
+fn slot_from_page<'a>(page: &'a crate::shared::ProfilePage, context: &crate::shared::Context) -> Result<&'a Option<crate::shared::ActionInstance>, anyhow::Error> {
+	match &context.controller[..] {
+		"Encoder" => page.sliders.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds")),
+		"Infobar" => page.infobars.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds")),
+		_ => page.keys.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds")),
+	}
+}
+
+fn slot_from_page_mut<'a>(page: &'a mut crate::shared::ProfilePage, context: &crate::shared::Context) -> Result<&'a mut Option<crate::shared::ActionInstance>, anyhow::Error> {
+	match &context.controller[..] {
+		"Encoder" => page.sliders.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds")),
+		"Infobar" => page.infobars.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds")),
+		_ => page.keys.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds")),
+	}
+}
+
+pub fn selected_slot_context(device: &str, controller: &str, position: u8, locks: &mut LocksMut<'_>) -> Result<crate::shared::Context, anyhow::Error> {
+	let selected_profile = locks.device_stores.get_selected_profile(device)?;
+	let page = match DEVICES.get(device) {
+		Some(device_info) => locks
+			.profile_stores
+			.get_profile_store(&device_info, &selected_profile)
+			.map(|store| store.value.current_page_index() as u8)
+			.unwrap_or(0),
+		None => 0,
+	};
+	Ok(crate::shared::Context {
+		device: device.to_owned(),
+		profile: selected_profile,
+		page,
+		controller: controller.to_owned(),
+		position,
+	})
+}
+
 pub async fn get_slot<'a>(context: &crate::shared::Context, locks: &'a Locks<'_>) -> Result<&'a Option<crate::shared::ActionInstance>, anyhow::Error> {
 	let device = DEVICES.get(&context.device).ok_or_else(|| anyhow!("device not found"))?;
 	let store = locks.profile_stores.get_profile_store(&device, &context.profile)?;
-
-	let configured = match &context.controller[..] {
-		"Encoder" => store.value.sliders.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
-		"Infobar" => store.value.infobars.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
-		_ => store.value.keys.get(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
-	};
-
-	Ok(configured)
+	let page = store.value.pages.get(context.page as usize).ok_or_else(|| anyhow!("page not found"))?;
+	slot_from_page(page, context)
 }
 
 pub async fn get_slot_mut<'a>(context: &crate::shared::Context, locks: &'a mut LocksMut<'_>) -> Result<&'a mut Option<crate::shared::ActionInstance>, anyhow::Error> {
 	let device = DEVICES.get(&context.device).ok_or_else(|| anyhow!("device not found"))?;
 	let store = locks.profile_stores.get_profile_store_mut(&device, &context.profile).await?;
-
-	let configured = match &context.controller[..] {
-		"Encoder" => store.value.sliders.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
-		"Infobar" => store.value.infobars.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
-		_ => store.value.keys.get_mut(context.position as usize).ok_or_else(|| anyhow!("index out of bounds"))?,
-	};
-
-	Ok(configured)
+	let page = store.value.pages.get_mut(context.page as usize).ok_or_else(|| anyhow!("page not found"))?;
+	slot_from_page_mut(page, context)
 }
 
 pub async fn get_instance<'a>(context: &crate::shared::ActionContext, locks: &'a Locks<'_>) -> Result<Option<&'a crate::shared::ActionInstance>, anyhow::Error> {
@@ -381,6 +407,7 @@ pub async fn save_profile_now(device_id: &str, locks: &mut LocksMut<'_>) -> Resu
 	let selected_profile = locks.device_stores.get_selected_profile(device_id)?;
 	let device = DEVICES.get(device_id).ok_or_else(|| anyhow!("device not found"))?;
 	let store = locks.profile_stores.get_profile_store_mut(&device, &selected_profile).await?;
+	store.value.hydrate_current_slots();
 
 	store.save()?;
 	store.value.stale = false;

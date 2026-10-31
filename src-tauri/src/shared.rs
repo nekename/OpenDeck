@@ -366,6 +366,8 @@ pub struct TriggerDescription {
 pub struct Context {
 	pub device: String,
 	pub profile: String,
+	#[serde(default)]
+	pub page: u8,
 	pub controller: String,
 	pub position: u8,
 }
@@ -375,6 +377,7 @@ pub struct Context {
 pub struct ActionContext {
 	pub device: String,
 	pub profile: String,
+	pub page: u8,
 	pub controller: String,
 	pub position: u8,
 	pub index: u16,
@@ -382,7 +385,7 @@ pub struct ActionContext {
 
 impl std::fmt::Display for ActionContext {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{}.{}.{}.{}.{}", self.device, self.profile, self.controller, self.position, self.index)
+		write!(f, "{}.{}.{}.{}.{}.{}", self.device, self.profile, self.page, self.controller, self.position, self.index)
 	}
 }
 
@@ -395,12 +398,15 @@ impl std::str::FromStr for ActionContext {
 		}
 		let device = segments[0].to_owned();
 		let profile = segments[1].to_owned();
-		let controller = segments[2].to_owned();
-		let position = u8::from_str(segments[3])?;
-		let index = u16::from_str(segments[4])?;
+		let (page, controller, position, index) = if segments.len() >= 6 {
+			(u8::from_str(segments[2])?, segments[3].to_owned(), u8::from_str(segments[4])?, u16::from_str(segments[5])?)
+		} else {
+			(0, segments[2].to_owned(), u8::from_str(segments[3])?, u16::from_str(segments[4])?)
+		};
 		Ok(Self {
 			device,
 			profile,
+			page,
 			controller,
 			position,
 			index,
@@ -413,6 +419,7 @@ impl ActionContext {
 		Self {
 			device: context.device,
 			profile: context.profile,
+			page: context.page,
 			controller: context.controller,
 			position: context.position,
 			index,
@@ -425,6 +432,7 @@ impl From<ActionContext> for Context {
 		Self {
 			device: value.device,
 			profile: value.profile,
+			page: value.page,
 			controller: value.controller,
 			position: value.position,
 		}
@@ -448,16 +456,106 @@ pub struct ActionInstance {
 	pub children: Option<Vec<ActionInstance>>,
 }
 
+#[derive(Clone, Serialize, Deserialize, Default)]
+pub struct ProfilePage {
+	#[serde(default)]
+	pub keys: Vec<Option<ActionInstance>>,
+	#[serde(default)]
+	pub sliders: Vec<Option<ActionInstance>>,
+	#[serde(default)]
+	pub infobars: Vec<Option<ActionInstance>>,
+}
+
+impl ProfilePage {
+	pub fn empty(device: &DeviceInfo) -> Self {
+		Self {
+			keys: vec![None; (device.rows * device.columns + device.touchpoints) as usize],
+			sliders: vec![None; device.encoders as usize],
+			infobars: vec![None; device.infobars as usize],
+		}
+	}
+
+	pub fn resize(&mut self, device: &DeviceInfo) {
+		self.keys.resize((device.rows * device.columns + device.touchpoints) as usize, None);
+		self.sliders.resize(device.encoders as usize, None);
+		self.infobars.resize(device.infobars as usize, None);
+	}
+
+	pub fn slots(&self) -> impl Iterator<Item = &Option<ActionInstance>> {
+		self.keys.iter().chain(self.sliders.iter()).chain(self.infobars.iter())
+	}
+
+	pub fn slots_mut(&mut self) -> impl Iterator<Item = &mut Option<ActionInstance>> {
+		self.keys.iter_mut().chain(self.sliders.iter_mut()).chain(self.infobars.iter_mut())
+	}
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Profile {
 	pub id: String,
+	#[serde(default)]
+	pub pages: Vec<ProfilePage>,
+	#[serde(default)]
+	pub current_page: usize,
+	/// Current page slots, kept in sync for the frontend and legacy profile files.
+	#[serde(default)]
 	pub keys: Vec<Option<ActionInstance>>,
+	#[serde(default)]
 	pub sliders: Vec<Option<ActionInstance>>,
 	#[serde(default)]
 	pub infobars: Vec<Option<ActionInstance>>,
 
 	#[serde(skip)]
 	pub stale: bool,
+}
+
+impl Profile {
+	pub fn ensure_pages(&mut self) {
+		if self.pages.is_empty() {
+			self.pages.push(ProfilePage {
+				keys: std::mem::take(&mut self.keys),
+				sliders: std::mem::take(&mut self.sliders),
+				infobars: std::mem::take(&mut self.infobars),
+			});
+		}
+		if self.current_page >= self.pages.len() {
+			self.current_page = self.pages.len().saturating_sub(1);
+		}
+	}
+
+	pub fn current_page_index(&self) -> usize {
+		if self.pages.is_empty() { 0 } else { self.current_page.min(self.pages.len() - 1) }
+	}
+
+	pub fn current(&self) -> &ProfilePage {
+		&self.pages[self.current_page_index()]
+	}
+
+	pub fn hydrate_current_slots(&mut self) {
+		self.ensure_pages();
+		let page = self.pages[self.current_page_index()].clone();
+		self.keys = page.keys;
+		self.sliders = page.sliders;
+		self.infobars = page.infobars;
+	}
+
+	pub fn reindex_pages(&mut self) {
+		for (page_index, page) in self.pages.iter_mut().enumerate() {
+			let page_index = page_index as u8;
+			for slot in page.slots_mut().filter_map(|slot| slot.as_mut()) {
+				slot.context.page = page_index;
+				if let Some(children) = &mut slot.children {
+					for child in children {
+						child.context.page = page_index;
+					}
+				}
+			}
+		}
+	}
+}
+
+pub fn is_page_action(uuid: &str) -> bool {
+	matches!(uuid, "opendeck.nextpage" | "opendeck.prevpage" | "opendeck.gotopage")
 }
 
 /// A map of category names to a list of actions in that category.
@@ -494,8 +592,69 @@ pub static CATEGORIES: LazyLock<RwLock<HashMap<String, Category>>> = LazyLock::n
 					}
 				))
 				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Next Page",
+						"icon": "opendeck/next-page.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.nextpage",
+						"tooltip": "Switch to the next page of this profile",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/next-page.png" } ]
+					}
+				))
+				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Previous Page",
+						"icon": "opendeck/prev-page.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.prevpage",
+						"tooltip": "Switch to the previous page of this profile",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/prev-page.png" } ]
+					}
+				))
+				.unwrap(),
+				serde_json::from_value(serde_json::json!(
+					{
+						"name": "Go to Page",
+						"icon": "opendeck/goto-page.png",
+						"plugin": "opendeck",
+						"uuid": "opendeck.gotopage",
+						"tooltip": "Switch to a specific page of this profile",
+						"controllers": [ "Keypad" ],
+						"states": [ { "image": "opendeck/goto-page.png" } ]
+					}
+				))
+				.unwrap(),
 			],
 		},
 	);
 	RwLock::new(hashmap)
 });
+
+#[cfg(test)]
+mod tests {
+	use super::ActionContext;
+	use std::str::FromStr;
+
+	#[test]
+	fn action_context_parses_legacy_and_paged_formats() {
+		let legacy = ActionContext::from_str("sd-1.Default.Keypad.3.0").unwrap();
+		assert_eq!(legacy.device, "sd-1");
+		assert_eq!(legacy.profile, "Default");
+		assert_eq!(legacy.page, 0);
+		assert_eq!(legacy.controller, "Keypad");
+		assert_eq!(legacy.position, 3);
+		assert_eq!(legacy.index, 0);
+
+		let paged = ActionContext::from_str("sd-1.folder/name.2.Encoder.1.4").unwrap();
+		assert_eq!(paged.profile, "folder/name");
+		assert_eq!(paged.page, 2);
+		assert_eq!(paged.controller, "Encoder");
+		assert_eq!(paged.position, 1);
+		assert_eq!(paged.index, 4);
+		assert_eq!(paged.to_string(), "sd-1.folder/name.2.Encoder.1.4");
+	}
+}
