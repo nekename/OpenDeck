@@ -32,11 +32,10 @@
 		registered = [];
 	}
 
-	listen("switch_profile", async ({ payload }: { payload: { device: string; profile: string } }) => {
+	listen("profile_switched", async ({ payload }: { payload: { device: string; profile: string } }) => {
 		if (payload.device == value) {
-			$profileManager?.setProfile(payload.profile);
+			$profileManager?.refreshProfile(payload.profile);
 		} else {
-			await invoke("set_selected_profile", { device: payload.device, id: payload.profile });
 			selectedProfiles[payload.device] = await invoke("get_selected_profile", { device: payload.device });
 		}
 	});

@@ -43,21 +43,28 @@ pub fn init_application_watcher() {
 				let application_profiles = &APPLICATION_PROFILES.read().await.value;
 				let application = application_profiles.get(&app_name);
 				let default = application_profiles.get("opendeck_default");
-				for value in crate::shared::DEVICES.iter() {
-					let device = value.key();
+				// Collect the keys first so the DashMap guard is not held across the awaits in select_profile.
+				let devices: Vec<String> = crate::shared::DEVICES.iter().map(|value| value.key().clone()).collect();
+				for device in &devices {
 					let Some(profile) = application.and_then(|d| d.get(device)).or(default.and_then(|d| d.get(device))) else {
 						continue;
 					};
 					if crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(device).ok().as_ref() == Some(profile) {
 						continue;
 					}
-					let _ = app_handle.get_webview_window("main").unwrap().emit(
-						"switch_profile",
-						SwitchProfileEvent {
-							device: device.clone(),
-							profile: profile.clone(),
-						},
-					);
+					if let Err(error) = crate::events::frontend::profiles::select_profile(device.clone(), profile.clone()).await {
+						log::error!("Failed to switch profile for device {device}: {error}");
+						continue;
+					}
+					if let Some(window) = app_handle.get_webview_window("main") {
+						let _ = window.emit(
+							"profile_switched",
+							SwitchProfileEvent {
+								device: device.clone(),
+								profile: profile.clone(),
+							},
+						);
+					}
 				}
 				previous = app_name;
 			}

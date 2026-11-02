@@ -49,8 +49,12 @@ pub struct SwitchProfileEvent {
 }
 
 pub async fn switch_profile(event: SwitchProfileEvent) -> Result<(), anyhow::Error> {
+	// Switch here rather than in the frontend, which may be hidden and unresponsive.
+	crate::events::frontend::profiles::select_profile(event.device.clone(), event.profile.clone()).await?;
 	let app_handle = crate::APP_HANDLE.get().unwrap();
-	app_handle.get_webview_window("main").unwrap().emit("switch_profile", event)?;
+	if let Some(window) = app_handle.get_webview_window("main") {
+		window.emit("profile_switched", event)?;
+	}
 	Ok(())
 }
 
