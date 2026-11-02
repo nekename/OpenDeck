@@ -42,7 +42,14 @@
 			return;
 		}
 		await invoke("set_selected_profile", { device: device.id, id });
+		await refreshProfile(id);
+	}
+
+	// Syncs the UI with a profile that is already selected in the backend.
+	export async function refreshProfile(id: string) {
+		if (!device || !id) return;
 		profile = await invoke("get_selected_profile", { device: device.id });
+		value = oldValue = id;
 
 		let folder = id.includes("/") ? id.split("/")[0] : "";
 		if (folders[folder]) {
