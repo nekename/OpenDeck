@@ -32,7 +32,6 @@
 		registered = [];
 	}
 
-	// The backend has already switched the profile; this only refreshes the UI.
 	listen("profile_switched", async ({ payload }: { payload: { device: string; profile: string } }) => {
 		if (payload.device == value) {
 			$profileManager?.refreshProfile(payload.profile);

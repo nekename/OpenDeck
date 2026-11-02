@@ -52,7 +52,8 @@ pub fn init_application_watcher() {
 					if crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(device).ok().as_ref() == Some(profile) {
 						continue;
 					}
-					if crate::events::frontend::profiles::select_profile(device.clone(), profile.clone()).await.is_err() {
+					if let Err(error) = crate::events::frontend::profiles::select_profile(device.clone(), profile.clone()).await {
+						log::error!("Failed to switch profile for device {device}: {error}");
 						continue;
 					}
 					if let Some(window) = app_handle.get_webview_window("main") {

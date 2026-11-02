@@ -23,12 +23,12 @@ pub async fn get_selected_profile(device: String) -> Result<crate::shared::Profi
 	Ok(profile.value.clone())
 }
 
-#[allow(clippy::flat_map_identity)]
 #[command]
 pub async fn set_selected_profile(device: String, id: String) -> Result<(), Error> {
 	select_profile(device, id).await
 }
 
+#[allow(clippy::flat_map_identity)]
 pub async fn select_profile(device: String, id: String) -> Result<(), Error> {
 	let mut locks = acquire_locks_mut().await;
 	if !DEVICES.contains_key(&device) {
