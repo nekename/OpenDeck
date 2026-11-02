@@ -66,6 +66,10 @@ pub async fn generate_encoder_image(context: &crate::shared::Context, fallback: 
 	}
 }
 
+/// Embedded at compile time so the indicator works in packaged builds, where the source
+/// tree is not present at runtime.
+const DIAL_STACK_INDICATOR_PNG: &[u8] = include_bytes!("../../static/dial-stack-indicator.png");
+
 /// Overlay a small "stacked dials" icon in the top-right corner of the 200x100 encoder canvas
 /// to indicate that this dial is a Dial Stack.
 fn overlay_dial_stack_indicator(img: DynamicImage, child_count: usize) -> DynamicImage {
@@ -73,11 +77,9 @@ fn overlay_dial_stack_indicator(img: DynamicImage, child_count: usize) -> Dynami
 		return img;
 	}
 
-	let indicator_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("static").join("dial-stack-indicator.png");
-
 	let mut canvas = img.to_rgba8();
 
-	if let Ok(indicator_img) = image::open(&indicator_path) {
+	if let Ok(indicator_img) = image::load_from_memory_with_format(DIAL_STACK_INDICATOR_PNG, image::ImageFormat::Png) {
 		overlay(&mut canvas, &indicator_img.to_rgba8(), 200 - 24, 4);
 	}
 
