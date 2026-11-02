@@ -35,6 +35,10 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 		if matches!(parent.action.uuid.as_str(), "opendeck.dialstack" | "opendeck.actionwheel") && matches!(action.uuid.as_str(), "opendeck.dialstack" | "opendeck.actionwheel") {
 			return Ok(None);
 		}
+		// A Dial Stack holds full dial actions, so the action's manifest must declare an Encoder block.
+		if parent.action.uuid == "opendeck.dialstack" && action.encoder.is_none() {
+			return Ok(None);
+		}
 		let Some(children) = &mut parent.children else { return Ok(None) };
 		let index = match children.last() {
 			None => 1,

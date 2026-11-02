@@ -56,7 +56,7 @@
 			(parentUuid == "opendeck.multiaction" && !action.supported_in_multi_actions) ||
 			(parentUuid == "opendeck.toggleaction" && (action.uuid == "opendeck.multiaction" || action.uuid == "opendeck.toggleaction")) ||
 			(parentUuid == "opendeck.dialstack" &&
-				["opendeck.multiaction", "opendeck.toggleaction", "opendeck.dialstack", "opendeck.actionwheel"].includes(action.uuid)) ||
+				(!action.encoder || ["opendeck.multiaction", "opendeck.toggleaction", "opendeck.dialstack", "opendeck.actionwheel"].includes(action.uuid))) ||
 			(parentUuid == "opendeck.actionwheel" &&
 				(!action.controllers.includes("Keypad") ||
 					["opendeck.multiaction", "opendeck.toggleaction", "opendeck.dialstack", "opendeck.actionwheel"].includes(action.uuid)))
