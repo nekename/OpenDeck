@@ -6,7 +6,15 @@
 			"type": "shell",
 			"isBackground": true,
 			"command": "deno",
-			"args": ["task", "dev"]
+			"args": ["task", "dev"],
+			"problemMatcher": {
+				"pattern": { "regexp": "^(Error: .*)$", "message": 1 },
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "Task dev",
+					"endsPattern": "VITE .*ready in"
+				}
+			}
 		},
 		{
 			"label": "frontend:build",
