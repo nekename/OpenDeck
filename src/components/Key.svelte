@@ -23,7 +23,6 @@
 	export let label: string = "";
 	export let tabindex: number = 0;
 	export let role: string = "gridcell";
-	export let interactive: boolean = true;
 
 	// One-way binding for slot data.
 	export let inslot: ActionInstance | null;
@@ -99,7 +98,7 @@
 	let contextMenuEl: HTMLDivElement;
 	async function contextMenu(event: MouseEvent | KeyboardEvent) {
 		event.preventDefault();
-		if (!interactive || !context) return;
+		if (!active || !context) return;
 		const rect = canvas.getBoundingClientRect();
 		let x = event instanceof MouseEvent && event.x ? event.x : rect.left;
 		let y = event instanceof MouseEvent && event.y ? event.y : rect.bottom;
@@ -203,7 +202,7 @@
 	}
 
 	async function triggerVirtualPress() {
-		if (!interactive || !active || !context || !slot) return;
+		if (!active || !context || !slot) return;
 		await invoke("trigger_virtual_press", { context });
 	}
 
