@@ -291,9 +291,10 @@ export async function renderActionWheel(
 	async function drawIcon(ctx: CanvasRenderingContext2D, child: ActionInstance, x: number, y: number, size: number, dimmed: boolean) {
 		const state = child.states[child.current_state] ?? child.states[0];
 		const fallback = child.action.states[child.current_state]?.image ?? child.action.icon;
+		const imageSource = state?.image_override ?? state?.image;
 		const img = document.createElement("img");
 		img.crossOrigin = "anonymous";
-		img.src = getImage(state?.image, fallback);
+		img.src = getImage(imageSource, fallback);
 		await new Promise((resolve, reject) => {
 			img.onload = resolve;
 			img.onerror = reject;
