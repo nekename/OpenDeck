@@ -29,7 +29,7 @@ struct GenericInstancePayload {
 }
 
 impl GenericInstancePayload {
-	fn new(instance: &crate::shared::ActionInstance) -> Self {
+	pub(crate) fn new(instance: &crate::shared::ActionInstance) -> Self {
 		let coordinates = match &instance.context.controller[..] {
 			"Encoder" => Coordinates {
 				row: 0,
@@ -48,6 +48,32 @@ impl GenericInstancePayload {
 			settings: instance.settings.clone(),
 			coordinates,
 			controller: instance.context.controller.clone(),
+			state: instance.current_state,
+			isInMultiAction: instance.context.index != 0,
+		}
+	}
+
+	/// Create a payload with an overridden controller (used for Action Wheel children
+	/// which are key-style actions on an Encoder slot and should report as Keypad).
+	pub(crate) fn new_with_controller(instance: &crate::shared::ActionInstance, controller: &str) -> Self {
+		let coordinates = match controller {
+			"Encoder" => Coordinates {
+				row: 0,
+				column: instance.context.position,
+			},
+			_ => {
+				let columns = crate::shared::DEVICES.get(&instance.context.device).unwrap().columns;
+				Coordinates {
+					row: instance.context.position / columns,
+					column: instance.context.position % columns,
+				}
+			}
+		};
+
+		Self {
+			settings: instance.settings.clone(),
+			coordinates,
+			controller: controller.to_owned(),
 			state: instance.current_state,
 			isInMultiAction: instance.context.index != 0,
 		}
