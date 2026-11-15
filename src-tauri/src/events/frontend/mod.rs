@@ -58,6 +58,35 @@ pub async fn get_devices() -> dashmap::DashMap<String, DeviceInfo> {
 	DEVICES.clone()
 }
 
+/// Reads an image file and returns it as a data URL. When a file is dropped the
+/// frontend only receives the path, not the file itself.
+#[command]
+pub async fn read_image_file(path: String) -> Result<String, String> {
+	use base64::Engine;
+
+	let file_path = std::path::Path::new(&path);
+	let mime = match file_path.extension().and_then(|e| e.to_str()).unwrap_or_default().to_lowercase().as_str() {
+		"png" => "image/png",
+		"jpg" | "jpeg" | "jpe" => "image/jpeg",
+		"webp" => "image/webp",
+		"gif" => "image/gif",
+		"bmp" => "image/bmp",
+		"svg" => "image/svg+xml",
+		"ico" => "image/x-icon",
+		"avif" => "image/avif",
+		"tif" | "tiff" => "image/tiff",
+		_ => return Err("not an image file".to_owned()),
+	};
+
+	let bytes = std::fs::read(file_path).map_err(|e| e.to_string())?;
+	if bytes.len() > 20 * 1024 * 1024 {
+		return Err("file too large".to_owned());
+	}
+
+	let encoded = base64::engine::general_purpose::STANDARD.encode(bytes);
+	Ok(format!("data:{mime};base64,{encoded}"))
+}
+
 pub async fn update_devices() {
 	let app = crate::APP_HANDLE.get().unwrap();
 	let _ = app.get_webview_window("main").unwrap().emit("devices", DEVICES.clone());
