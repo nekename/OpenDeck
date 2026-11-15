@@ -134,6 +134,8 @@ pub struct Settings {
 	pub sleep_timeout_minutes: u16,
 	pub sleep_when_computer_locked: bool,
 	pub rotation: u16,
+	/// Rotation in degrees per device, keyed by the device id (serial).
+	pub device_rotation: std::collections::HashMap<String, u16>,
 	pub background: bool,
 	pub autolaunch: bool,
 	pub updatecheck: bool,
@@ -152,6 +154,7 @@ impl Default for Settings {
 			sleep_timeout_minutes: 0,
 			sleep_when_computer_locked: false,
 			rotation: 0,
+			device_rotation: std::collections::HashMap::new(),
 			background: !is_flatpak(),
 			autolaunch: false,
 			updatecheck: option_env!("OPENDECK_DISABLE_UPDATE_CHECK").is_none() && !is_flatpak(),

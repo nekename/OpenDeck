@@ -182,6 +182,7 @@
 				<div class="flex flex-row" role="row">
 					{#each { length: device.columns } as _, c}
 						<Key
+							deviceId={device.id}
 							context={{ device: device.id, profile: profile.id, controller: "Keypad", position: r * device.columns + c }}
 							bind:inslot={profile.keys[r * device.columns + c]}
 							on:dragover={handleDragOver}
@@ -200,6 +201,7 @@
 		<div class="flex flex-row justify-between" role="row" style={`width: ${keypadRowWidth}px;`}>
 			{#each { length: device.encoders } as _, i}
 				<Key
+							deviceId={device.id}
 					context={{ device: device.id, profile: profile.id, controller: "Encoder", position: i }}
 					bind:inslot={profile.sliders[i]}
 					on:dragover={handleDragOver}
@@ -220,6 +222,7 @@
 					{#each { length: device.infobars } as _, j}
 						<div class="px-3.5 py-[3.5px]">
 							<Key
+							deviceId={device.id}
 								context={{ device: device.id, profile: profile.id, controller: "Infobar", position: j }}
 								bind:inslot={profile.infobars[j]}
 								on:dragover={handleDragOver}
@@ -234,6 +237,7 @@
 					{/each}
 				{/if}
 				<Key
+							deviceId={device.id}
 					context={{ device: device.id, profile: profile.id, controller: "Keypad", position: device.rows * device.columns + i }}
 					bind:inslot={profile.keys[device.rows * device.columns + i]}
 					on:dragover={handleDragOver}

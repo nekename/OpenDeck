@@ -142,6 +142,8 @@
 	"settings.restore_config.prompt": "You will be prompted to select a location to restore the backup from. This may take a while if you have many plugins or profiles. The application will restart after the restoration is complete.\n\nYou may encounter issues if you attempt to restore a backup from a different operating system or architecture.",
 	"settings.restore_config.title": "Restoring configuration",
 	"settings.rotation": "Image rotation:",
+	"settings.rotation_per_device": "Image rotation per device:",
+	"settings.refresh_devices": "Refresh devices",
 	"settings.separatewine": "Create separate Wine prefixes:",
 	"settings.separatewine.tooltip": "If this option is enabled, {{PRODUCT_NAME}} will create a separate Wine prefix for each plugin that runs under Wine. Please note that each Wine prefix is quite large - around 300MB when initialised.",
 	"settings.sleep_timeout_minutes": "Sleep after inactivity:",

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ArrowClockwise from "phosphor-svelte/lib/ArrowClockwise";
 	import ClockClockwise from "phosphor-svelte/lib/ClockClockwise";
 	import ClockCounterClockwise from "phosphor-svelte/lib/ClockCounterClockwise";
 	import Gear from "phosphor-svelte/lib/Gear";
@@ -8,6 +9,8 @@
 	import Popup from "./Popup.svelte";
 	import Tooltip from "./Tooltip.svelte";
 
+	import type { DeviceInfo } from "$lib/DeviceInfo";
+
 	import { t } from "$lib/i18n";
 	import { settings } from "$lib/settings";
 	import { PRODUCT_NAME } from "$lib/singletons";
@@ -15,6 +18,33 @@
 	import { invoke } from "@tauri-apps/api/core";
 	import { listen } from "@tauri-apps/api/event";
 	import { message } from "@tauri-apps/plugin-dialog";
+
+	let devices: { [id: string]: DeviceInfo } = {};
+	(async () => (devices = await invoke("get_devices")))();
+	listen("devices", ({ payload }: { payload: { [id: string]: DeviceInfo } }) => (devices = payload));
+
+	// Fill each device once from the settings. Nothing may overwrite the value
+	// while it is being dragged, otherwise the slider jumps back.
+	let rotations: { [id: string]: number } = {};
+	$: if ($settings) {
+		for (const device of Object.values(devices)) {
+			if (rotations[device.id] === undefined) {
+				rotations[device.id] = $settings.device_rotation?.[device.id] ?? 0;
+			}
+		}
+	}
+
+	async function refreshDevices() {
+		await invoke("refresh_devices");
+		devices = await invoke("get_devices");
+	}
+
+	function setDeviceRotation(deviceId: string, value: number) {
+		if (!$settings) return;
+		const map = { ...($settings.device_rotation ?? {}) };
+		map[deviceId] = value;
+		settings.set({ ...$settings, device_rotation: map });
+	}
 
 	let showPopup: boolean;
 	let buildInfo: string;
@@ -115,9 +145,33 @@
 			<Tooltip>{$t("settings.sleep_when_computer_locked.tooltip")}</Tooltip>
 		</div>
 
-		<div class="flex flex-row items-center m-2 space-x-2">
-			<label for="settings-rotation" class="text-neutral-400">{$t("settings.rotation")}</label>
-			<input type="range" min="0" max="270" step="90" bind:value={$settings.rotation} id="settings-rotation" />
+
+		<div class="flex flex-col m-2 space-y-1">
+			<div class="flex flex-row items-center space-x-2">
+				<span class="text-neutral-400">{$t("settings.rotation_per_device")}</span>
+				<button
+					class="flex flex-row items-center space-x-1 rounded bg-neutral-800 px-2 py-0.5 text-xs text-neutral-300 hover:bg-neutral-700"
+					on:click={refreshDevices}
+				>
+					<ArrowClockwise size={12} />
+					<span>{$t("settings.refresh_devices")}</span>
+				</button>
+			</div>
+			{#if Object.keys(devices).length > 0}
+				{#each Object.values(devices).sort((a, b) => a.name.localeCompare(b.name)) as device (device.id)}
+					<label class="flex flex-row items-center space-x-2">
+						<span class="w-48 truncate text-neutral-300">{device.name}</span>
+						<input
+							type="range"
+							min="0"
+							max="270"
+							step="90"
+							bind:value={rotations[device.id]}
+							on:change={() => setDeviceRotation(device.id, rotations[device.id])}
+						/>
+					</label>
+				{/each}
+			{/if}
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">

@@ -142,6 +142,8 @@
 	"settings.restore_config.prompt": "Du kommer att få välja en plats där säkerhetskopian ska återställas från. Detta kan ta en stund om du har många plugin eller profiler. Programmet startar om när återställningen är klar.\n\nDu kan stöta på problem om du försöker återställa en säkerhetskopia från ett annat operativsystem eller en annan arkitektur.",
 	"settings.restore_config.title": "Återställer konfiguration",
 	"settings.rotation": "Bildrotation:",
+	"settings.rotation_per_device": "Bildrotation per enhet:",
+	"settings.refresh_devices": "Uppdatera enheter",
 	"settings.separatewine": "Skapa separata Wine-prefix:",
 	"settings.separatewine.tooltip": "Om detta alternativ är aktiverat skapar {{PRODUCT_NAME}} ett separat Wine-prefix för varje plugin som körs under Wine. Observera att varje Wine-prefix är ganska stort – cirka 300 MB när det har initierats.",
 	"settings.sleep_timeout_minutes": "Viloläge efter inaktivitet:",

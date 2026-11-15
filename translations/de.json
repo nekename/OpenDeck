@@ -142,6 +142,8 @@
 	"settings.restore_config.prompt": "Du wirst aufgefordert, einen Speicherort zum Wiederherstellen der Sicherung auszuwählen. Dies kann eine Weile dauern, wenn du viele Plugins oder Profile hast. Die Anwendung wird nach der Wiederherstellung neu gestartet.\n\nDu kannst Probleme haben, wenn du versuchst, eine Sicherung von einem anderen Betriebssystem oder Architektur zu wiederherstellen.",
 	"settings.restore_config.title": "Wiederherstellen der Konfiguration",
 	"settings.rotation": "Bildrotation:",
+	"settings.rotation_per_device": "Bildrotation je Gerät:",
+	"settings.refresh_devices": "Geräte aktualisieren",
 	"settings.separatewine": "Separate Wine Präfixe erstellen:",
 	"settings.separatewine.tooltip": "Wenn diese Option aktiviert ist, erstellt {{PRODUCT_NAME}} für jedes Plugin, das unter Wine läuft, ein separates Wine-Präfix. Bitte beachte, dass jedes Wine-Präfix recht groß ist – im initialisierten Zustand etwa 300 MB.",
 	"settings.sleep_timeout_minutes": "Ruhezustand nach Inaktivität:",

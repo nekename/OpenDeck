@@ -20,6 +20,10 @@
 	import { tick } from "svelte";
 
 	export let context: Context | null;
+	// Device this key belongs to, so it can use that device's own rotation
+	export let deviceId: string | null = null;
+	// Effective rotation: the device setting wins, 0 if it has none
+	let rotation: number | undefined;
 	export let label: string = "";
 	export let tabindex: number = 0;
 	export let role: string = "gridcell";
@@ -168,7 +172,7 @@
 			const unlock = await lock.lock();
 			try {
 				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
-				if (state && canvas) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, $settings?.rotation);
+				if (state && canvas) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, rotation);
 			} finally {
 				unlock();
 			}
@@ -179,7 +183,9 @@
 		canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
 		slot = slot;
 	}
-	$: if ($settings?.rotation != undefined) {
+	// A device without an entry stays upright, so a new deck starts at 0 degrees.
+	$: rotation = deviceId ? ($settings?.device_rotation?.[deviceId] ?? 0) : 0;
+	$: if (rotation != undefined) {
 		clearAndRedraw();
 	}
 
