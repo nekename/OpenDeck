@@ -23,7 +23,7 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 use tauri::{
-	AppHandle, Builder, Manager, WindowEvent,
+	AppHandle, Emitter, Builder, Manager, WindowEvent,
 	menu::{IconMenuItemBuilder, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
 	tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
@@ -94,6 +94,11 @@ async fn main() {
 			frontend::property_inspector::make_info,
 			frontend::property_inspector::switch_property_inspector,
 			frontend::property_inspector::open_url,
+			frontend::windows::open_second_window,
+			frontend::windows::toggle_second_window,
+			frontend::windows::close_second_window,
+			frontend::windows::set_clipboard,
+			frontend::windows::get_clipboard,
 			frontend::plugins::list_plugins,
 			frontend::plugins::install_plugin,
 			frontend::plugins::remove_plugin,
@@ -109,6 +114,7 @@ async fn main() {
 		])
 		.setup(|app| {
 			APP_HANDLE.set(app.handle().clone()).unwrap();
+
 
 			#[cfg(windows)]
 			if !std::env::args().any(|v| v == "--hide") {
@@ -371,6 +377,12 @@ If you have already donated, thank you so much for your support!"#,
 		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_deep_link::init())
 		.on_window_event(|window, event| {
+			if window.label() == frontend::windows::SECONDARY_LABEL {
+				if let WindowEvent::Destroyed = event {
+					let _ = window.app_handle().emit("second_window", false);
+				}
+				return;
+			}
 			if window.label() != "main" {
 				return;
 			}

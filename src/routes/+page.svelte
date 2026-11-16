@@ -2,8 +2,12 @@
 	import type { DeviceInfo } from "$lib/DeviceInfo";
 	import type { Profile } from "$lib/Profile";
 
+	import { onMount } from "svelte";
+
+	import { t } from "$lib/i18n";
 	import { initPortBase } from "$lib/ports";
-	import { inspectedParentAction } from "$lib/propertyInspector";
+	import { initClipboard, inspectedParentAction } from "$lib/propertyInspector";
+	import { settings } from "$lib/settings";
 	import { actionList, deviceSelector, profileManager } from "$lib/singletons";
 
 	import ActionList from "../components/ActionList.svelte";
@@ -20,7 +24,40 @@
 	let selectedDevice: string;
 	let selectedProfiles: { [id: string]: Profile } = {};
 
+	// The second window shows keys only: no settings, no plugins, no language.
+	import { getCurrentWindow } from "@tauri-apps/api/window";
+
+	// The window label decides: "main" is the settings window, "secondary" only
+	// shows keys for another device.
+	const secondary = getCurrentWindow().label !== "main";
+
+	let windowTitle = "";
+	let secondOpen = false;
+
 	initPortBase();
+
+	onMount(() => {
+		initClipboard();
+		if (!secondary) {
+			import("@tauri-apps/api/event").then(({ listen }) =>
+				listen<boolean>("second_window", ({ payload }) => (secondOpen = payload))
+			);
+		}
+	});
+
+	$: if (selectedDevice && devices[selectedDevice]) {
+		const title = devices[selectedDevice].name;
+		if (title !== windowTitle) {
+			windowTitle = title;
+			import("@tauri-apps/api/window").then(({ getCurrentWindow }) =>
+				getCurrentWindow().setTitle(`OpenDeck - ${title}`)
+			);
+		}
+	}
+
+	$: if ($settings && $settings.second_window === false) {
+		import("@tauri-apps/api/core").then(({ invoke }) => invoke("close_second_window"));
+	}
 </script>
 
 <svelte:window on:dragover={(event) => event.preventDefault()} on:drop={(event) => event.preventDefault()} />
@@ -37,10 +74,28 @@
 				{/key}
 			</div>
 
-			<div class="flex flex-row items-center space-x-2" class:mr-4={Object.keys(devices).length > 0}>
-				<PluginManager />
-				<SettingsView />
-			</div>
+			{#if !secondary}
+				<div class="flex flex-row items-center space-x-2" class:mr-4={Object.keys(devices).length > 0}>
+					{#if $settings?.second_window}
+						<button
+							class="flex flex-row items-center px-2 py-1 text-sm transition-colors border rounded-lg"
+							class:bg-blue-600={secondOpen}
+							class:text-white={secondOpen}
+							class:hover:bg-blue-500={secondOpen}
+							class:border-blue-400={secondOpen}
+							class:bg-neutral-700={!secondOpen}
+							class:text-neutral-300={!secondOpen}
+							class:hover:bg-neutral-600={!secondOpen}
+							class:border-neutral-600={!secondOpen}
+							on:click={() => import("@tauri-apps/api/core").then(({ invoke }) => invoke("toggle_second_window"))}
+						>
+							{$t("window.second")}: {secondOpen ? $t("window.second.on") : $t("window.second.off")}
+						</button>
+					{/if}
+					<PluginManager />
+					<SettingsView />
+				</div>
+			{/if}
 		</nav>
 
 		{#if Object.keys(devices).length > 0 && selectedProfiles}
@@ -62,5 +117,7 @@
 		{/if}
 	</div>
 
-	<ActionList bind:this={$actionList} />
+	{#if !secondary}
+		<ActionList bind:this={$actionList} />
+	{/if}
 </div>

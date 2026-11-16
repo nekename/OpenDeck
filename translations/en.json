@@ -150,5 +150,11 @@
 	"settings.sleep_when_computer_locked": "Sleep when computer is locked:",
 	"settings.sleep_when_computer_locked.tooltip": "If this option is enabled, devices will enter sleep mode when the computer locks and all key presses will be suppressed until it is unlocked.",
 	"settings.statistics": "Contribute statistics:",
-	"settings.updatecheck": "Check for updates:"
+	"settings.updatecheck": "Check for updates:",
+	"settings.secondwindow": "Second window",
+	"settings.secondwindow.tooltip": "Allows a second window with its own device, for copying keys between decks.",
+	"window.second": "Second window",
+	"window.second.tooltip": "Opens another window with its own device, keys can be copied between the two.",
+	"window.second.on": "on",
+	"window.second.off": "off"
 }

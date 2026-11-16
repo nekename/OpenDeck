@@ -150,5 +150,11 @@
 	"settings.sleep_when_computer_locked": "컴퓨터 잠금 시 절전:",
 	"settings.sleep_when_computer_locked.tooltip": "이 옵션을 켜면 컴퓨터가 잠길 때 장치가 절전 모드로 전환되고, 잠금이 풀릴 때까지 모든 키 입력이 무시됩니다.",
 	"settings.statistics": "통계 제공:",
-	"settings.updatecheck": "업데이트 확인:"
+	"settings.updatecheck": "업데이트 확인:",
+	"settings.secondwindow": "Second window",
+	"settings.secondwindow.tooltip": "Allows a second window with its own device, for copying keys between decks.",
+	"window.second": "Second window",
+	"window.second.tooltip": "Opens another window with its own device, keys can be copied between the two.",
+	"window.second.on": "on",
+	"window.second.off": "off"
 }

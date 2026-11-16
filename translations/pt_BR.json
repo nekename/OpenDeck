@@ -150,5 +150,11 @@
 	"settings.sleep_when_computer_locked": "Suspender quando o computador estiver bloqueado:",
 	"settings.sleep_when_computer_locked.tooltip": "Se esta opção estiver ativada, os dispositivos entrarão em modo de suspensão quando o computador for bloqueado, e todos os pressionamentos de teclas serão suprimidos até ele ser desbloqueado.",
 	"settings.statistics": "Contribuir com estatísticas:",
-	"settings.updatecheck": "Verificar atualizações:"
+	"settings.updatecheck": "Verificar atualizações:",
+	"settings.secondwindow": "Second window",
+	"settings.secondwindow.tooltip": "Allows a second window with its own device, for copying keys between decks.",
+	"window.second": "Second window",
+	"window.second.tooltip": "Opens another window with its own device, keys can be copied between the two.",
+	"window.second.on": "on",
+	"window.second.off": "off"
 }

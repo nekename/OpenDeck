@@ -5,7 +5,7 @@
 
 	import { t } from "$lib/i18n";
 	import { getWebserverUrl } from "$lib/ports";
-	import { copiedItem } from "$lib/propertyInspector";
+	import { copiedItem, copyItem } from "$lib/propertyInspector";
 	import { localisations } from "$lib/settings";
 	import { PRODUCT_NAME } from "$lib/singletons";
 
@@ -117,7 +117,7 @@
 							}}
 							on:keydown={(event) => {
 								if ((event.ctrlKey || event.metaKey) && event.key == "c") {
-									copiedItem.set({ type: "action", action });
+									void copyItem({ type: "action", action });
 								}
 							}}
 						>
