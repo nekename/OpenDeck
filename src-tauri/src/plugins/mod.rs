@@ -79,7 +79,7 @@ fn plugin_command<S: AsRef<std::ffi::OsStr>>(program: S) -> Command {
 	match tauri::utils::platform::current_exe() {
 		Ok(exe) => {
 			let mut command = Command::new(exe);
-			command.arg(PARENT_DEATH_TRAMPOLINE_ARG).arg(program);
+			command.arg(PARENT_DEATH_TRAMPOLINE_ARG).arg(std::process::id().to_string()).arg(program);
 			return command;
 		}
 		Err(error) => warn!("Unable to locate own executable, plugin will not be terminated if OpenDeck exits unexpectedly: {error}"),
@@ -89,7 +89,7 @@ fn plugin_command<S: AsRef<std::ffi::OsStr>>(program: S) -> Command {
 
 /// If OpenDeck was started by [`plugin_command`] on FreeBSD, set a parent-death signal of SIGTERM and execute the plugin
 /// in place. `PROC_PDEATHSIG_CTL` is preserved across `execve`, and the plugin keeps OpenDeck as its parent.
-/// Never returns in that case.
+/// Exits instead if the OpenDeck that started it is no longer the parent. Never returns in either case.
 #[cfg(target_os = "freebsd")]
 pub fn run_parent_death_trampoline() {
 	use std::os::unix::process::CommandExt;
@@ -98,8 +98,8 @@ pub fn run_parent_death_trampoline() {
 	if args.nth(1).as_deref() != Some(std::ffi::OsStr::new(PARENT_DEATH_TRAMPOLINE_ARG)) {
 		return;
 	}
-	let Some(program) = args.next() else {
-		eprintln!("{PARENT_DEATH_TRAMPOLINE_ARG}: missing program");
+	let (Some(parent), Some(program)) = (args.next().and_then(|pid| pid.to_str()?.parse::<libc::pid_t>().ok()), args.next()) else {
+		eprintln!("{PARENT_DEATH_TRAMPOLINE_ARG}: expected a parent PID and a program");
 		std::process::exit(127);
 	};
 
@@ -108,9 +108,9 @@ pub fn run_parent_death_trampoline() {
 	if unsafe { libc::procctl(libc::P_PID, 0, libc::PROC_PDEATHSIG_CTL, (&raw mut signal).cast()) } != 0 {
 		eprintln!("{PARENT_DEATH_TRAMPOLINE_ARG}: failed to set parent death signal: {}", std::io::Error::last_os_error());
 	}
-	// The parent may have exited before the signal was armed.
+	// The parent may have exited before the signal was armed, leaving this process with init or a reaper as its parent.
 	// SAFETY: getppid has no preconditions.
-	if unsafe { libc::getppid() } == 1 {
+	if unsafe { libc::getppid() } != parent {
 		std::process::exit(0);
 	}
 
