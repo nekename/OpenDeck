@@ -14,6 +14,8 @@
 		<p class="mb-2">{$t("no_devices_detected.check_connection")}</p>
 		{#if buildInfo?.split("</summary>")[0]?.includes("linux")}
 			<p class="mb-2">{$t("no_devices_detected.check_udev")}</p>
+		{:else if buildInfo?.split("</summary>")[0]?.includes("freebsd")}
+			<p class="mb-2">{$t("no_devices_detected.check_freebsd")}</p>
 		{/if}
 		<p class="mb-4">{$t("no_devices_detected.install_plugin")}</p>
 		<button
