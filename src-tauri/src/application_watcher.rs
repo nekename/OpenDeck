@@ -3,6 +3,7 @@ use crate::store::{NotProfile, Store};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
+#[cfg(not(target_os = "freebsd"))]
 use active_win_pos_rs::get_active_window;
 use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System};
 use tauri::{Emitter, Manager};
@@ -130,4 +131,21 @@ pub async fn stop_monitoring(plugin: &str) {
 		plugins.retain(|p| p != plugin);
 	}
 	application_plugins.retain(|_, p| !p.is_empty());
+}
+
+/// The subset of `active_win_pos_rs::ActiveWindow` used by `init_application_watcher`.
+#[cfg(target_os = "freebsd")]
+struct ActiveWindow {
+	app_name: String,
+}
+
+/// `active-win-pos-rs` has no FreeBSD backend, so switching profiles by focused application is unavailable.
+/// Logs a warning on first use.
+#[cfg(target_os = "freebsd")]
+fn get_active_window() -> Result<ActiveWindow, ()> {
+	static UNAVAILABLE_WARNING: std::sync::Once = std::sync::Once::new();
+	UNAVAILABLE_WARNING.call_once(|| {
+		log::warn!("Active window detection is unavailable on FreeBSD; automatic profile switching by application will not work");
+	});
+	Err(())
 }

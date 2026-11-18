@@ -59,6 +59,20 @@ pub fn log_dir() -> std::path::PathBuf {
 	app_handle.path().app_log_dir().unwrap()
 }
 
+/// Get the directory containing the plugins bundled with the application.
+pub fn builtin_plugins_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, tauri::Error> {
+	let resolved = app.path().resolve("plugins", tauri::path::BaseDirectory::Resource);
+	// Tauri has no resource directory for FreeBSD outside of Cargo's target directory;
+	// use the same `<prefix>/lib/<name>` layout as Linux bundles, relative to the executable (e.g. /usr/local/lib/opendeck).
+	#[cfg(target_os = "freebsd")]
+	if resolved.is_err() {
+		let exe = tauri::utils::platform::current_exe()?;
+		let prefix = exe.parent().and_then(|p| p.parent()).ok_or(tauri::Error::UnknownPath)?;
+		return Ok(prefix.join("lib").join(&app.package_info().name).join("plugins"));
+	}
+	resolved
+}
+
 /// Get whether or not the application is running inside the Flatpak sandbox.
 pub fn is_flatpak() -> bool {
 	var("FLATPAK_ID").is_ok() || var("container").map(|x| x.to_lowercase().trim() == "flatpak").unwrap_or(false)

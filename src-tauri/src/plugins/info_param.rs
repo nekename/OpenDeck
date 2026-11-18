@@ -77,6 +77,8 @@ pub async fn make_info(uuid: String, version: String, wine: bool) -> Info {
 	let platform = "mac";
 	#[cfg(target_os = "linux")]
 	let platform = "linux";
+	#[cfg(target_os = "freebsd")]
+	let platform = "freebsd";
 
 	Info {
 		application: ApplicationInfo {

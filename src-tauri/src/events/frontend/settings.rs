@@ -7,9 +7,11 @@ use std::fs::{File, read_dir};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+#[cfg(all(not(debug_assertions), target_os = "freebsd"))]
+use crate::autostart::ManagerExt;
 use path_slash::PathExt;
-use tauri::{AppHandle, Manager, command};
-#[cfg(not(debug_assertions))]
+use tauri::{AppHandle, command};
+#[cfg(all(not(debug_assertions), not(target_os = "freebsd")))]
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_dialog::{DialogExt, FilePath};
 use zip::{ZipWriter, write::FileOptions};
@@ -119,9 +121,7 @@ pub async fn backup_config_directory(app: AppHandle) -> Result<bool, Error> {
 	let mut skip_paths = vec![temp_path.clone()];
 	let config_dir = config_dir();
 
-	if let Some(builtin_plugins) = app
-		.path()
-		.resolve("plugins", tauri::path::BaseDirectory::Resource)
+	if let Some(builtin_plugins) = crate::shared::builtin_plugins_dir(&app)
 		.ok()
 		.and_then(|p| read_dir(p).ok())
 		.map(|e| e.into_iter().flatten().map(|x| config_dir.join("plugins").join(x.file_name())).collect::<Vec<_>>())
