@@ -125,12 +125,26 @@ where
 	}
 }
 
+fn deserialize_deck_preview_size<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<u8, D::Error> {
+	let value = serde_json::Value::deserialize(deserializer)?;
+	// Accept the previous compact_deck boolean setting.
+	if let serde_json::Value::Bool(compact) = value {
+		return Ok(if compact { 50 } else { 100 });
+	}
+	match value.as_u64() {
+		Some(size @ (50 | 75 | 100)) => Ok(size as u8),
+		_ => Err(serde::de::Error::custom("deck preview size must be 50, 75, or 100")),
+	}
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
 	pub version: String,
 	pub language: String,
 	pub brightness: u8,
+	#[serde(alias = "compact_deck", deserialize_with = "deserialize_deck_preview_size")]
+	pub deck_preview_size: u8,
 	pub sleep_timeout_minutes: u16,
 	pub sleep_when_computer_locked: bool,
 	pub rotation: u16,
@@ -149,6 +163,7 @@ impl Default for Settings {
 			version: "0.0.0".to_owned(),
 			language: "en".to_owned(),
 			brightness: 50,
+			deck_preview_size: 100,
 			sleep_timeout_minutes: 0,
 			sleep_when_computer_locked: false,
 			rotation: 0,
@@ -172,3 +187,28 @@ pub fn get_settings() -> Store<Settings> {
 
 pub static SETTINGS_MUT: std::sync::LazyLock<tokio::sync::Mutex<Store<Settings>>> =
 	std::sync::LazyLock::new(|| tokio::sync::Mutex::new(Store::new_concurrent("settings", &crate::shared::config_dir(), Settings::default())));
+
+#[cfg(test)]
+mod tests {
+	use super::Settings;
+
+	#[test]
+	fn deck_preview_size_defaults_migrates_and_round_trips() {
+		assert_eq!(serde_json::from_str::<Settings>("{}").unwrap().deck_preview_size, 100);
+		for (legacy, expected) in [(true, 50), (false, 100)] {
+			let json = format!(r#"{{"compact_deck":{legacy}}}"#);
+			assert_eq!(serde_json::from_str::<Settings>(&json).unwrap().deck_preview_size, expected);
+		}
+		for size in [50, 75, 100] {
+			let json = format!(r#"{{"deck_preview_size":{size}}}"#);
+			let settings: Settings = serde_json::from_str(&json).unwrap();
+			assert_eq!(settings.deck_preview_size, size);
+			let saved = serde_json::to_string(&settings).unwrap();
+			assert_eq!(serde_json::from_str::<Settings>(&saved).unwrap().deck_preview_size, size);
+		}
+		for invalid in ["0", "60", "101", "-1", "null", "\"75\""] {
+			let json = format!(r#"{{"deck_preview_size":{invalid}}}"#);
+			assert!(serde_json::from_str::<Settings>(&json).is_err());
+		}
+	}
+}

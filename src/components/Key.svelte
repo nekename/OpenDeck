@@ -38,6 +38,7 @@
 
 	export let active: boolean = true;
 	export let scale: number = 1;
+	export let previewScale: number = 1;
 	export let isTouchPoint: boolean = false;
 	let pressed: boolean = false;
 
@@ -192,11 +193,12 @@
 		label + (slot ? ": " + slot.action.name + (state?.show && (state?.text_override || state?.text) ? " - " + (state.text_override || state.text) : "") : "");
 </script>
 
-<div class="relative" style={`transform: scale(${(112 /* desired inner size */ / size) * scale});`}>
+<div class="relative" style={`zoom: ${previewScale}; transform: scale(${(112 /* desired inner size */ / size) * scale});`}>
+	<!-- Explicit outer dimensions keep border rounding at 50% zoom from shifting the grid. -->
 	<canvas
 		bind:this={canvas}
 		class="relative border-3 border-neutral-700 rounded-3xl outline-none outline-offset-2 outline-blue-500"
-		style={`margin: ${-((size + 3 * 2 /* border */ - 132) /* desired outer size */ / 2)}px;`}
+		style={`width: ${width + 6}px; height: ${height + 6}px; box-sizing: border-box; margin: ${-((size + 3 * 2 /* border */ - 132) /* desired outer size */ / 2)}px;`}
 		class:outline-solid={active && ((slot && $inspectedInstance == slot.context) || (context && $inspectedInstance == context))}
 		class:rounded-full!={context?.controller == "Encoder"}
 		class:rounded-lg!={context?.controller == "Infobar"}

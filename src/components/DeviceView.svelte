@@ -8,6 +8,7 @@
 	import Key from "./Key.svelte";
 
 	import { t } from "$lib/i18n";
+	import { settings } from "$lib/settings";
 	import { inspectedInstance, inspectedParentAction } from "$lib/propertyInspector";
 
 	import { invoke } from "@tauri-apps/api/core";
@@ -75,8 +76,9 @@
 		}
 	}
 
-	$: overflowsX = Math.max(device.columns, device.encoders, device.touchpoints) > 8;
-	$: overflowsY = device.rows + Math.min(device.encoders, 1) + Math.min(device.touchpoints, 1) > 4;
+	$: previewScale = ($settings?.deck_preview_size ?? 100) / 100;
+	$: overflowsX = Math.max(device.columns, device.encoders, device.touchpoints) * previewScale > 8;
+	$: overflowsY = (device.rows + Math.min(device.encoders, 1) + Math.min(device.touchpoints, 1)) * previewScale > 4;
 
 	// Grid navigation: track focused cell and compute row lengths for arrow key movement.
 	let focusedRow = 0;
@@ -89,7 +91,7 @@
 	];
 	$: encoderRowIndex = device.rows;
 	$: touchpointRowIndex = device.rows + (device.encoders > 0 ? 1 : 0);
-	$: keypadRowWidth = device.columns * 132;
+	$: keypadRowWidth = device.columns * 132 * previewScale;
 
 	function flatIndexFromRowCol(row: number, col: number): number {
 		let index = 0;
@@ -188,6 +190,7 @@
 							on:drop={(event) => handleDrop(event, "Keypad", r * device.columns + c)}
 							on:dragstart={(event) => handleDragStart(event, "Keypad", r * device.columns + c)}
 							{handlePaste}
+							{previewScale}
 							size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 							label="{$t('device_view.key')} {String.fromCharCode(65 + r)}{c + 1}"
 							tabindex={focusedRow === r && focusedCol === c ? 0 : -1}
@@ -206,6 +209,7 @@
 					on:drop={(event) => handleDrop(event, "Encoder", i)}
 					on:dragstart={(event) => handleDragStart(event, "Encoder", i)}
 					{handlePaste}
+					{previewScale}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					label="{$t('device_view.encoder')} {i + 1}"
 					tabindex={focusedRow === encoderRowIndex && focusedCol === i ? 0 : -1}
@@ -218,7 +222,7 @@
 				<!-- On the Stream Deck Neo, the infobar display sits physically between the two touchpoints. -->
 				{#if device.infobars > 0 && i === 1}
 					{#each { length: device.infobars } as _, j}
-						<div class="px-3.5 py-[3.5px]">
+						<div style={`padding: ${3.5 * previewScale}px ${14 * previewScale}px;`}>
 							<Key
 								context={{ device: device.id, profile: profile.id, controller: "Infobar", position: j }}
 								bind:inslot={profile.infobars[j]}
@@ -226,6 +230,7 @@
 								on:drop={(event) => handleDrop(event, "Infobar", j)}
 								on:dragstart={(event) => handleDragStart(event, "Infobar", j)}
 								{handlePaste}
+								{previewScale}
 								size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 								width={248}
 								height={58}
@@ -240,6 +245,7 @@
 					on:drop={(event) => handleDrop(event, "Keypad", device.rows * device.columns + i)}
 					on:dragstart={(event) => handleDragStart(event, "Keypad", device.rows * device.columns + i)}
 					{handlePaste}
+					{previewScale}
 					size={device.id.startsWith("sd-") && device.rows == 4 && device.columns == 8 ? 192 : 144}
 					isTouchPoint
 					label="{$t('device_view.touchpoint')} {i + 1}"

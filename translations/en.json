@@ -122,6 +122,7 @@
 	"settings.backup_config.success.prompt": "Successfully backed up the config directory.",
 	"settings.backup_config.success.title": "Backup complete",
 	"settings.backup_config.title": "Backing up configuration",
+	"settings.deck_preview_size": "Deck preview size:",
 	"settings.brightness": "Device brightness:",
 	"settings.button": "Settings",
 	"settings.close": "Close",

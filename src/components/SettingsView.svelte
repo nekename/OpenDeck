@@ -92,6 +92,17 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-deck_preview_size" class="text-neutral-400">{$t("settings.deck_preview_size")}</label>
+			<div class="select-wrapper">
+				<select bind:value={$settings.deck_preview_size} id="settings-deck_preview_size" class="w-auto pr-10!">
+					<option value={100}>100%</option>
+					<option value={75}>75%</option>
+					<option value={50}>50%</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-brightness" class="text-neutral-400">{$t("settings.brightness")}</label>
 			<input type="range" min="0" max="100" bind:value={$settings.brightness} id="settings-brightness" />
 		</div>
