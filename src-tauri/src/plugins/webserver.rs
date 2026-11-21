@@ -32,7 +32,11 @@ pub async fn init_webserver(prefix: PathBuf) {
 	};
 
 	for request in server.incoming_requests() {
-		let mut url = urlencoding::decode(request.url()).unwrap().into_owned();
+		let Ok(url) = urlencoding::decode(request.url()) else {
+			let _ = request.respond(Response::empty(400));
+			continue;
+		};
+		let mut url = url.into_owned();
 		if url.contains('?') {
 			url = url.split_once('?').unwrap().0.to_owned();
 		}

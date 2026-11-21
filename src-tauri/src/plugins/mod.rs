@@ -533,24 +533,34 @@ async fn init_websocket_server() {
 	}
 
 	while let Ok((stream, _)) = listener.accept().await {
-		accept_connection(stream).await;
+		tokio::spawn(accept_connection(stream));
 	}
 }
 
 /// Handle incoming data from a WebSocket connection.
 async fn accept_connection(stream: TcpStream) {
-	let mut socket = match tokio_tungstenite::accept_async(stream).await {
-		Ok(socket) => socket,
-		Err(error) => {
+	// Give up on clients that connect but never finish the handshake or never send a first message.
+	const TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+
+	let mut socket = match tokio::time::timeout(TIMEOUT, tokio_tungstenite::accept_async(stream)).await {
+		Ok(Ok(socket)) => socket,
+		Ok(Err(error)) => {
 			warn!("Failed to complete WebSocket handshake: {}", error);
+			return;
+		}
+		Err(_) => {
+			warn!("Timed out waiting for WebSocket handshake");
 			return;
 		}
 	};
 
-	let Ok(register_event) = socket.next().await.unwrap() else {
+	let Ok(Some(Ok(register_event))) = tokio::time::timeout(TIMEOUT, socket.next()).await else {
 		return;
 	};
-	match serde_json::from_str(&register_event.clone().into_text().unwrap()) {
+	let Ok(text) = register_event.clone().into_text() else {
+		return;
+	};
+	match serde_json::from_str(&text) {
 		Ok(event) => crate::events::register_plugin(event, socket).await,
 		Err(_) => {
 			let _ = crate::events::inbound::process_incoming_message(Ok(register_event), "", false).await;
