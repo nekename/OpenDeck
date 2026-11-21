@@ -4,6 +4,8 @@ use crate::plugins::DEVICE_NAMESPACES;
 use crate::shared::DEVICES;
 use crate::store::profiles::get_device_profiles;
 
+#[cfg(target_os = "freebsd")]
+use crate::aptabase as tauri_plugin_aptabase;
 use serde::Deserialize;
 
 pub async fn register_device(uuid: &str, mut event: PayloadEvent<crate::shared::DeviceInfo>) -> Result<(), anyhow::Error> {

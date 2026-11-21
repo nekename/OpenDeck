@@ -2,6 +2,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod application_watcher;
+#[cfg(target_os = "freebsd")]
+mod aptabase;
+#[cfg(target_os = "freebsd")]
+mod autostart;
 mod device_sleep;
 mod elgato;
 mod encoder_layouts;
@@ -9,6 +13,8 @@ mod events;
 mod plugins;
 mod power_events;
 mod shared;
+#[cfg(target_os = "freebsd")]
+mod single_instance;
 mod store;
 mod zip_extract;
 
@@ -28,6 +34,9 @@ use tauri::{
 	tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_plugin_log::{Target, TargetKind};
+
+#[cfg(target_os = "freebsd")]
+use crate::{aptabase as tauri_plugin_aptabase, autostart as tauri_plugin_autostart, single_instance as tauri_plugin_single_instance};
 
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 const SAVE_PROBE: Duration = Duration::from_secs(30);
@@ -58,10 +67,13 @@ fn hide_window(app: &AppHandle) -> Result<(), tauri::Error> {
 
 #[tokio::main]
 async fn main() {
+	#[cfg(target_os = "freebsd")]
+	plugins::run_parent_death_trampoline();
+
 	log_panics::init();
 	let _ = fix_path_env::fix();
 
-	#[cfg(target_os = "linux")]
+	#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 	// SAFETY: std::env::set_var can cause race conditions in multithreaded contexts. We have not spawned any other threads at this point.
 	unsafe {
 		std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");

@@ -6,6 +6,8 @@ use crate::store::profiles::{acquire_locks, get_instance};
 
 use std::sync::mpsc;
 
+#[cfg(target_os = "freebsd")]
+use crate::aptabase as tauri_plugin_aptabase;
 use tauri::{AppHandle, Emitter, Manager, command};
 use tokio::fs;
 
@@ -31,7 +33,7 @@ pub async fn list_plugins(app: AppHandle) -> Result<Vec<PluginInfo>, Error> {
 	};
 
 	let registered = crate::events::registered_plugins().await;
-	let builtins = match app.path().resolve("plugins", tauri::path::BaseDirectory::Resource).map(std::fs::read_dir) {
+	let builtins = match crate::shared::builtin_plugins_dir(&app).map(std::fs::read_dir) {
 		Ok(Ok(entries)) => entries.flatten().map(|x| x.file_name().to_str().unwrap().to_owned()).collect(),
 		_ => vec![],
 	};

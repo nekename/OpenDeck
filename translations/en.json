@@ -36,6 +36,7 @@
 	"key.paste": "Paste",
 	"no_devices_detected.check_connection": "Make sure your devices are connected properly and you have permission to access them.",
 	"no_devices_detected.check_udev": "Ensure you have the correct udev subsystem rules installed.",
+	"no_devices_detected.check_freebsd": "Ensure your user is in the operator group (or the group set by your devd/devfs rules) so it can access /dev/usb/*.",
 	"no_devices_detected.install_plugin": "You may need to install a plugin that adds support for your device.",
 	"no_devices_detected.restart": "Restart {{PRODUCT_NAME}}",
 	"no_devices_detected.title": "No devices detected",

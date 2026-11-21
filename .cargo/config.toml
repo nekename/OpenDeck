@@ -1,0 +1,7 @@
+# FreeBSD: ports/packages install libraries to /usr/local/lib, which the system linker does not search by default.
+# Crates that link without pkg-config (e.g. xkbcommon, used by the starter pack's input simulation) need this.
+[target.x86_64-unknown-freebsd]
+rustflags = ["-L", "native=/usr/local/lib"]
+
+[target.aarch64-unknown-freebsd]
+rustflags = ["-L", "native=/usr/local/lib"]

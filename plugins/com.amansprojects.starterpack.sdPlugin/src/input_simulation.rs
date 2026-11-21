@@ -21,11 +21,11 @@ async fn execute_input(value: Option<String>) -> Result<(), anyhow::Error> {
 	}
 
 	let mut enigo_guard = ENIGO.lock().await;
-	#[cfg(target_os = "linux")]
+	#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 	let runtime_handle = tokio::runtime::Handle::current();
 	std::thread::spawn(move || -> Result<(), anyhow::Error> {
 		if enigo_guard.is_none() {
-			#[cfg(target_os = "linux")]
+			#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 			{
 				let mut settings = crate::current_settings().write().unwrap();
 
@@ -42,7 +42,7 @@ async fn execute_input(value: Option<String>) -> Result<(), anyhow::Error> {
 				enigo_guard.replace(enigo);
 			}
 
-			#[cfg(not(target_os = "linux"))]
+			#[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
 			{
 				enigo_guard.replace(Enigo::new(&Settings::default())?);
 			}

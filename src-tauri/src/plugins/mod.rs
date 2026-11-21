@@ -65,6 +65,69 @@ fn attach_parent_death_signal(command: &mut Command) {
 	}
 }
 
+/// Argument that makes OpenDeck act as the FreeBSD parent-death trampoline; see [`run_parent_death_trampoline`].
+#[cfg(target_os = "freebsd")]
+const PARENT_DEATH_TRAMPOLINE_ARG: &str = "--opendeck-exec-with-parent-death-signal";
+
+/// Create the command used to start a plugin process.
+///
+/// On FreeBSD, a `pre_exec` hook makes Rust's standard library use `fork()` instead of `posix_spawn()`, and forking
+/// OpenDeck's many threads can deadlock in libc's allocator (`_malloc_prefork`). Instead, OpenDeck starts each plugin
+/// through itself: the new process sets the parent-death signal, then executes the plugin in place.
+fn plugin_command<S: AsRef<std::ffi::OsStr>>(program: S) -> Command {
+	#[cfg(target_os = "freebsd")]
+	match tauri::utils::platform::current_exe() {
+		Ok(exe) => {
+			let mut command = Command::new(exe);
+			command.arg(PARENT_DEATH_TRAMPOLINE_ARG).arg(std::process::id().to_string()).arg(program);
+			return command;
+		}
+		Err(error) => warn!("Unable to locate own executable, plugin will not be terminated if OpenDeck exits unexpectedly: {error}"),
+	}
+	Command::new(program)
+}
+
+/// If OpenDeck was started by [`plugin_command`] on FreeBSD, set a parent-death signal of SIGTERM and execute the plugin
+/// in place. `PROC_PDEATHSIG_CTL` is preserved across `execve`, and the plugin keeps OpenDeck as its parent.
+/// Exits instead if the OpenDeck that started it is no longer the parent. Never returns in either case.
+#[cfg(target_os = "freebsd")]
+pub fn run_parent_death_trampoline() {
+	use std::os::unix::process::CommandExt;
+
+	let mut args = std::env::args_os();
+	if args.nth(1).as_deref() != Some(std::ffi::OsStr::new(PARENT_DEATH_TRAMPOLINE_ARG)) {
+		return;
+	}
+	let (Some(parent), Some(program)) = (args.next().and_then(|pid| pid.to_str()?.parse::<libc::pid_t>().ok()), args.next()) else {
+		eprintln!("{PARENT_DEATH_TRAMPOLINE_ARG}: expected a parent PID and a program");
+		std::process::exit(127);
+	};
+
+	let mut signal: libc::c_int = libc::SIGTERM;
+	// SAFETY: PROC_PDEATHSIG_CTL with P_PID 0 applies to the calling process and reads a c_int.
+	if unsafe { libc::procctl(libc::P_PID, 0, libc::PROC_PDEATHSIG_CTL, (&raw mut signal).cast()) } != 0 {
+		eprintln!("{PARENT_DEATH_TRAMPOLINE_ARG}: failed to set parent death signal: {}", std::io::Error::last_os_error());
+	}
+	// The parent may have exited before the signal was armed, leaving this process with init or a reaper as its parent.
+	// SAFETY: getppid has no preconditions.
+	if unsafe { libc::getppid() } != parent {
+		std::process::exit(0);
+	}
+
+	let error = Command::new(&program).args(args).exec();
+	eprintln!("{PARENT_DEATH_TRAMPOLINE_ARG}: failed to execute {}: {error}", program.to_string_lossy());
+	std::process::exit(127);
+}
+
+/// Whether Linux binaries can be executed through FreeBSD's Linux binary compatibility layer (linux(4)).
+#[cfg(target_os = "freebsd")]
+fn linux_compat_available() -> bool {
+	let mut value = [0u8; 32];
+	let mut len = value.len();
+	// SAFETY: the name is a valid C string, and `value`/`len` describe a writable buffer of `len` bytes.
+	unsafe { libc::sysctlbyname(c"compat.linux.osrelease".as_ptr(), value.as_mut_ptr().cast(), &raw mut len, std::ptr::null(), 0) == 0 }
+}
+
 pub type SpawnRequest = Box<dyn FnOnce() -> Result<(String, PluginChildType, Command), anyhow::Error> + Send>;
 
 /// Initialise a plugin from a given directory.
@@ -160,6 +223,23 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 	let platform = "mac";
 	#[cfg(target_os = "linux")]
 	let platform = "linux";
+	#[cfg(target_os = "freebsd")]
+	let platform = "freebsd";
+
+	// On FreeBSD, run plugins that have a Linux build but no FreeBSD build through the Linux binary compatibility layer.
+	// This takes priority over running a Windows build through Wine.
+	#[cfg(target_os = "freebsd")]
+	let linux_code_path = if !manifest.os.iter().any(|os| os.platform == platform) && manifest.os.iter().any(|os| os.platform == "linux") && linux_compat_available() {
+		let linux_target = TARGET.replace("unknown-freebsd", "unknown-linux-gnu");
+		manifest
+			.code_paths
+			.as_ref()
+			.and_then(|p| p.get(&linux_target).cloned())
+			.or_else(|| manifest.code_path_linux.clone())
+			.or_else(|| manifest.code_path.clone())
+	} else {
+		None
+	};
 
 	let mut code_path = manifest.code_path;
 	let mut use_wine = false;
@@ -190,6 +270,13 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 			use_wine = true;
 			supported = true;
 		}
+	}
+
+	#[cfg(target_os = "freebsd")]
+	if linux_code_path.is_some() {
+		code_path = linux_code_path;
+		use_wine = false;
+		supported = true;
 	}
 
 	if code_path.is_none() && use_wine {
@@ -257,7 +344,7 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 
 		spawner_tx
 			.send(Box::new(move || {
-				let mut command = Command::new(command);
+				let mut command = plugin_command(command);
 				command
 					.current_dir(path)
 					.args(extra_args)
@@ -296,7 +383,7 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 
 		spawner_tx
 			.send(Box::new(move || {
-				let mut command = Command::new(command);
+				let mut command = plugin_command(command);
 				command
 					.current_dir(&path)
 					.args(extra_args)
@@ -327,7 +414,7 @@ pub async fn initialise_plugin(path: path::PathBuf, spawner_tx: mpsc::Sender<Spa
 
 		spawner_tx
 			.send(Box::new(move || {
-				let mut command = Command::new(path.join(code_path));
+				let mut command = plugin_command(path.join(code_path));
 				command
 					.current_dir(path)
 					.args(args)
@@ -412,7 +499,7 @@ pub fn initialise_plugins() {
 	let _ = fs::create_dir_all(&plugin_dir);
 	let _ = fs::create_dir_all(log_dir().join("plugins"));
 
-	if let Ok(Ok(entries)) = APP_HANDLE.get().unwrap().path().resolve("plugins", tauri::path::BaseDirectory::Resource).map(fs::read_dir) {
+	if let Ok(Ok(entries)) = crate::shared::builtin_plugins_dir(APP_HANDLE.get().unwrap()).map(fs::read_dir) {
 		for entry in entries.flatten() {
 			if let Err(error) = (|| -> Result<(), anyhow::Error> {
 				let builtin_version = semver::Version::parse(&serde_json::from_slice::<manifest::PluginManifest>(&fs::read(entry.path().join("manifest.json"))?)?.version)?;
