@@ -5,6 +5,7 @@ export type Settings = {
 	sleep_timeout_minutes: number;
 	sleep_when_computer_locked: boolean;
 	rotation: number;
+	device_rotation?: { [deviceId: string]: number };
 	background: boolean;
 	autolaunch: boolean;
 	updatecheck: boolean;

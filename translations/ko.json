@@ -142,6 +142,8 @@
 	"settings.restore_config.prompt": "복원할 백업 위치를 선택하는 창이 열립니다. 플러그인이나 프로필이 많으면 시간이 걸릴 수 있습니다. 복원이 끝나면 애플리케이션이 다시 시작됩니다.\n\n다른 운영체제나 아키텍처에서 만든 백업을 복원하면 문제가 생길 수 있습니다.",
 	"settings.restore_config.title": "설정 복원 중",
 	"settings.rotation": "이미지 회전:",
+	"settings.rotation_per_device": "기기별 이미지 회전:",
+	"settings.refresh_devices": "기기 새로 고침",
 	"settings.separatewine": "Wine 프리픽스 개별 생성:",
 	"settings.separatewine.tooltip": "이 옵션을 켜면 {{PRODUCT_NAME}}이(가) Wine으로 실행되는 플러그인마다 별도의 Wine 프리픽스를 만듭니다. Wine 프리픽스는 초기화 시 약 300MB로 용량이 큰 편이니 유의하세요.",
 	"settings.sleep_timeout_minutes": "비활성 후 절전:",

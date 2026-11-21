@@ -142,6 +142,8 @@
 	"settings.restore_config.prompt": "Você será solicitado a selecionar um local de onde restaurar o backup. Isso pode demorar um pouco se você tiver muitos plugins ou perfis. O aplicativo será reiniciado após a restauração ser concluída.\n\nVocê pode encontrar problemas se tentar restaurar um backup de um sistema operacional ou arquitetura diferente.",
 	"settings.restore_config.title": "Restaurando configuração",
 	"settings.rotation": "Rotação da imagem:",
+	"settings.rotation_per_device": "Rotação de imagem por dispositivo:",
+	"settings.refresh_devices": "Atualizar dispositivos",
 	"settings.separatewine": "Criar prefixos Wine separados:",
 	"settings.separatewine.tooltip": "Se esta opção estiver ativada, o {{PRODUCT_NAME}} criará um prefixo Wine separado para cada plugin executado pelo Wine. Observe que cada prefixo Wine é bem grande - cerca de 300 MB quando inicializado.",
 	"settings.sleep_timeout_minutes": "Suspender após inatividade:",

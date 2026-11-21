@@ -58,6 +58,13 @@ pub async fn get_devices() -> dashmap::DashMap<String, DeviceInfo> {
 	DEVICES.clone()
 }
 
+/// Looks for connected Stream Decks right away instead of waiting for the next pass.
+#[command]
+pub async fn refresh_devices() {
+	crate::elgato::initialise_devices().await;
+	update_devices().await;
+}
+
 pub async fn update_devices() {
 	let app = crate::APP_HANDLE.get().unwrap();
 	let _ = app.get_webview_window("main").unwrap().emit("devices", DEVICES.clone());
