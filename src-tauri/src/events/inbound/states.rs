@@ -1,11 +1,33 @@
 use super::ContextAndPayloadEvent;
 
 use crate::events::frontend::instances::update_state;
-use crate::store::profiles::{acquire_locks_mut, get_instance_mut, mark_profile_stale};
+use crate::shared::ActionContext;
+use crate::store::profiles::{LocksMut, acquire_locks_mut, get_instance_mut, mark_profile_stale};
 
 use anyhow::bail;
 use serde::Deserialize;
 use serde_json::Value;
+
+/// If the given context is a child of a Dial Stack or Action Wheel container, trigger an
+/// update_state for the root container so the device LCD re-renders with the active child's display.
+async fn maybe_update_dial_stack_parent(context: &ActionContext, locks: &mut LocksMut<'_>) -> Result<(), anyhow::Error> {
+	if context.index == 0 {
+		return Ok(());
+	}
+	let root_context = ActionContext {
+		device: context.device.clone(),
+		profile: context.profile.clone(),
+		controller: context.controller.clone(),
+		position: context.position,
+		index: 0,
+	};
+	if let Some(root) = get_instance_mut(&root_context, locks).await?
+		&& matches!(root.action.uuid.as_str(), "opendeck.dialstack" | "opendeck.actionwheel")
+	{
+		update_state(crate::APP_HANDLE.get().unwrap(), root_context, locks).await?;
+	}
+	Ok(())
+}
 
 #[derive(Deserialize)]
 pub struct SetTitlePayload {
@@ -59,6 +81,7 @@ pub async fn set_title(event: ContextAndPayloadEvent<SetTitlePayload>) -> Result
 		}
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
+	let _ = maybe_update_dial_stack_parent(&event.context, &mut locks).await;
 	mark_profile_stale(&event.context.device, &mut locks).await?;
 
 	Ok(())
@@ -97,6 +120,7 @@ pub async fn set_image(mut event: ContextAndPayloadEvent<SetImagePayload>) -> Re
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
 
+	let _ = maybe_update_dial_stack_parent(&event.context, &mut locks).await;
 	mark_profile_stale(&event.context.device, &mut locks).await?;
 	Ok(())
 }
@@ -115,6 +139,7 @@ pub async fn set_feedback(event: ContextAndPayloadEvent<Value>) -> Result<(), an
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
 
+	let _ = maybe_update_dial_stack_parent(&event.context, &mut locks).await;
 	Ok(())
 }
 
@@ -128,6 +153,7 @@ pub async fn set_feedback_layout(event: ContextAndPayloadEvent<SetFeedbackLayout
 		// Trigger a state update; should cause a redraw
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
+	let _ = maybe_update_dial_stack_parent(&event.context, &mut locks).await;
 	Ok(())
 }
 
@@ -141,6 +167,7 @@ pub async fn set_state(event: ContextAndPayloadEvent<SetStatePayload>) -> Result
 		instance.current_state = event.payload.state;
 		update_state(crate::APP_HANDLE.get().unwrap(), instance.context.clone(), &mut locks).await?;
 	}
+	let _ = maybe_update_dial_stack_parent(&event.context, &mut locks).await;
 	mark_profile_stale(&event.context.device, &mut locks).await?;
 
 	Ok(())

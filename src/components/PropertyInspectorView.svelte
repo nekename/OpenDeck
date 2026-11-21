@@ -23,8 +23,17 @@
 		const split = instance.context.split(".");
 
 		const position = parseInt(split[3]);
+		// If this instance is a child of an Action Wheel, it should report as Keypad
+		// since Action Wheel holds key-style actions even though the slot is on an Encoder.
+		let effectiveController = split[2];
+		if (split[2] == "Encoder" && parseInt(split[4]) != 0) {
+			const parentSlot = profile.sliders[position];
+			if (parentSlot && parentSlot.action.uuid == "opendeck.actionwheel") {
+				effectiveController = "Keypad";
+			}
+		}
 		let coordinates: { row: number; column: number };
-		if (split[2] == "Encoder") {
+		if (effectiveController == "Encoder") {
 			coordinates = { row: 0, column: position };
 		} else {
 			coordinates = { row: Math.floor(position / device.columns), column: position % device.columns };
@@ -48,7 +57,7 @@
 						payload: {
 							settings: instance.settings,
 							coordinates,
-							controller: split[2],
+							controller: effectiveController,
 							state: instance.current_state,
 							isInMultiAction: parseInt(split[4]) != 0,
 						},
@@ -165,8 +174,16 @@
 	$: instances = profile.keys
 		.filter(nonNull)
 		.reduce((prev, current) => prev.concat(current.children ? [current, ...current.children] : current), [] as ActionInstance[])
-		.concat(profile.sliders.filter(nonNull))
-		.concat(profile.infobars.filter(nonNull));
+		.concat(
+			profile.sliders
+				.filter(nonNull)
+				.reduce((prev, current) => prev.concat(current.children ? [current, ...current.children] : current), [] as ActionInstance[]),
+		)
+		.concat(
+			profile.infobars
+				.filter(nonNull)
+				.reduce((prev, current) => prev.concat(current.children ? [current, ...current.children] : current), [] as ActionInstance[]),
+		);
 
 	listen("plugin_reloaded", ({ payload }: { payload: string }) => {
 		for (const instance of instances) {
