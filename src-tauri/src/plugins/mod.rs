@@ -403,6 +403,17 @@ pub async fn deactivate_plugins() {
 	}
 }
 
+/// Resolve an entry of the plugins directory to the plugin folder it refers to, following a symlink relative to the plugins directory.
+/// Returns `Ok(None)` if the entry is not a directory, and an error if it or its symlink target cannot be read.
+pub fn resolve_plugin_entry(entry: &path::Path) -> std::io::Result<Option<path::PathBuf>> {
+	let path = if fs::symlink_metadata(entry)?.is_symlink() {
+		entry.parent().unwrap_or_else(|| path::Path::new(".")).join(fs::read_link(entry)?)
+	} else {
+		entry.to_owned()
+	};
+	Ok(fs::metadata(&path)?.is_dir().then_some(path))
+}
+
 /// Initialise plugins from the plugins directory.
 pub fn initialise_plugins() {
 	tokio::spawn(init_websocket_server());
@@ -442,14 +453,6 @@ pub fn initialise_plugins() {
 		}
 	}
 
-	let entries = match fs::read_dir(&plugin_dir) {
-		Ok(p) => p,
-		Err(error) => {
-			error!("Failed to read plugins directory at {}: {}", plugin_dir.display(), error);
-			panic!()
-		}
-	};
-
 	let (tx, rx) = mpsc::channel::<SpawnRequest>();
 	APP_HANDLE.get().unwrap().manage(tx.clone());
 
@@ -476,24 +479,24 @@ pub fn initialise_plugins() {
 	});
 
 	// Iterate through all directory entries in the plugins folder and initialise them as plugins if appropriate
-	for entry in entries {
-		if let Ok(entry) = entry {
-			let path = match entry.metadata().unwrap().is_symlink() {
-				true => entry.path().parent().unwrap_or_else(|| path::Path::new(".")).join(fs::read_link(entry.path()).unwrap()),
-				false => entry.path(),
-			};
-			let metadata = fs::metadata(&path).unwrap();
-			if metadata.is_dir() {
-				let spawner_tx = tx.clone();
-				tokio::spawn(async move {
-					if let Err(error) = initialise_plugin(path.clone(), spawner_tx).await {
-						warn!("Failed to initialise plugin at {}: {:#}", path.display(), error);
+	match fs::read_dir(&plugin_dir) {
+		Ok(entries) => {
+			for entry in entries {
+				match entry.map(|entry| resolve_plugin_entry(&entry.path())) {
+					Ok(Ok(Some(path))) => {
+						let spawner_tx = tx.clone();
+						tokio::spawn(async move {
+							if let Err(error) = initialise_plugin(path.clone(), spawner_tx).await {
+								warn!("Failed to initialise plugin at {}: {:#}", path.display(), error);
+							}
+						});
 					}
-				});
+					Ok(Ok(None)) => {}
+					Ok(Err(error)) | Err(error) => warn!("Failed to read entry of plugins directory: {}", error),
+				}
 			}
-		} else if let Err(error) = entry {
-			warn!("Failed to read entry of plugins directory: {}", error)
 		}
+		Err(error) => error!("Failed to read plugins directory at {}: {}", plugin_dir.display(), error),
 	}
 
 	// On macOS, hidden WKWebView windows suspend JavaScript after ~7s.
@@ -555,5 +558,29 @@ async fn accept_connection(stream: TcpStream) {
 		Err(_) => {
 			let _ = crate::events::inbound::process_incoming_message(Ok(register_event), "", false).await;
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::resolve_plugin_entry;
+	use std::fs;
+
+	#[cfg(unix)]
+	#[test]
+	fn resolve_plugin_entry_handles_symlinks_and_files() {
+		let dir = std::env::temp_dir().join(format!("opendeck-resolve-plugin-entry-{}", std::process::id()));
+		let _ = fs::remove_dir_all(&dir);
+		fs::create_dir_all(dir.join("real.sdPlugin")).unwrap();
+		fs::write(dir.join("file.txt"), "").unwrap();
+		std::os::unix::fs::symlink("real.sdPlugin", dir.join("relative.sdPlugin")).unwrap();
+		std::os::unix::fs::symlink("missing.sdPlugin", dir.join("dangling.sdPlugin")).unwrap();
+
+		assert_eq!(resolve_plugin_entry(&dir.join("real.sdPlugin")).unwrap(), Some(dir.join("real.sdPlugin")));
+		assert_eq!(resolve_plugin_entry(&dir.join("relative.sdPlugin")).unwrap(), Some(dir.join("real.sdPlugin")));
+		assert_eq!(resolve_plugin_entry(&dir.join("file.txt")).unwrap(), None);
+		assert!(resolve_plugin_entry(&dir.join("dangling.sdPlugin")).is_err());
+
+		fs::remove_dir_all(&dir).unwrap();
 	}
 }
