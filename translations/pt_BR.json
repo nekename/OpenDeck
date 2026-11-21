@@ -150,5 +150,11 @@
 	"settings.sleep_when_computer_locked": "Suspender quando o computador estiver bloqueado:",
 	"settings.sleep_when_computer_locked.tooltip": "Se esta opção estiver ativada, os dispositivos entrarão em modo de suspensão quando o computador for bloqueado, e todos os pressionamentos de teclas serão suprimidos até ele ser desbloqueado.",
 	"settings.statistics": "Contribuir com estatísticas:",
+	"settings.trayicon": "Ícone da bandeja:",
+	"settings.trayicon.auto": "Monocromático (automático)",
+	"settings.trayicon.colour": "Colorido",
+	"settings.trayicon.dark": "Monocromático (escuro)",
+	"settings.trayicon.light": "Monocromático (claro)",
+	"settings.trayicon.tooltip": "Use um ícone monocromático na bandeja para combinar com o tema de ícones do seu sistema. A variante automática segue o tema da sua barra de tarefas ou painel; se ela errar, escolha a variante clara para painéis escuros ou a variante escura para painéis claros. No macOS, todas as variantes monocromáticas se adaptam automaticamente à barra de menus.",
 	"settings.updatecheck": "Verificar atualizações:"
 }

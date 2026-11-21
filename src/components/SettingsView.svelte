@@ -127,6 +127,19 @@
 		</div>
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-trayicon" class="text-neutral-400">{$t("settings.trayicon")}</label>
+			<div class="select-wrapper">
+				<select bind:value={$settings.trayicon} class="w-auto pr-10!" id="settings-trayicon">
+					<option value="colour">{$t("settings.trayicon.colour")}</option>
+					<option value="auto">{$t("settings.trayicon.auto")}</option>
+					<option value="light">{$t("settings.trayicon.light")}</option>
+					<option value="dark">{$t("settings.trayicon.dark")}</option>
+				</select>
+			</div>
+			<Tooltip>{$t("settings.trayicon.tooltip")}</Tooltip>
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-autolaunch" class="text-neutral-400">{$t("settings.autolaunch")}</label>
 			<input type="checkbox" bind:checked={$settings.autolaunch} id="settings-autolaunch" />
 			<Tooltip>

@@ -10,6 +10,7 @@ mod plugins;
 mod power_events;
 mod shared;
 mod store;
+mod tray;
 mod zip_extract;
 
 mod built_info {
@@ -224,9 +225,11 @@ If you have already donated, thank you so much for your support!"#,
 			let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
 			let separator = PredefinedMenuItem::separator(app)?;
 			let menu = MenuBuilder::new(app).items(&[&label, &separator, &show, &hide, &separator, &restart, &quit]).build()?;
+			let (icon, icon_as_template) = tray::icon(app.handle(), &settings.value.trayicon);
 			let _tray = TrayIconBuilder::with_id("opendeck")
 				.menu(&menu)
-				.icon(app.default_window_icon().unwrap().clone())
+				.icon(icon)
+				.icon_as_template(icon_as_template)
 				.show_menu_on_left_click(false)
 				.on_tray_icon_event(move |icon, event| {
 					if let TrayIconEvent::Click { button, button_state, .. } = event {
@@ -252,6 +255,7 @@ If you have already donated, thank you so much for your support!"#,
 					};
 				})
 				.build(app)?;
+			tray::init_panel_watcher();
 
 			#[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
 			{

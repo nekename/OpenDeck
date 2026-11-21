@@ -150,5 +150,11 @@
 	"settings.sleep_when_computer_locked": "Gå i viloläge när datorn är låst:",
 	"settings.sleep_when_computer_locked.tooltip": "Om detta alternativ är aktiverat går enheter in i viloläge när datorn låses, och alla knapptryckningar ignoreras tills den låses upp.",
 	"settings.statistics": "Bidra med statistik:",
+	"settings.trayicon": "Ikon i systemfältet:",
+	"settings.trayicon.auto": "Monokrom (automatisk)",
+	"settings.trayicon.colour": "Färg",
+	"settings.trayicon.dark": "Monokrom (mörk)",
+	"settings.trayicon.light": "Monokrom (ljus)",
+	"settings.trayicon.tooltip": "Använd en monokrom ikon i systemfältet som matchar systemets ikontema. Den automatiska varianten följer temat för aktivitetsfältet eller panelen; om den gissar fel, välj den ljusa varianten för mörka paneler eller den mörka varianten för ljusa paneler. På macOS anpassas alla monokroma varianter automatiskt till menyraden.",
 	"settings.updatecheck": "Sök efter uppdateringar:"
 }
