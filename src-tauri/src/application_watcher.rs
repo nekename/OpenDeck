@@ -43,8 +43,9 @@ pub fn init_application_watcher() {
 				let application_profiles = &APPLICATION_PROFILES.read().await.value;
 				let application = application_profiles.get(&app_name);
 				let default = application_profiles.get("opendeck_default");
-				for value in crate::shared::DEVICES.iter() {
-					let device = value.key();
+				// Collect the IDs first so no DashMap guard is held across the await below.
+				let devices = crate::shared::DEVICES.iter().map(|value| value.key().clone()).collect::<Vec<_>>();
+				for device in &devices {
 					let Some(profile) = application.and_then(|d| d.get(device)).or(default.and_then(|d| d.get(device))) else {
 						continue;
 					};
@@ -73,13 +74,16 @@ pub fn init_application_watcher() {
 			if !APPLICATION_PLUGINS.read().await.is_empty() {
 				system.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::nothing().without_tasks());
 
+				// Snapshot the plugins so APPLICATION_PLUGINS is never awaited while APPLICATION_PROCESSES is held.
+				// start_monitoring takes them in the opposite order, so doing so here could deadlock.
+				let application_plugins = APPLICATION_PLUGINS.read().await.clone();
 				for (application, processes) in APPLICATION_PROCESSES.write().await.iter_mut() {
 					let mut alive_processes = Vec::with_capacity(processes.len());
 					for pid in processes.iter() {
 						if system.process(Pid::from_u32(*pid)).is_some() {
 							alive_processes.push(*pid);
 						} else {
-							for plugin in APPLICATION_PLUGINS.read().await.get(application).into_iter().flatten() {
+							for plugin in application_plugins.get(application).into_iter().flatten() {
 								let _ = crate::events::outbound::applications::application_did_terminate(plugin, application.clone()).await;
 							}
 						}
