@@ -1,6 +1,6 @@
 //! Duplicates of many structs to facilitate saving profiles to disk in a format that can be transferred between devices or systems.
 
-use crate::shared::{Action, ActionContext, ActionInstance, ActionState, Profile};
+use crate::shared::{Action, ActionContext, ActionInstance, ActionState, Profile, ProfilePage};
 
 use std::{
 	fs,
@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)]
 pub struct DiskActionContext {
+	pub page: u8,
 	pub controller: String,
 	pub position: u8,
 	pub index: u16,
@@ -19,7 +20,11 @@ pub struct DiskActionContext {
 
 impl std::fmt::Display for DiskActionContext {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(f, "{}.{}.{}", self.controller, self.position, self.index)
+		if self.page == 0 {
+			write!(f, "{}.{}.{}", self.controller, self.position, self.index)
+		} else {
+			write!(f, "{}.{}.{}.{}", self.page, self.controller, self.position, self.index)
+		}
 	}
 }
 
@@ -27,20 +32,40 @@ impl std::str::FromStr for DiskActionContext {
 	type Err = std::num::ParseIntError;
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		let segments: Vec<&str> = s.split('.').collect();
-		let mut offset: usize = 0;
-		if segments.len() == 5 {
-			offset = 2;
+		match segments.len() {
+			6 => Ok(Self {
+				page: u8::from_str(segments[2])?,
+				controller: segments[3].to_owned(),
+				position: u8::from_str(segments[4])?,
+				index: u16::from_str(segments[5])?,
+			}),
+			5 => Ok(Self {
+				page: 0,
+				controller: segments[2].to_owned(),
+				position: u8::from_str(segments[3])?,
+				index: u16::from_str(segments[4])?,
+			}),
+			4 => Ok(Self {
+				page: u8::from_str(segments[0])?,
+				controller: segments[1].to_owned(),
+				position: u8::from_str(segments[2])?,
+				index: u16::from_str(segments[3])?,
+			}),
+			3 => Ok(Self {
+				page: 0,
+				controller: segments[0].to_owned(),
+				position: u8::from_str(segments[1])?,
+				index: u16::from_str(segments[2])?,
+			}),
+			_ => Err("".parse::<u8>().unwrap_err()),
 		}
-		let controller = segments[offset].to_owned();
-		let position = u8::from_str(segments[1 + offset])?;
-		let index = u16::from_str(segments[2 + offset])?;
-		Ok(Self { controller, position, index })
 	}
 }
 
 impl From<ActionContext> for DiskActionContext {
 	fn from(value: ActionContext) -> Self {
 		Self {
+			page: value.page,
 			controller: value.controller,
 			position: value.position,
 			index: value.index,
@@ -53,6 +78,7 @@ impl DiskActionContext {
 		ActionContext {
 			device,
 			profile,
+			page: self.page,
 			controller: self.controller,
 			position: self.position,
 			index: self.index,
@@ -112,10 +138,18 @@ impl From<ActionInstance> for DiskActionInstance {
 				};
 
 				let filename = format!("{}{}.{}", index, suffix, extension);
-				if fs::create_dir_all(&image_dir).is_err() || fs::write(image_dir.join(&filename), data).is_err() {
+				// Same blank placeholder as set_image. Do not overwrite the saved button art with it.
+				if data.len() < 256 {
+					if image_dir.join(&filename).is_file() {
+						*image = filename;
+					} else {
+						return;
+					}
+				} else if fs::create_dir_all(&image_dir).is_err() || fs::write(image_dir.join(&filename), data).is_err() {
 					return;
-				};
-				*image = filename;
+				} else {
+					*image = filename;
+				}
 			}
 
 			*image = normalise_path(image);
@@ -205,19 +239,46 @@ impl DiskActionInstance {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct DiskProfilePage {
+	#[serde(default)]
+	pub keys: Vec<Option<DiskActionInstance>>,
+	#[serde(default)]
+	pub sliders: Vec<Option<DiskActionInstance>>,
+	#[serde(default)]
+	pub infobars: Vec<Option<DiskActionInstance>>,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct DiskProfile {
+	#[serde(default)]
+	pub pages: Vec<DiskProfilePage>,
+	#[serde(default)]
+	pub current_page: usize,
 	pub keys: Vec<Option<DiskActionInstance>>,
 	pub sliders: Vec<Option<DiskActionInstance>>,
 	#[serde(default)]
 	pub infobars: Vec<Option<DiskActionInstance>>,
 }
 
+fn to_disk_page(page: &ProfilePage) -> DiskProfilePage {
+	DiskProfilePage {
+		keys: page.keys.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
+		sliders: page.sliders.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
+		infobars: page.infobars.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
+	}
+}
+
 impl From<&Profile> for DiskProfile {
 	fn from(value: &Profile) -> Self {
+		let mut profile = value.clone();
+		profile.ensure_pages();
+		let current = to_disk_page(profile.current());
 		Self {
-			keys: value.keys.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
-			sliders: value.sliders.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
-			infobars: value.infobars.clone().into_iter().map(|x| x.map(|v| v.into())).collect(),
+			pages: profile.pages.iter().map(to_disk_page).collect(),
+			current_page: profile.current_page_index(),
+			keys: current.keys,
+			sliders: current.sliders,
+			infobars: current.infobars,
 		}
 	}
 }
@@ -229,14 +290,48 @@ impl DiskProfile {
 		let _ = iter.nth(1);
 		let mut id = iter.map(|x| x.to_string_lossy()).collect::<Vec<_>>().join("/");
 		id = id[..id.len() - 5].to_owned();
-		Profile {
-			id,
-			keys: self.keys.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
-			sliders: self.sliders.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
-			infobars: self.infobars.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect(),
 
-			stale: false,
+		let map_slots = |slots: Vec<Option<DiskActionInstance>>| slots.into_iter().map(|x| x.map(|v| v.into_action_instance(path))).collect();
+		let mut pages: Vec<ProfilePage> = if self.pages.is_empty() {
+			vec![ProfilePage {
+				keys: map_slots(self.keys),
+				sliders: map_slots(self.sliders),
+				infobars: map_slots(self.infobars),
+			}]
+		} else {
+			self.pages
+				.into_iter()
+				.map(|page| ProfilePage {
+					keys: map_slots(page.keys),
+					sliders: map_slots(page.sliders),
+					infobars: map_slots(page.infobars),
+				})
+				.collect()
+		};
+
+		for (index, page) in pages.iter_mut().enumerate() {
+			let page_index = index as u8;
+			for slot in page.slots_mut().filter_map(|slot| slot.as_mut()) {
+				slot.context.page = page_index;
+				if let Some(children) = &mut slot.children {
+					for child in children {
+						child.context.page = page_index;
+					}
+				}
+			}
 		}
+
+		let mut profile = Profile {
+			id,
+			current_page: self.current_page.min(pages.len().saturating_sub(1)),
+			pages,
+			keys: Vec::new(),
+			sliders: Vec::new(),
+			infobars: Vec::new(),
+			stale: false,
+		};
+		profile.hydrate_current_slots();
+		profile
 	}
 }
 

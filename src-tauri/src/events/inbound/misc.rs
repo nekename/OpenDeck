@@ -46,6 +46,8 @@ pub async fn show_ok(event: ContextEvent) -> Result<(), anyhow::Error> {
 pub struct SwitchProfileEvent {
 	device: String,
 	profile: String,
+	#[serde(default)]
+	page: Option<usize>,
 }
 
 pub async fn switch_profile(event: SwitchProfileEvent) -> Result<(), anyhow::Error> {

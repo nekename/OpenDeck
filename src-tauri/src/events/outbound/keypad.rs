@@ -1,8 +1,8 @@
 use super::{GenericInstancePayload, send_to_plugin};
 
 use crate::events::frontend::instances::{key_moved, update_state};
-use crate::shared::{ActionContext, Context};
-use crate::store::profiles::{acquire_locks_mut, get_slot_mut, mark_profile_stale};
+use crate::shared::{ActionContext, ActionInstance, Context, is_page_action};
+use crate::store::profiles::{acquire_locks_mut, get_slot_mut, mark_profile_stale, selected_slot_context};
 
 use std::sync::LazyLock;
 use std::time::Duration;
@@ -21,20 +21,36 @@ struct KeyEvent {
 	payload: GenericInstancePayload,
 }
 
+async fn activate_page_action(device: &str, instance: &ActionInstance) -> Result<(), anyhow::Error> {
+	match instance.action.uuid.as_str() {
+		"opendeck.nextpage" => {
+			crate::events::frontend::profiles::next_page(device).await?;
+		}
+		"opendeck.prevpage" => {
+			crate::events::frontend::profiles::previous_page(device).await?;
+		}
+		"opendeck.gotopage" => {
+			let page = instance.settings.get("page").and_then(|value| value.as_u64()).unwrap_or(1) as usize;
+			crate::events::frontend::profiles::goto_page(device, page).await?;
+		}
+		_ => {}
+	}
+	Ok(())
+}
+
 pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
-	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let context = Context {
-		device: device.to_owned(),
-		profile: selected_profile.to_owned(),
-		controller: "Keypad".to_owned(),
-		position: key,
-	};
+	let context = selected_slot_context(device, "Keypad", key, &mut locks)?;
 
 	let _ = key_moved(crate::APP_HANDLE.get().unwrap(), context.clone(), true).await;
 	KEY_DOWN_TARGETS.insert((device.to_owned(), key), context.clone());
 
 	let Some(instance) = get_slot_mut(&context, &mut locks).await? else { return Ok(()) };
+	if is_page_action(&instance.action.uuid) {
+		let instance = instance.clone();
+		drop(locks);
+		return activate_page_action(device, &instance).await;
+	}
 	if instance.action.uuid == "opendeck.multiaction" {
 		let children = instance.children.clone().unwrap_or_default();
 		let delays: Vec<u64> = instance
@@ -47,6 +63,14 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 		drop(locks);
 
 		for (i, child) in children.iter().enumerate() {
+			if is_page_action(&child.action.uuid) {
+				activate_page_action(device, child).await?;
+				let delay = delays.get(i).copied().unwrap_or(100);
+				if delay > 0 {
+					tokio::time::sleep(Duration::from_millis(delay)).await;
+				}
+				continue;
+			}
 			send_to_plugin(
 				&child.action.plugin,
 				&KeyEvent {
@@ -132,13 +156,7 @@ pub async fn key_down(device: &str, key: u8) -> Result<(), anyhow::Error> {
 
 pub async fn key_up(device: &str, key: u8) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
-	let selected_profile = locks.device_stores.get_selected_profile(device)?;
-	let context = Context {
-		device: device.to_owned(),
-		profile: selected_profile.to_owned(),
-		controller: "Keypad".to_owned(),
-		position: key,
-	};
+	let context = selected_slot_context(device, "Keypad", key, &mut locks)?;
 
 	let _ = key_moved(crate::APP_HANDLE.get().unwrap(), context.clone(), false).await;
 	let Some((_, expected_context)) = KEY_DOWN_TARGETS.remove(&(device.to_owned(), key)) else {
@@ -170,7 +188,7 @@ pub async fn key_up(device: &str, key: u8) -> Result<(), anyhow::Error> {
 		)
 		.await?;
 		instance.current_state = ((index + 1) % instance.children.as_ref().unwrap().len()) as u16;
-	} else if instance.action.uuid != "opendeck.multiaction" {
+	} else if instance.action.uuid != "opendeck.multiaction" && !is_page_action(&instance.action.uuid) {
 		if instance.states.len() == 2 && !instance.action.disable_automatic_states {
 			instance.current_state = (instance.current_state + 1) % (instance.states.len() as u16);
 		}

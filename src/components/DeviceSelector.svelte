@@ -32,13 +32,20 @@
 		registered = [];
 	}
 
-	listen("switch_profile", async ({ payload }: { payload: { device: string; profile: string } }) => {
+	listen("switch_profile", async ({ payload }: { payload: { device: string; profile: string; page?: number | null } }) => {
 		if (payload.device == value) {
 			$profileManager?.setProfile(payload.profile);
 		} else {
 			await invoke("set_selected_profile", { device: payload.device, id: payload.profile });
 			selectedProfiles[payload.device] = await invoke("get_selected_profile", { device: payload.device });
 		}
+		if (payload.page != null) {
+			selectedProfiles[payload.device] = await invoke("set_selected_page", { device: payload.device, page: payload.page });
+		}
+	});
+
+	listen("switch_page", ({ payload }: { payload: { device: string; profile: Profile } }) => {
+		selectedProfiles[payload.device] = payload.profile;
 	});
 
 	(async () => (devices = await invoke("get_devices")))();

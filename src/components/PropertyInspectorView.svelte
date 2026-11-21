@@ -3,6 +3,7 @@
 	import type { DeviceInfo } from "$lib/DeviceInfo";
 	import type { Profile } from "$lib/Profile";
 
+	import { parseActionContext } from "$lib/Context";
 	import { t } from "$lib/i18n";
 	import { getWebserverUrl, getWebSocketPort } from "$lib/ports";
 	import { inspectedInstance } from "$lib/propertyInspector";
@@ -20,14 +21,13 @@
 
 	async function iframeOnLoad(event: Event, instance: ActionInstance) {
 		const iframe = iframes[instance.context] ?? event.target;
-		const split = instance.context.split(".");
+		const parsed = parseActionContext(instance.context);
 
-		const position = parseInt(split[3]);
 		let coordinates: { row: number; column: number };
-		if (split[2] == "Encoder") {
-			coordinates = { row: 0, column: position };
+		if (parsed.controller == "Encoder") {
+			coordinates = { row: 0, column: parsed.position };
 		} else {
-			coordinates = { row: Math.floor(position / device.columns), column: position % device.columns };
+			coordinates = { row: Math.floor(parsed.position / device.columns), column: parsed.position % device.columns };
 		}
 
 		if (instance == null || !iframe?.src || !iframe.src.startsWith(getWebserverUrl())) return;
@@ -44,13 +44,13 @@
 					JSON.stringify({
 						action: instance.action.uuid,
 						context: instance.context,
-						device: split[0],
+						device: parsed.device,
 						payload: {
 							settings: instance.settings,
 							coordinates,
-							controller: split[2],
+							controller: parsed.controller,
 							state: instance.current_state,
-							isInMultiAction: parseInt(split[4]) != 0,
+							isInMultiAction: parsed.index != 0,
 						},
 					}),
 				],
@@ -168,6 +168,18 @@
 		.concat(profile.sliders.filter(nonNull))
 		.concat(profile.infobars.filter(nonNull));
 
+	$: gotoInstance = instances.find((instance) => instance.context == $inspectedInstance && instance.action.uuid == "opendeck.gotopage");
+	let gotoPage = 1;
+	$: if (gotoInstance) gotoPage = Math.max(1, Number(gotoInstance.settings?.page) || 1);
+
+	async function saveGotoPage() {
+		if (!gotoInstance) return;
+		const page = Math.max(1, Math.floor(Number(gotoPage) || 1));
+		gotoPage = page;
+		gotoInstance.settings = { ...gotoInstance.settings, page };
+		await invoke("set_instance_settings", { context: gotoInstance.context, settings: gotoInstance.settings });
+	}
+
 	listen("plugin_reloaded", ({ payload }: { payload: string }) => {
 		for (const instance of instances) {
 			if (instance.action.plugin == payload && iframes[instance.context]) {
@@ -196,17 +208,32 @@
 	>
 		✕
 	</button>
-	{#each instances as instance (instance.context)}
-		{#if instance.action.property_inspector}
-			<iframe
-				title={$t("property_inspector.title")}
-				class="w-full h-full hidden"
-				class:block!={$inspectedInstance == instance.context}
-				src={getWebserverUrl(instance.action.property_inspector + "|opendeck_property_inspector")}
-				name={instance.context}
-				bind:this={iframes[instance.context]}
-				on:load={(event) => iframeOnLoad(event, instance)}
+	{#if gotoInstance}
+		<div class="flex flex-col justify-center gap-2 p-4 text-neutral-300">
+			<label for="goto-page" class="text-neutral-400">{$t("property_inspector.goto_page")}</label>
+			<input
+				id="goto-page"
+				type="number"
+				min="1"
+				class="w-32 p-2 text-neutral-300 bg-neutral-700 border border-neutral-600 rounded-lg"
+				bind:value={gotoPage}
+				on:change={saveGotoPage}
 			/>
-		{/if}
-	{/each}
+			<span class="text-sm text-neutral-500">{$t("property_inspector.goto_page.hint")}</span>
+		</div>
+	{:else}
+		{#each instances as instance (instance.context)}
+			{#if instance.action.property_inspector}
+				<iframe
+					title={$t("property_inspector.title")}
+					class="w-full h-full hidden"
+					class:block!={$inspectedInstance == instance.context}
+					src={getWebserverUrl(instance.action.property_inspector + "|opendeck_property_inspector")}
+					name={instance.context}
+					bind:this={iframes[instance.context]}
+					on:load={(event) => iframeOnLoad(event, instance)}
+				/>
+			{/if}
+		{/each}
+	{/if}
 </div>

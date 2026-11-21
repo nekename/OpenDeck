@@ -31,7 +31,11 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 			context: ActionContext::from_context(context.clone(), index),
 			states: action.states.clone(),
 			current_state: 0,
-			settings: serde_json::Value::Object(serde_json::Map::new()),
+			settings: if action.uuid == "opendeck.gotopage" {
+				serde_json::json!({ "page": 1 })
+			} else {
+				serde_json::Value::Object(serde_json::Map::new())
+			},
 			children: None,
 		};
 		children.push(instance.clone());
@@ -57,7 +61,11 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 			context: ActionContext::from_context(context.clone(), 0),
 			states: action.states.clone(),
 			current_state: 0,
-			settings: serde_json::Value::Object(serde_json::Map::new()),
+			settings: if action.uuid == "opendeck.gotopage" {
+				serde_json::json!({ "page": 1 })
+			} else {
+				serde_json::Value::Object(serde_json::Map::new())
+			},
 			children: if matches!(action.uuid.as_str(), "opendeck.multiaction" | "opendeck.toggleaction") {
 				Some(vec![])
 			} else {
@@ -76,11 +84,12 @@ pub async fn create_instance(app: AppHandle, mut action: Action, context: Contex
 }
 
 fn instance_images_dir(context: &ActionContext) -> std::path::PathBuf {
-	config_dir()
-		.join("images")
-		.join(&context.device)
-		.join(&context.profile)
-		.join(format!("{}.{}.{}", context.controller, context.position, context.index))
+	let folder = if context.page == 0 {
+		format!("{}.{}.{}", context.controller, context.position, context.index)
+	} else {
+		format!("{}.{}.{}.{}", context.page, context.controller, context.position, context.index)
+	};
+	config_dir().join("images").join(&context.device).join(&context.profile).join(folder)
 }
 
 #[command]
@@ -176,6 +185,7 @@ pub async fn remove_instance(context: ActionContext) -> Result<(), Error> {
 		}
 		let _ = remove_dir_all(instance_images_dir(&instance.context)).await;
 		*slot = None;
+		let _ = update_state(crate::APP_HANDLE.get().unwrap(), context.clone(), &mut locks).await;
 	} else {
 		let children = instance.children.as_mut().unwrap();
 		for (index, child) in children.iter().enumerate() {
@@ -274,9 +284,25 @@ pub async fn set_child_delay(parent_context: ActionContext, index: usize, delay_
 }
 
 #[command]
+pub async fn set_instance_settings(context: ActionContext, settings: serde_json::Value) -> Result<(), Error> {
+	crate::events::inbound::settings::set_settings(crate::events::inbound::ContextAndPayloadEvent { context, payload: settings }, true).await?;
+	Ok(())
+}
+
+#[command]
 pub async fn update_image(context: Context, image: Option<String>) {
-	if Some(&context.profile) != crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(&context.device).ok().as_ref() {
+	let selected = crate::store::profiles::DEVICE_STORES.write().await.get_selected_profile(&context.device).ok();
+	if Some(&context.profile) != selected.as_ref() {
 		return;
+	}
+
+	if let (Some(profile_id), Some(device)) = (selected.as_ref(), crate::shared::DEVICES.get(&context.device).map(|device| device.clone())) {
+		let stores = crate::store::profiles::PROFILE_STORES.read().await;
+		if let Ok(store) = stores.get_profile_store(&device, profile_id)
+			&& store.value.current_page_index() != context.page as usize
+		{
+			return;
+		}
 	}
 
 	if let Err(error) = crate::events::outbound::devices::update_image(context, image).await {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ActionInstance } from "$lib/ActionInstance";
 	import type { ActionState } from "$lib/ActionState";
-	import type { Context } from "$lib/Context";
+	import { type Context, actionContextString } from "$lib/Context";
 	import type { CopiedItem } from "$lib/propertyInspector";
 
 	import Clipboard from "phosphor-svelte/lib/Clipboard";
@@ -16,25 +16,30 @@
 	import { settings } from "$lib/settings";
 
 	import { invoke } from "@tauri-apps/api/core";
-	import { listen } from "@tauri-apps/api/event";
-	import { tick } from "svelte";
+	import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+	import { createEventDispatcher, onDestroy, tick } from "svelte";
+
+	const dispatch = createEventDispatcher<{ cleared: void }>();
 
 	export let context: Context | null;
 	export let label: string = "";
 	export let tabindex: number = 0;
 	export let role: string = "gridcell";
 
-	// One-way binding for slot data.
+	// One-way slot data. Do not bind this from the parent — Svelte writes the
+	// child's value into a replaced profile and leaks keys across pages.
 	export let inslot: ActionInstance | null;
 	let slot: ActionInstance | null;
-	let lastInslot: ActionInstance | null | undefined;
-	const update = (inslot: ActionInstance | null) => {
-		if (inslot === lastInslot) return;
-		if (inslot && context && inslot.context.split(".")[0] != context.device) return;
-		lastInslot = inslot;
-		slot = inslot;
-	};
-	$: update(inslot);
+	// Copy the parent slot only when the button identity changes. A new context object
+	// on each parent render must not wipe the image that update_state just delivered.
+	let seenSlotId = "";
+	$: {
+		const slotId = `${context?.page ?? "none"}:${context?.controller ?? ""}:${context?.position ?? ""}:${inslot?.context ?? "empty"}`;
+		if (slotId !== seenSlotId && !(inslot && context && inslot.context.split(".")[0] != context.device)) {
+			seenSlotId = slotId;
+			slot = inslot ?? null;
+		}
+	}
 
 	export let active: boolean = true;
 	export let scale: number = 1;
@@ -50,13 +55,28 @@
 		}
 	}
 
-	listen("update_state", ({ payload }: { payload: { context: string; contents: ActionInstance | null } }) => {
-		if (payload.context == slot?.context) slot = payload.contents;
-	});
+	function payloadContextString(payloadContext: string | Context): string {
+		return typeof payloadContext == "string" ? payloadContext : actionContextString(payloadContext);
+	}
 
-	listen("key_moved", ({ payload }: { payload: { context: Context; pressed: boolean } }) => {
-		if (JSON.stringify(context) == JSON.stringify(payload.context)) pressed = payload.pressed;
-	});
+	const unlistens: Promise<UnlistenFn>[] = [];
+	unlistens.push(
+		listen("update_state", ({ payload }: { payload: { context: string; contents: ActionInstance | null } }) => {
+			if (!context) return;
+			if (payloadContextString(payload.context) != actionContextString(context, 0)) return;
+			// Parent slot is empty. A late setImage from the previous page must not fill this key.
+			if (!inslot && payload.contents) return;
+			slot = payload.contents;
+			// Dial feedback lives in the backend renderer, outside drawKey's state fields.
+			if (context.controller === "Encoder") scheduleDraw();
+		}),
+	);
+
+	unlistens.push(
+		listen("key_moved", ({ payload }: { payload: { context: Context; pressed: boolean } }) => {
+			if (JSON.stringify(context) == JSON.stringify(payload.context)) pressed = payload.pressed;
+		}),
+	);
 
 	function select(event: MouseEvent | KeyboardEvent) {
 		if (event instanceof MouseEvent && event.ctrlKey) return;
@@ -115,16 +135,22 @@
 		if (!$copiedItem || !context || !handlePaste) return;
 		await handlePaste($copiedItem, context);
 		await tick();
-		$inspectedInstance = `${context.device}.${context.profile}.${context.controller}.${context.position}.0`;
+		$inspectedInstance = actionContextString(context);
 	}
 
 	async function clear() {
 		$openContextMenu = null;
 		if (!slot) return;
+		const parsed = slot.context.split(".");
+		if (context && parsed.length >= 6 && parsed[2] != String(context.page)) {
+			slot = null;
+			dispatch("cleared");
+			return;
+		}
 		await invoke("remove_instance", { context: slot.context });
 		showEditor = false;
 		slot = null;
-		inslot = slot;
+		dispatch("cleared");
 		await tick();
 		$inspectedInstance = context;
 	}
@@ -132,19 +158,27 @@
 	let showAlert: boolean = false;
 	let showOk: boolean = false;
 	let timeouts: number[] = [];
-	listen("show_alert", ({ payload }: { payload: string }) => {
-		if (!slot || payload != slot.context) return;
-		timeouts.forEach(clearTimeout);
-		showOk = false;
-		showAlert = true;
-		timeouts.push(setTimeout(() => (showAlert = false), 1.5e3));
-	});
-	listen("show_ok", ({ payload }: { payload: string }) => {
-		if (!slot || payload != slot.context) return;
-		timeouts.forEach(clearTimeout);
-		showAlert = false;
-		showOk = true;
-		timeouts.push(setTimeout(() => (showOk = false), 1.5e3));
+	unlistens.push(
+		listen("show_alert", ({ payload }: { payload: string }) => {
+			if (!slot || payload != slot.context) return;
+			timeouts.forEach(clearTimeout);
+			showOk = false;
+			showAlert = true;
+			timeouts.push(setTimeout(() => (showAlert = false), 1.5e3));
+		}),
+	);
+	unlistens.push(
+		listen("show_ok", ({ payload }: { payload: string }) => {
+			if (!slot || payload != slot.context) return;
+			timeouts.forEach(clearTimeout);
+			showAlert = false;
+			showOk = true;
+			timeouts.push(setTimeout(() => (showOk = false), 1.5e3));
+		}),
+	);
+
+	onDestroy(() => {
+		unlistens.forEach((unlisten) => unlisten.then((fn) => fn()));
 	});
 
 	let canvas: HTMLCanvasElement;
@@ -153,31 +187,80 @@
 	// Canvas resolution defaults to a square `size`, but rectangular controllers (e.g. the Neo's infobar) can override this.
 	export let width: number = size;
 	export let height: number = size;
-	$: (async () => {
-		const sl = structuredClone(slot);
+	let drawGen = 0;
+	let drawQueued = false;
+	function scheduleDraw() {
+		if (drawQueued) return;
+		drawQueued = true;
+		requestAnimationFrame(() => {
+			drawQueued = false;
+			void draw();
+		});
+	}
+	async function draw() {
+		const gen = ++drawGen;
+		const live = () => gen === drawGen;
+		const drawContext = context;
+		if (!canvas) await tick();
+		if (!live() || !canvas) return;
+		const sl = slot ? structuredClone(slot) : null;
+		// Only an empty slot clears. A missing state must not wipe a button that is still there.
 		if (!sl) {
-			const unlock = await lock.lock();
-			try {
-				const ctx = canvas?.getContext("2d");
-				if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-				if (active) await invoke("update_image", { context, image: null });
-			} finally {
-				unlock();
-			}
-		} else {
-			const unlock = await lock.lock();
-			try {
-				let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
-				if (state && canvas) await renderImage(canvas, context, state, fallback, showOk, showAlert, true, active, pressed, $settings?.rotation);
-			} finally {
-				unlock();
-			}
+			canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+			if (active && drawContext && live()) await invoke("update_image", { context: drawContext, image: null });
+			return;
 		}
-	})();
+		const currentState = sl.states?.[sl.current_state];
+		if (!currentState || !live()) return;
+		const unlock = await lock.lock();
+		try {
+			if (!live() || !canvas) return;
+			let fallback = sl.action.states[sl.current_state]?.image ?? sl.action.icon;
+			await renderImage(
+				canvas,
+				drawContext,
+				currentState,
+				fallback,
+				showOk,
+				showAlert,
+				true,
+				active,
+				pressed,
+				$settings?.rotation,
+				live,
+				sl.context,
+				sl.current_state ?? 0,
+			);
+		} finally {
+			unlock();
+		}
+	}
+	$: drawKey = [
+		slot?.context ?? "",
+		slot?.current_state ?? "",
+		state?.image ?? "",
+		state?.image_override ?? "",
+		state?.text ?? "",
+		state?.text_override ?? "",
+		state?.background_colour ?? "",
+		state?.show ?? "",
+		showOk,
+		showAlert,
+		pressed,
+		active,
+		$settings?.rotation ?? "",
+		context?.page ?? "",
+		context?.controller ?? "",
+		context?.position ?? "",
+	].join("\u001f");
+	$: {
+		void drawKey;
+		scheduleDraw();
+	}
 
 	function clearAndRedraw() {
 		canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
-		slot = slot;
+		scheduleDraw();
 	}
 	$: if ($settings?.rotation != undefined) {
 		clearAndRedraw();
