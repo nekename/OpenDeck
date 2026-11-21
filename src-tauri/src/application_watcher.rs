@@ -62,7 +62,7 @@ pub fn init_application_watcher() {
 				previous = app_name;
 			}
 
-			tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+			tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
 		}
 	});
 
