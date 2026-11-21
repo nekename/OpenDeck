@@ -26,3 +26,31 @@ globalThis.addEventListener("blur", () => openContextMenu.set(null));
 
 export type CopiedItem = { type: "instance"; source: Context } | { type: "action"; action: Action };
 export const copiedItem: Writable<CopiedItem | null> = writable(null);
+
+/**
+ * Copies an item into this window and into the Rust side, so the other window
+ * can paste it too. The Rust side emits "clipboard", which keeps both windows
+ * in sync without them talking to each other directly.
+ */
+export async function copyItem(item: CopiedItem) {
+	copiedItem.set(item);
+	try {
+		await invoke("set_clipboard", { item: JSON.stringify(item) });
+	} catch (error) {
+		console.error("Could not share the copied item", error);
+	}
+}
+
+/** Loads a clipboard that was copied in another window. */
+export async function initClipboard() {
+	try {
+		const raw = await invoke<string | null>("get_clipboard");
+		if (raw) copiedItem.set(JSON.parse(raw));
+	} catch (error) {
+		console.error("Could not read the shared clipboard", error);
+	}
+
+	await listen<string | null>("clipboard", ({ payload }) => {
+		copiedItem.set(payload ? JSON.parse(payload) : null);
+	});
+}

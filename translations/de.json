@@ -150,5 +150,11 @@
 	"settings.sleep_when_computer_locked": "Ruhezustand, wenn der Computer gesperrt ist:",
 	"settings.sleep_when_computer_locked.tooltip": "Wenn diese Option aktiviert ist, wechseln die Geräte beim Sperren des Computers in den Ruhezustand, und alle Tastendrücke werden bis zum Entsperren des Computers unterdrückt.",
 	"settings.statistics": "Statistiken übermitteln:",
-	"settings.updatecheck": "Automatisch auf Updates prüfen:"
+	"settings.updatecheck": "Automatisch auf Updates prüfen:",
+	"settings.secondwindow": "Zweites Fenster",
+	"settings.secondwindow.tooltip": "Erlaubt ein zweites Fenster mit eigener Gerätewahl, um Tasten zwischen Decks zu kopieren.",
+	"window.second": "Zweites Fenster",
+	"window.second.tooltip": "Öffnet ein weiteres Fenster mit eigener Gerätewahl, Tasten lassen sich zwischen beiden kopieren.",
+	"window.second.on": "an",
+	"window.second.off": "aus"
 }

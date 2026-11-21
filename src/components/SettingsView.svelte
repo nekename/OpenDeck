@@ -159,6 +159,12 @@
 		{/if}
 
 		<div class="flex flex-row items-center m-2 space-x-2">
+			<label for="settings-secondwindow" class="text-neutral-400">{$t("settings.secondwindow")}</label>
+			<input type="checkbox" bind:checked={$settings.second_window} id="settings-secondwindow" />
+			<Tooltip>{$t("settings.secondwindow.tooltip")}</Tooltip>
+		</div>
+
+		<div class="flex flex-row items-center m-2 space-x-2">
 			<label for="settings-developer" class="text-neutral-400">{$t("settings.developer")}</label>
 			<input type="checkbox" bind:checked={$settings.developer} id="settings-developer" />
 			<Tooltip>

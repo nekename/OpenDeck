@@ -11,7 +11,7 @@
 	import InstanceEditor from "./InstanceEditor.svelte";
 
 	import { t } from "$lib/i18n";
-	import { copiedItem, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
+	import { copiedItem, copyItem, inspectedInstance, inspectedParentAction, openContextMenu } from "$lib/propertyInspector";
 	import { CanvasLock, renderImage } from "$lib/rendererHelper";
 	import { settings } from "$lib/settings";
 
@@ -106,14 +106,26 @@
 	function copy() {
 		$openContextMenu = null;
 		if (!context || !slot) return;
-		copiedItem.set({ type: "instance", source: context });
+		void copyItem({ type: "instance", source: context });
 	}
 
 	export let handlePaste: ((item: CopiedItem, destination: Context) => Promise<void>) | undefined = undefined;
 	async function paste() {
 		$openContextMenu = null;
-		if (!$copiedItem || !context || !handlePaste) return;
-		await handlePaste($copiedItem, context);
+		if (!context || !handlePaste) return;
+
+		// Always ask the backend first: the other window may have copied
+		// something newer than what this window knows about.
+		let item: CopiedItem | null = null;
+		try {
+			const raw = await invoke<string | null>("get_clipboard");
+			if (raw) item = JSON.parse(raw);
+		} catch (error) {
+			console.error("Could not read the shared clipboard", error);
+		}
+		if (!item) item = $copiedItem;
+		if (!item) return;
+		await handlePaste(item, context);
 		await tick();
 		$inspectedInstance = `${context.device}.${context.profile}.${context.controller}.${context.position}.0`;
 	}

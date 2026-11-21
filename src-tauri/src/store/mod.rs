@@ -141,6 +141,7 @@ pub struct Settings {
 	pub separatewine: bool,
 	pub developer: bool,
 	pub disableelgato: bool,
+	pub second_window: bool,
 }
 
 impl Default for Settings {
@@ -160,6 +161,7 @@ impl Default for Settings {
 			separatewine: false,
 			developer: false,
 			disableelgato: false,
+			second_window: false,
 		}
 	}
 }
