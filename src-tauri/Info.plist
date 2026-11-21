@@ -4,5 +4,13 @@
 <dict>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>OpenDeck plugins use this to control your system and other apps. Access is granted to all installed plugins.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>OpenDeck plugins use this to access your microphone. Access is granted to all installed plugins.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>OpenDeck plugins use this to access your camera. Access is granted to all installed plugins.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>OpenDeck plugins use this to connect to Bluetooth devices. Access is granted to all installed plugins.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>OpenDeck plugins use this to find and control devices on your local network. Access is granted to all installed plugins.</string>
 </dict>
 </plist>
