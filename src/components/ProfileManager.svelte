@@ -35,14 +35,18 @@
 	getProfiles(device);
 
 	export let profile: Profile;
+	let switchSeq = 0;
 	export async function setProfile(id: string) {
 		if (!device || !id) return;
 		if (value != id) {
 			value = id;
 			return;
 		}
+		const seq = ++switchSeq;
 		await invoke("set_selected_profile", { device: device.id, id });
-		profile = await invoke("get_selected_profile", { device: device.id });
+		const selected: Profile = await invoke("get_selected_profile", { device: device.id });
+		if (seq != switchSeq) return;
+		profile = selected;
 
 		let folder = id.includes("/") ? id.split("/")[0] : "";
 		if (folders[folder]) {
