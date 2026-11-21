@@ -165,3 +165,8 @@ input[type="color"] {
 .plugin-readme .markdown-alert-caution > .markdown-alert-title {
 	color: #e5534b;
 }
+
+html,
+:host {
+	font-family: ui-sans-serif, system-ui, sans-serif;
+}
