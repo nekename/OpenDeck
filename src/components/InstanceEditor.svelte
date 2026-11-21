@@ -5,6 +5,7 @@
 	import { renderImage, resizeImage } from "$lib/rendererHelper";
 
 	import { invoke } from "@tauri-apps/api/core";
+	import { getCurrentWebview } from "@tauri-apps/api/webview";
 	import { onMount } from "svelte";
 
 	export let instance: ActionInstance;
@@ -47,6 +48,45 @@
 		reader.readAsDataURL(file);
 	}
 
+	let dragActive = false;
+
+	// Dropping from a file manager gives the frontend no file, only Tauri's
+	// native event knows the path.
+	function isOverIcon(position: { x: number; y: number }) {
+		const scale = window.devicePixelRatio || 1;
+		const element = document.elementFromPoint(position.x / scale, position.y / scale);
+		return !!element?.closest("[data-drop-icon]");
+	}
+
+	async function setImageFromPath(path: string) {
+		try {
+			const dataUrl = await invoke<string>("read_image_file", { path });
+			const resized = await resizeImage(dataUrl);
+			if (instance.states[state]) instance.states[state].image_override = resized ?? dataUrl;
+		} catch (error) {
+			console.error("Could not read the dropped image", error);
+		}
+	}
+
+	onMount(() => {
+		let unlisten: (() => void) | undefined;
+		getCurrentWebview()
+			.onDragDropEvent((event) => {
+				const payload = event.payload;
+				if (payload.type === "leave") {
+					dragActive = false;
+				} else if (payload.type === "over") {
+					dragActive = isOverIcon(payload.position);
+				} else if (payload.type === "drop") {
+					const overIcon = isOverIcon(payload.position);
+					dragActive = false;
+					if (overIcon && payload.paths?.length) setImageFromPath(payload.paths[0]);
+				}
+			})
+			.then((un) => (unlisten = un));
+		return () => unlisten?.();
+	});
+
 	function update(instance: ActionInstance) {
 		bold = instance.states[state].style.includes("Bold");
 		italic = instance.states[state].style.includes("Italic");
@@ -78,6 +118,10 @@
 	<div class="flex flex-row mx-1">
 		<div class="flex flex-col justify-center items-center mt-2 mb-1">
 			<button
+				data-drop-icon
+				class="rounded-md transition-shadow"
+				class:ring-2={dragActive}
+				class:ring-blue-500={dragActive}
 				on:click={(event) => {
 					if (event.ctrlKey) return;
 					fileInput.click();
