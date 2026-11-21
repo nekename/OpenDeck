@@ -5,6 +5,14 @@ use crate::store::profiles::{acquire_locks, acquire_locks_mut, get_instance, get
 use std::io::Write;
 use std::str::FromStr;
 
+pub(crate) fn valid_plugin_id(id: &str) -> bool {
+	!id.is_empty()
+		&& id != "."
+		&& id != ".."
+		&& !id.ends_with('.')
+		&& id.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_'))
+}
+
 pub async fn set_settings(event: super::ContextAndPayloadEvent<serde_json::Value>, from_property_inspector: bool) -> Result<(), anyhow::Error> {
 	let mut locks = acquire_locks_mut().await;
 
@@ -37,6 +45,9 @@ pub async fn set_global_settings(event: super::ContextAndPayloadEvent<serde_json
 	} else {
 		event.context.clone()
 	};
+	if !valid_plugin_id(&uuid) {
+		anyhow::bail!("invalid plugin ID");
+	}
 
 	{
 		let settings_dir = crate::shared::config_dir().join("settings");
@@ -64,6 +75,9 @@ pub async fn get_global_settings(event: super::ContextEvent<String>, from_proper
 	} else {
 		event.context.clone()
 	};
+	if !valid_plugin_id(&uuid) {
+		anyhow::bail!("invalid plugin ID");
+	}
 
 	outbound::did_receive_global_settings(&uuid, from_property_inspector).await
 }
